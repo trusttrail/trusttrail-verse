@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Menu, X, ShoppingCart } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -24,6 +25,7 @@ const Header = () => {
           <a href="#tokenomics" className="text-foreground/80 hover:text-foreground transition-colors">Tokenomics</a>
           <a href="#dex-details" className="text-foreground/80 hover:text-foreground transition-colors">DEX Details</a>
           <a href="#faq" className="text-foreground/80 hover:text-foreground transition-colors">FAQ</a>
+          <ThemeToggle />
         </nav>
         
         <div className="hidden md:flex items-center space-x-4">
@@ -40,9 +42,12 @@ const Header = () => {
           <Button className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 hover:from-trustpurple-600 hover:to-trustblue-600 text-white">Launch App</Button>
         </div>
         
-        <button className="md:hidden text-foreground" onClick={toggleMenu}>
-          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <div className="md:hidden flex items-center gap-2">
+          <ThemeToggle />
+          <button className="text-foreground" onClick={toggleMenu}>
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </div>
       
       {/* Mobile menu */}

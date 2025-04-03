@@ -5,48 +5,54 @@
 
 @layer base {
   :root {
+    /* Dark theme (default) */
     --background: 240 30% 7%;
     --foreground: 0 0% 98%;
-
     --card: 240 25% 9%;
     --card-foreground: 0 0% 98%;
-
     --popover: 240 25% 7%;
     --popover-foreground: 0 0% 98%;
-
     --primary: 250 84% 54%;
     --primary-foreground: 0 0% 100%;
-
     --secondary: 220 85% 57%;
     --secondary-foreground: 0 0% 100%;
-
     --muted: 240 15% 15%;
     --muted-foreground: 240 5% 65%;
-
     --accent: 220 85% 57%;
     --accent-foreground: 0 0% 100%;
-
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-
     --border: 240 15% 20%;
+    --border-light: 240 15% 30%;
     --input: 240 15% 20%;
     --ring: 240 70% 40%;
-    
     --radius: 0.75rem;
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
-}
 
-@layer base {
+  /* Light theme */
+  .light {
+    --background: 0 0% 98%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 250 84% 54%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 85% 57%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 5% 95%;
+    --muted-foreground: 240 5% 45%;
+    --accent: 220 85% 57%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 85%;
+    --border-light: 240 5% 75%;
+    --input: 240 5% 85%;
+    --ring: 240 30% 40%;
+  }
+
   * {
     @apply border-border;
   }
@@ -62,7 +68,9 @@
   }
   
   .glass-card {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg rounded-2xl;
+    @apply dark:bg-white/5 dark:backdrop-blur-xl dark:border-white/10 
+           light:bg-white/90 light:backdrop-blur-xl light:border-black/5 
+           shadow-lg rounded-2xl border;
   }
   
   .crypto-gradient {
@@ -70,14 +78,26 @@
   }
 
   .glow {
-    box-shadow: 0 0 20px 5px rgba(123, 88, 246, 0.3);
+    @apply dark:shadow-[0_0_20px_5px_rgba(123,88,246,0.3)]
+           light:shadow-[0_0_20px_5px_rgba(123,88,246,0.2)];
   }
   
   .gold-glow {
-    box-shadow: 0 0 20px 5px rgba(240, 176, 3, 0.4);
+    @apply dark:shadow-[0_0_20px_5px_rgba(240,176,3,0.4)]
+           light:shadow-[0_0_20px_5px_rgba(240,176,3,0.3)];
   }
 
   .section-padding {
     @apply py-20 px-4 md:px-8 lg:px-12;
+  }
+  
+  .animated-bg {
+    background: conic-gradient(from 0deg at 50% 50%, 
+      rgba(123, 88, 246, 0.15) 0deg, 
+      rgba(44, 159, 255, 0.15) 72deg, 
+      rgba(123, 88, 246, 0.15) 144deg, 
+      rgba(240, 176, 3, 0.15) 216deg, 
+      rgba(123, 88, 246, 0.15) 288deg, 
+      rgba(44, 159, 255, 0.15) 360deg);
   }
 }
