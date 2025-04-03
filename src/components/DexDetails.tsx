@@ -55,9 +55,9 @@ const DexDetails = () => {
                 <p className="text-foreground/70 text-sm">Current Price</p>
               </div>
               <div className="flex items-baseline gap-2">
-                <p className="font-bold text-2xl">$0.0432</p>
-                <span className="text-green-500 text-sm flex items-center">
-                  <TrendingUp size={14} className="mr-1" /> +2.4%
+                <p className="font-bold text-2xl">$0.000034</p>
+                <span className="text-red-500 text-sm flex items-center">
+                  <TrendingUp size={14} className="mr-1 rotate-180" /> -1.2%
                 </span>
               </div>
             </div>
@@ -69,9 +69,9 @@ const DexDetails = () => {
                 <p className="text-foreground/70 text-sm">24h Volume</p>
               </div>
               <div className="flex items-baseline gap-2">
-                <p className="font-bold text-2xl">$526,340</p>
-                <span className="text-green-500 text-sm flex items-center">
-                  <TrendingUp size={14} className="mr-1" /> +8.7%
+                <p className="font-bold text-2xl">$23,450</p>
+                <span className="text-red-500 text-sm flex items-center">
+                  <TrendingUp size={14} className="mr-1 rotate-180" /> -5.3%
                 </span>
               </div>
             </div>
@@ -83,9 +83,9 @@ const DexDetails = () => {
                 <p className="text-foreground/70 text-sm">Liquidity</p>
               </div>
               <div className="flex items-baseline gap-2">
-                <p className="font-bold text-2xl">$1.8M</p>
+                <p className="font-bold text-2xl">$156,720</p>
                 <span className="text-green-500 text-sm flex items-center">
-                  <TrendingUp size={14} className="mr-1" /> +1.2%
+                  <TrendingUp size={14} className="mr-1" /> +0.8%
                 </span>
               </div>
             </div>

@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import Features from '@/components/Features';
@@ -13,24 +13,36 @@ import { useTheme } from '@/hooks/useTheme';
 
 const Index = () => {
   const { theme } = useTheme();
+  const particlesContainerRef = useRef<HTMLDivElement>(null);
+  const mousePosition = useRef({ x: 0, y: 0 });
+  const lastScrollY = useRef(0);
   
-  // Add enhanced particle effect
   useEffect(() => {
+    // Track mouse position
+    const handleMouseMove = (e: MouseEvent) => {
+      mousePosition.current = { x: e.clientX, y: e.clientY };
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    
+    // Enhanced particle creation
     const createParticle = () => {
-      const particlesContainer = document.querySelector('#particles-container');
+      const particlesContainer = particlesContainerRef.current;
       if (!particlesContainer) return;
       
       const particle = document.createElement('div');
       particle.classList.add('particle');
       
-      // Random position
-      const x = Math.random() * window.innerWidth;
-      const y = Math.random() * window.innerHeight;
+      // Random position with bias towards mouse position
+      const mouseInfluence = 0.3; // How much the mouse influences particle position
+      const randomX = Math.random() * window.innerWidth;
+      const randomY = Math.random() * window.innerHeight;
       
-      // Random size with more variation
+      const x = randomX * (1 - mouseInfluence) + mousePosition.current.x * mouseInfluence;
+      const y = randomY * (1 - mouseInfluence) + mousePosition.current.y * mouseInfluence;
+      
+      // Enhanced particle properties
       const size = Math.random() * 6 + 1;
-      
-      // Random opacity with more variation
       const opacity = Math.random() * 0.6 + 0.1;
       
       // Enhanced color palette
@@ -40,11 +52,15 @@ const Index = () => {
       
       const color = colors[Math.floor(Math.random() * colors.length)];
       
-      // Random duration with more variation
+      // More varied durations and delays
       const duration = Math.random() * 20 + 10;
+      const delay = Math.random() * 2; // Add a small random delay
       
-      // Random blur effect
-      const blur = Math.random() > 0.7 ? `blur(${Math.random() * 3}px)` : '';
+      // Random blur effect with more variation
+      const blur = Math.random() > 0.5 ? `blur(${Math.random() * 3}px)` : '';
+      
+      // Random glow effect
+      const glow = Math.random() > 0.7 ? `0 0 ${Math.random() * 8 + 2}px ${color}` : '';
       
       // Apply enhanced styles
       particle.style.cssText = `
@@ -59,15 +75,19 @@ const Index = () => {
         pointer-events: none;
         z-index: 0;
         filter: ${blur};
-        animation: float ${duration}s ease-in-out infinite;
+        box-shadow: ${glow};
+        animation: float ${duration}s ease-in-out ${delay}s infinite;
+        transform: translate(-50%, -50%);
       `;
       
       particlesContainer.appendChild(particle);
       
       // Remove after animation
       setTimeout(() => {
-        particle.remove();
-      }, duration * 1000);
+        if (particle.parentNode === particlesContainer) {
+          particlesContainer.removeChild(particle);
+        }
+      }, (duration + delay) * 1000);
     };
     
     // Create particles initially
@@ -76,16 +96,61 @@ const Index = () => {
     }
     
     // Continue creating particles
-    const intervalId = setInterval(() => {
+    const particleInterval = setInterval(() => {
       createParticle();
-    }, 1500);
+    }, 1000);
     
-    return () => clearInterval(intervalId);
+    // Handle scroll interactions
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollDelta = currentScrollY - lastScrollY.current;
+      
+      // Create extra particles on scroll
+      if (Math.abs(scrollDelta) > 15) {
+        // Add 1-3 particles when scrolling significantly
+        const extraParticles = Math.floor(Math.random() * 3) + 1;
+        for (let i = 0; i < extraParticles; i++) {
+          createParticle();
+        }
+      }
+      
+      lastScrollY.current = currentScrollY;
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    
+    // Clean up event listeners
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('scroll', handleScroll);
+      clearInterval(particleInterval);
+    };
   }, [theme]);
   
   return (
     <div className={`min-h-screen bg-background text-foreground transition-colors duration-300 ${theme}`}>
-      <div id="particles-container" className="fixed inset-0 overflow-hidden pointer-events-none z-0"></div>
+      <div 
+        ref={particlesContainerRef} 
+        id="particles-container" 
+        className="fixed inset-0 overflow-hidden pointer-events-none z-0"
+      >
+        <style jsx>{`
+          @keyframes float {
+            0% {
+              transform: translate(-50%, -50%) translateY(0) translateX(0);
+            }
+            33% {
+              transform: translate(-50%, -50%) translateY(${Math.random() * 40 - 20}px) translateX(${Math.random() * 40 - 20}px);
+            }
+            66% {
+              transform: translate(-50%, -50%) translateY(${Math.random() * 40 - 20}px) translateX(${Math.random() * 40 - 20}px);
+            }
+            100% {
+              transform: translate(-50%, -50%) translateY(0) translateX(0);
+            }
+          }
+        `}</style>
+      </div>
       <Header />
       <Hero />
       <Features />

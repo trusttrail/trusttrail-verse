@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Shield, Check, Star, AlertCircle } from "lucide-react";
+import { Shield, Check, Star, AlertCircle, Users } from "lucide-react";
 
 const Hero = () => {
   return (
@@ -56,40 +56,14 @@ const Hero = () => {
                 <AlertCircle size={18} className="text-red-400" />
                 <span>Identity Scoring</span>
               </div>
+              <div className="flex items-center gap-2">
+                <Users size={18} className="text-green-400" />
+                <span>Trusted Community</span>
+              </div>
             </div>
           </div>
           
           <div className="flex-1 relative">
-            <div className="relative z-10 w-full max-w-md mx-auto">
-              <div className="aspect-square rounded-2xl bg-gradient-to-br from-trustpurple-500 to-trustblue-500 p-[2px] shadow-lg relative overflow-hidden">
-                <div className="absolute inset-0 bg-[url('/blockchain-pattern.png')] bg-cover opacity-20 mix-blend-overlay"></div>
-                <div className="h-full w-full rounded-2xl bg-card p-6 flex flex-col justify-center items-center overflow-hidden">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-r from-trustpurple-500 to-trustblue-500 flex items-center justify-center mb-4">
-                    <Shield size={32} className="text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">TrustTrail Verified</h3>
-                  <p className="text-sm text-center text-foreground/80 mb-4">
-                    All reviews are verified on the blockchain with identity scoring for maximum trust
-                  </p>
-                  <div className="space-y-3 w-full">
-                    <div className="flex items-center justify-between py-2 px-4 rounded-lg bg-white/5">
-                      <span>Testnet Reviews</span>
-                      <span className="font-bold text-trustblue-400">500+</span>
-                    </div>
-                    <div className="flex items-center justify-between py-2 px-4 rounded-lg bg-white/5">
-                      <span>Test $NOCAP Issued</span>
-                      <span className="font-bold text-gold-400">10k</span>
-                    </div>
-                    <div className="flex items-center justify-between py-2 px-4 rounded-lg bg-white/5">
-                      <span>Test Reviewers</span>
-                      <span className="font-bold text-trustpurple-400">100+</span>
-                    </div>
-                  </div>
-                  <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-trustpurple-500/20 rounded-full blur-3xl"></div>
-                </div>
-              </div>
-            </div>
-            
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] bg-gradient-to-br from-trustpurple-900/30 via-trustblue-900/20 to-transparent rounded-full blur-3xl -z-10"></div>
           </div>
         </div>
