@@ -68,9 +68,11 @@
   }
   
   .glass-card {
-    @apply dark:bg-white/5 dark:backdrop-blur-xl dark:border-white/10 
-           light:bg-white/90 light:backdrop-blur-xl light:border-black/5 
-           shadow-lg rounded-2xl border;
+    @apply bg-white/5 backdrop-blur-xl border-white/10 shadow-lg rounded-2xl border;
+  }
+  
+  .light .glass-card {
+    @apply bg-white/90 backdrop-blur-xl border-black/5 shadow-lg rounded-2xl border;
   }
   
   .crypto-gradient {
@@ -78,13 +80,19 @@
   }
 
   .glow {
-    @apply dark:shadow-[0_0_20px_5px_rgba(123,88,246,0.3)]
-           light:shadow-[0_0_20px_5px_rgba(123,88,246,0.2)];
+    @apply shadow-[0_0_20px_5px_rgba(123,88,246,0.3)];
+  }
+  
+  .light .glow {
+    @apply shadow-[0_0_20px_5px_rgba(123,88,246,0.2)];
   }
   
   .gold-glow {
-    @apply dark:shadow-[0_0_20px_5px_rgba(240,176,3,0.4)]
-           light:shadow-[0_0_20px_5px_rgba(240,176,3,0.3)];
+    @apply shadow-[0_0_20px_5px_rgba(240,176,3,0.4)];
+  }
+  
+  .light .gold-glow {
+    @apply shadow-[0_0_20px_5px_rgba(240,176,3,0.3)];
   }
 
   .section-padding {
