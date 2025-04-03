@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Shield, Check, Star } from "lucide-react";
+import { Shield, Check, Star, AlertCircle } from "lucide-react";
 
 const Hero = () => {
   return (
@@ -12,10 +12,6 @@ const Hero = () => {
       <div className="container mx-auto px-4 py-16 md:py-24 relative z-10">
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-6 items-center">
           <div className="flex-1 space-y-6 text-center lg:text-left">
-            <div className="inline-block rounded-full bg-trustpurple-900/50 border border-trustpurple-700/40 px-4 py-1.5 text-sm font-medium text-trustpurple-300">
-              @trusttrail69
-            </div>
-            
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold">
               Genuine Reviews, <br/>
               <span className="bg-gradient-to-r from-trustpurple-400 to-trustblue-400 bg-clip-text text-transparent">
@@ -25,16 +21,22 @@ const Hero = () => {
             
             <p className="text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto lg:mx-0">
               TrustTrail rewards authentic reviews with $NOCAP tokens and NFTs, 
-              ensuring trust and transparency through blockchain verification.
+              ensuring trust and transparency through blockchain verification 
+              with comprehensive identity scoring.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Button size="lg" className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 hover:from-trustpurple-600 hover:to-trustblue-600 text-white font-medium text-lg px-8">
-                Start Reviewing
+                Launch Review Portal
               </Button>
               <Button size="lg" variant="outline" className="border-trustpurple-500 text-trustpurple-400 hover:bg-trustpurple-500/10 font-medium text-lg">
                 View Whitepaper
               </Button>
+            </div>
+
+            <div className="text-sm text-foreground/70 italic">
+              <p className="mb-1">* The Launch Portal is under development and will be out soon.</p>
+              <p>* The Whitepaper will be published soon as we are carefully reviewing the market conditions to ensure a fair launch and distribution for our community.</p>
             </div>
             
             <div className="flex flex-wrap gap-6 justify-center lg:justify-start text-foreground/70">
@@ -50,6 +52,10 @@ const Hero = () => {
                 <Star size={18} className="text-gold-400" />
                 <span>Token Rewards</span>
               </div>
+              <div className="flex items-center gap-2">
+                <AlertCircle size={18} className="text-red-400" />
+                <span>Identity Scoring</span>
+              </div>
             </div>
           </div>
           
@@ -63,20 +69,20 @@ const Hero = () => {
                   </div>
                   <h3 className="text-xl font-bold mb-2">TrustTrail Verified</h3>
                   <p className="text-sm text-center text-foreground/80 mb-4">
-                    All reviews are verified on the blockchain for maximum transparency and trust
+                    All reviews are verified on the blockchain with identity scoring for maximum trust
                   </p>
                   <div className="space-y-3 w-full">
                     <div className="flex items-center justify-between py-2 px-4 rounded-lg bg-white/5">
-                      <span>Reviews Verified</span>
-                      <span className="font-bold text-trustblue-400">53.4k</span>
+                      <span>Testnet Reviews</span>
+                      <span className="font-bold text-trustblue-400">500+</span>
                     </div>
                     <div className="flex items-center justify-between py-2 px-4 rounded-lg bg-white/5">
-                      <span>$NOCAP Distributed</span>
-                      <span className="font-bold text-gold-400">1.2M</span>
+                      <span>Test $NOCAP Issued</span>
+                      <span className="font-bold text-gold-400">10k</span>
                     </div>
                     <div className="flex items-center justify-between py-2 px-4 rounded-lg bg-white/5">
-                      <span>Unique Reviewers</span>
-                      <span className="font-bold text-trustpurple-400">12.8k</span>
+                      <span>Test Reviewers</span>
+                      <span className="font-bold text-trustpurple-400">100+</span>
                     </div>
                   </div>
                   <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-trustpurple-500/20 rounded-full blur-3xl"></div>

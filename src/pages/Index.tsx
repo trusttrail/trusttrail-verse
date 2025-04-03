@@ -4,6 +4,7 @@ import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import Features from '@/components/Features';
 import HowItWorks from '@/components/HowItWorks';
+import DexDetails from '@/components/DexDetails';
 import Tokenomics from '@/components/Tokenomics';
 import FAQ from '@/components/FAQ';
 import Newsletter from '@/components/Newsletter';
@@ -17,6 +18,7 @@ const Index = () => {
       <Features />
       <HowItWorks />
       <Tokenomics />
+      <DexDetails />
       <FAQ />
       <Newsletter />
       <Footer />
