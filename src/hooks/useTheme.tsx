@@ -6,6 +6,7 @@ type Theme = "dark" | "light";
 interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
+  setTheme: (theme: Theme) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -21,12 +22,20 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     // Update document class when theme changes
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    const root = document.documentElement;
+    root.classList.remove("dark", "light");
+    root.classList.add(theme);
     localStorage.setItem("theme", theme);
+
+    // Add transition class for smooth theme change
+    setTimeout(() => {
+      root.classList.add("theme-transition");
+    }, 100);
+
+    // Clean up
+    return () => {
+      root.classList.remove("theme-transition");
+    };
   }, [theme]);
 
   const toggleTheme = () => {
@@ -34,7 +43,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
