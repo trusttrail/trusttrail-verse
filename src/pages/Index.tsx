@@ -180,14 +180,18 @@ const Index = () => {
         
         stars.forEach(star => {
           const speed = Math.random() * 0.05 + 0.02;
-          const currentY = parseFloat(star.style.top);
-          star.style.top = `${currentY - scrollDelta * speed}px`;
+          // Cast to HTMLElement since Element doesn't have style property
+          const htmlStar = star as HTMLElement;
+          const currentY = parseFloat(htmlStar.style.top);
+          htmlStar.style.top = `${currentY - scrollDelta * speed}px`;
         });
         
         nebulae.forEach(nebula => {
           const speed = Math.random() * 0.02 + 0.01; // Slower parallax for nebulae
-          const currentY = parseFloat(nebula.style.top);
-          nebula.style.top = `${currentY - scrollDelta * speed}px`;
+          // Cast to HTMLElement since Element doesn't have style property
+          const htmlNebula = nebula as HTMLElement;
+          const currentY = parseFloat(htmlNebula.style.top);
+          htmlNebula.style.top = `${currentY - scrollDelta * speed}px`;
         });
       }
       
