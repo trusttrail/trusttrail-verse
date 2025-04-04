@@ -5,7 +5,7 @@ import Hero from '@/components/Hero';
 import Features from '@/components/Features';
 import HowItWorks from '@/components/HowItWorks';
 import DexDetails from '@/components/DexDetails';
-import Tokenomics from '@/components/Tokenomics';
+import FakeReviewDetection from '@/components/FakeReviewDetection';
 import FAQ from '@/components/FAQ';
 import Newsletter from '@/components/Newsletter';
 import Footer from '@/components/Footer';
@@ -259,7 +259,7 @@ const Index = () => {
       <Hero />
       <Features />
       <HowItWorks />
-      <Tokenomics />
+      <FakeReviewDetection />
       <DexDetails />
       <FAQ />
       <Newsletter />
