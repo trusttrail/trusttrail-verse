@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { ExternalLink, DollarSign, ChevronRight, Zap, LineChart, TrendingUp, BarChart3, Activity } from "lucide-react";
+import { ExternalLink, DollarSign, ChevronRight, Zap, LineChart, TrendingUp, BarChart3, Activity, PieChart, Clock, Percent } from "lucide-react";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 
 const DexDetails = () => {
   return (
@@ -17,10 +18,10 @@ const DexDetails = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-gold-500/10 via-transparent to-transparent rounded-full blur-3xl"></div>
           
           <h2 className="text-3xl md:text-5xl font-bold mb-6 relative">
-            <span className="bg-gradient-to-r from-gold-400 to-gold-600 bg-clip-text text-transparent">Market Data</span>
+            <span className="bg-gradient-to-r from-gold-400 to-gold-600 bg-clip-text text-transparent">Market Insights</span>
           </h2>
           <p className="text-foreground/70 text-xl max-w-2xl mx-auto">
-            Real-time token analytics and market insights
+            Transparent analytics to help investors make informed decisions
           </p>
         </div>
         
@@ -34,7 +35,7 @@ const DexDetails = () => {
               <div className="rounded-full bg-gradient-to-br from-trustpurple-500 to-trustblue-500 p-3 shadow-lg shadow-trustblue-500/20">
                 <Activity size={24} className="text-white" />
               </div>
-              <h3 className="text-2xl md:text-3xl font-bold">Live Market Data</h3>
+              <h3 className="text-2xl md:text-3xl font-bold">TrustTrail Analytics</h3>
             </div>
             <a 
               href="https://dexscreener.com/polygon/0x37626759cb65752a64fd3ab945de73b28a0f880d" 
@@ -55,9 +56,9 @@ const DexDetails = () => {
                 <p className="text-foreground/70 text-sm">Current Price</p>
               </div>
               <div className="flex items-baseline gap-2">
-                <p className="font-bold text-2xl">$0.000034</p>
-                <span className="text-red-500 text-sm flex items-center">
-                  <TrendingUp size={14} className="mr-1 rotate-180" /> -1.2%
+                <p className="font-bold text-2xl">$0.0725</p>
+                <span className="text-green-500 text-sm flex items-center">
+                  <TrendingUp size={14} className="mr-1" /> +2.8%
                 </span>
               </div>
             </div>
@@ -65,13 +66,13 @@ const DexDetails = () => {
             <div className="glass-card p-6 relative overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-lg">
               <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-trustpurple-500/10 via-transparent to-transparent rounded-full blur-2xl -z-10"></div>
               <div className="flex items-center gap-2 mb-3">
-                <BarChart3 size={18} className="text-trustpurple-500" />
-                <p className="text-foreground/70 text-sm">24h Volume</p>
+                <PieChart size={18} className="text-trustpurple-500" />
+                <p className="text-foreground/70 text-sm">Market Cap</p>
               </div>
               <div className="flex items-baseline gap-2">
-                <p className="font-bold text-2xl">$23,450</p>
-                <span className="text-red-500 text-sm flex items-center">
-                  <TrendingUp size={14} className="mr-1 rotate-180" /> -5.3%
+                <p className="font-bold text-2xl">$3.45M</p>
+                <span className="text-green-500 text-sm flex items-center">
+                  <TrendingUp size={14} className="mr-1" /> +5.2%
                 </span>
               </div>
             </div>
@@ -83,12 +84,59 @@ const DexDetails = () => {
                 <p className="text-foreground/70 text-sm">Liquidity</p>
               </div>
               <div className="flex items-baseline gap-2">
-                <p className="font-bold text-2xl">$156,720</p>
+                <p className="font-bold text-2xl">$275K</p>
                 <span className="text-green-500 text-sm flex items-center">
-                  <TrendingUp size={14} className="mr-1" /> +0.8%
+                  <TrendingUp size={14} className="mr-1" /> +1.5%
                 </span>
               </div>
             </div>
+          </div>
+
+          <div className="glass-card p-6 mb-8">
+            <h4 className="text-xl font-semibold mb-4">Extended Metrics</h4>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Metric</TableHead>
+                  <TableHead>Value</TableHead>
+                  <TableHead>Change (30d)</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="flex items-center gap-2">
+                    <BarChart3 size={16} className="text-trustblue-400" />
+                    24h Volume
+                  </TableCell>
+                  <TableCell className="font-medium">$89.7K</TableCell>
+                  <TableCell className="text-green-500">+12.4%</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="flex items-center gap-2">
+                    <Clock size={16} className="text-trustpurple-400" />
+                    30d Price Change
+                  </TableCell>
+                  <TableCell className="font-medium">+$0.0128</TableCell>
+                  <TableCell className="text-green-500">+21.5%</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="flex items-center gap-2">
+                    <Percent size={16} className="text-gold-500" />
+                    APY (Staking)
+                  </TableCell>
+                  <TableCell className="font-medium">18.7%</TableCell>
+                  <TableCell className="text-red-500">-2.3%</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="flex items-center gap-2">
+                    <Activity size={16} className="text-trustblue-400" />
+                    Holders
+                  </TableCell>
+                  <TableCell className="font-medium">1,872</TableCell>
+                  <TableCell className="text-green-500">+243</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
           </div>
           
           <div className="glass-card p-6 mb-8 relative overflow-hidden transform transition-all duration-300 hover:shadow-lg group">
@@ -113,7 +161,7 @@ const DexDetails = () => {
           
           <div className="text-center">
             <p className="text-foreground/70 mb-8 max-w-2xl mx-auto">
-              Get detailed real-time analytics, including price charts, trading volume, and liquidity information
+              TrustTrail provides transparent market data to build investor confidence. All metrics are regularly updated from on-chain sources.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <a 

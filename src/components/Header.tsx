@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Menu, X, ShoppingCart } from "lucide-react";
+import { Menu, X, ShoppingCart, CheckCircle } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 
 const Header = () => {
@@ -14,7 +14,9 @@ const Header = () => {
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center">
           <a href="https://x.com/trusttrail69" target="_blank" rel="noopener noreferrer" className="flex items-center">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-trustpurple-500 to-trustblue-500 mr-2"></div>
+            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-trustpurple-500 to-trustblue-500 flex items-center justify-center mr-2">
+              <CheckCircle size={18} className="text-white" />
+            </div>
             <span className="text-xl font-bold bg-gradient-to-r from-trustpurple-300 to-trustblue-400 bg-clip-text text-transparent">TrustTrail</span>
           </a>
         </div>
