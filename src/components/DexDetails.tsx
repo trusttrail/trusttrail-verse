@@ -56,9 +56,9 @@ const DexDetails = () => {
                 <p className="text-foreground/70 text-sm">Current Price</p>
               </div>
               <div className="flex items-baseline gap-2">
-                <p className="font-bold text-2xl">$0.0725</p>
-                <span className="text-green-500 text-sm flex items-center">
-                  <TrendingUp size={14} className="mr-1" /> +2.8%
+                <p className="font-bold text-2xl">$0.0152</p>
+                <span className="text-red-500 text-sm flex items-center">
+                  <TrendingUp size={14} className="mr-1 transform rotate-180" /> -6.7%
                 </span>
               </div>
             </div>
@@ -70,9 +70,9 @@ const DexDetails = () => {
                 <p className="text-foreground/70 text-sm">Market Cap</p>
               </div>
               <div className="flex items-baseline gap-2">
-                <p className="font-bold text-2xl">$3.45M</p>
-                <span className="text-green-500 text-sm flex items-center">
-                  <TrendingUp size={14} className="mr-1" /> +5.2%
+                <p className="font-bold text-2xl">$154K</p>
+                <span className="text-red-500 text-sm flex items-center">
+                  <TrendingUp size={14} className="mr-1 transform rotate-180" /> -2.3%
                 </span>
               </div>
             </div>
@@ -84,9 +84,9 @@ const DexDetails = () => {
                 <p className="text-foreground/70 text-sm">Liquidity</p>
               </div>
               <div className="flex items-baseline gap-2">
-                <p className="font-bold text-2xl">$275K</p>
+                <p className="font-bold text-2xl">$146K</p>
                 <span className="text-green-500 text-sm flex items-center">
-                  <TrendingUp size={14} className="mr-1" /> +1.5%
+                  <TrendingUp size={14} className="mr-1" /> +0.37%
                 </span>
               </div>
             </div>
@@ -99,7 +99,7 @@ const DexDetails = () => {
                 <TableRow>
                   <TableHead>Metric</TableHead>
                   <TableHead>Value</TableHead>
-                  <TableHead>Change (30d)</TableHead>
+                  <TableHead>Change (24h)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -108,32 +108,32 @@ const DexDetails = () => {
                     <BarChart3 size={16} className="text-trustblue-400" />
                     24h Volume
                   </TableCell>
-                  <TableCell className="font-medium">$89.7K</TableCell>
-                  <TableCell className="text-green-500">+12.4%</TableCell>
+                  <TableCell className="font-medium">$6.8K</TableCell>
+                  <TableCell className="text-red-500">-28.9%</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell className="flex items-center gap-2">
                     <Clock size={16} className="text-trustpurple-400" />
-                    30d Price Change
+                    7d Price Change
                   </TableCell>
-                  <TableCell className="font-medium">+$0.0128</TableCell>
-                  <TableCell className="text-green-500">+21.5%</TableCell>
+                  <TableCell className="font-medium">-$0.0018</TableCell>
+                  <TableCell className="text-red-500">-10.8%</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell className="flex items-center gap-2">
                     <Percent size={16} className="text-gold-500" />
-                    APY (Staking)
+                    Fully Diluted Val.
                   </TableCell>
-                  <TableCell className="font-medium">18.7%</TableCell>
-                  <TableCell className="text-red-500">-2.3%</TableCell>
+                  <TableCell className="font-medium">$152K</TableCell>
+                  <TableCell className="text-red-500">-6.5%</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell className="flex items-center gap-2">
                     <Activity size={16} className="text-trustblue-400" />
-                    Holders
+                    Txns (24hr)
                   </TableCell>
-                  <TableCell className="font-medium">1,872</TableCell>
-                  <TableCell className="text-green-500">+243</TableCell>
+                  <TableCell className="font-medium">21 (12 buys, 9 sells)</TableCell>
+                  <TableCell className="text-green-500">+3</TableCell>
                 </TableRow>
               </TableBody>
             </Table>
@@ -188,7 +188,7 @@ const DexDetails = () => {
         
         <div className="text-center">
           <a 
-            href="https://dexscreener.com/polygon/0x37626759cb65752a64fd3ab945de73b28a0f880d" 
+            href="https://www.geckoterminal.com/polygon_pos/pools/0x37626759cb65752a64fd3ab945de73b28a0f880d" 
             target="_blank" 
             rel="noopener noreferrer" 
             className="inline-flex items-center text-trustpurple-400 hover:text-trustpurple-300 transition-colors font-medium hover:underline"
