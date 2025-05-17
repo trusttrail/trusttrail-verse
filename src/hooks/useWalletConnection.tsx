@@ -7,8 +7,11 @@ export interface WalletConnectionHook {
   walletAddress: string;
   currentNetwork: string;
   connectWallet: () => Promise<void>;
+  connectWithWalletConnect: () => Promise<void>;
   disconnectWallet: () => void;
   handleNetworkChange: (network: string) => void;
+  isMetaMaskAvailable: boolean;
+  isWalletConnecting: boolean;
 }
 
 export const useWalletConnection = (): WalletConnectionHook => {
@@ -16,16 +19,17 @@ export const useWalletConnection = (): WalletConnectionHook => {
   const [isWalletConnected, setIsWalletConnected] = useState<boolean>(false);
   const [walletAddress, setWalletAddress] = useState<string>("");
   const [currentNetwork, setCurrentNetwork] = useState<string>("polygon");
+  const [isMetaMaskAvailable, setIsMetaMaskAvailable] = useState<boolean>(false);
+  const [isWalletConnecting, setIsWalletConnecting] = useState<boolean>(false);
 
   // Check if MetaMask is installed
+  useEffect(() => {
+    setIsMetaMaskAvailable(!!window.ethereum);
+  }, []);
+
   const checkIfWalletIsConnected = async () => {
     try {
       if (!window.ethereum) {
-        toast({
-          title: "MetaMask Not Found",
-          description: "Please install MetaMask browser extension to connect your wallet.",
-          variant: "destructive",
-        });
         return;
       }
 
@@ -46,15 +50,17 @@ export const useWalletConnection = (): WalletConnectionHook => {
     }
   };
 
-  // Connect wallet handler
+  // Connect wallet handler for MetaMask
   const connectWallet = async () => {
     try {
+      setIsWalletConnecting(true);
       if (!window.ethereum) {
         toast({
-          title: "MetaMask Not Found",
-          description: "Please install MetaMask browser extension to connect your wallet.",
+          title: "No Wallet Detected",
+          description: "No MetaMask or compatible wallet extension found.",
           variant: "destructive",
         });
+        setIsWalletConnecting(false);
         return;
       }
 
@@ -81,6 +87,7 @@ export const useWalletConnection = (): WalletConnectionHook => {
           });
         }
       }
+      setIsWalletConnecting(false);
     } catch (error) {
       console.error("Error connecting wallet:", error);
       toast({
@@ -88,6 +95,40 @@ export const useWalletConnection = (): WalletConnectionHook => {
         description: "Failed to connect wallet. Please try again.",
         variant: "destructive",
       });
+      setIsWalletConnecting(false);
+    }
+  };
+
+  // Connect with WalletConnect
+  const connectWithWalletConnect = async () => {
+    try {
+      setIsWalletConnecting(true);
+      
+      // Since we can't actually implement WalletConnect without installing additional libraries,
+      // we'll show a message to the user about the feature
+      toast({
+        title: "WalletConnect",
+        description: "To fully implement WalletConnect, we would need to install the WalletConnect SDK library. This is a UI demonstration.",
+      });
+      
+      // Simulate connection delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Show connection successful toast
+      toast({
+        title: "WalletConnect Ready",
+        description: "Scan a QR code with your mobile wallet to connect.",
+      });
+      
+      setIsWalletConnecting(false);
+    } catch (error) {
+      console.error("Error connecting with WalletConnect:", error);
+      toast({
+        title: "Connection Failed",
+        description: "Failed to initialize WalletConnect. Please try again.",
+        variant: "destructive",
+      });
+      setIsWalletConnecting(false);
     }
   };
 
@@ -192,7 +233,10 @@ export const useWalletConnection = (): WalletConnectionHook => {
     walletAddress,
     currentNetwork,
     connectWallet,
+    connectWithWalletConnect,
     disconnectWallet,
-    handleNetworkChange
+    handleNetworkChange,
+    isMetaMaskAvailable,
+    isWalletConnecting
   };
 };

@@ -41,7 +41,10 @@ const ReviewPortal = () => {
     currentNetwork,
     connectWallet,
     disconnectWallet,
-    handleNetworkChange
+    handleNetworkChange,
+    isMetaMaskAvailable,
+    connectWithWalletConnect,
+    isWalletConnecting
   } = useWalletConnection();
 
   // Mock data for demonstration
@@ -144,6 +147,9 @@ const ReviewPortal = () => {
                   address={walletAddress}
                   onConnect={connectWallet}
                   onDisconnect={disconnectWallet}
+                  onWalletConnectClick={connectWithWalletConnect}
+                  isMetaMaskAvailable={isMetaMaskAvailable}
+                  isWalletConnecting={isWalletConnecting}
                 />
               </div>
             </div>

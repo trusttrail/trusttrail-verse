@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Wallet } from "lucide-react";
+import { Wallet, PlugZap } from "lucide-react";
 import { Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useWalletConnection } from "@/hooks/useWalletConnection";
 
 interface WriteReviewFormProps {
   isWalletConnected: boolean;
@@ -16,6 +17,7 @@ interface WriteReviewFormProps {
 
 const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormProps) => {
   const { toast } = useToast();
+  const { isMetaMaskAvailable, connectWithWalletConnect } = useWalletConnection();
   const [companyName, setCompanyName] = useState("");
   const [rating, setRating] = useState<number>(0);
   const [reviewTitle, setReviewTitle] = useState("");
@@ -76,10 +78,16 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
               Connect your wallet to sign and submit your review to the blockchain.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex justify-center">
-            <Button onClick={connectWallet} className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500">
-              <Wallet className="mr-2" size={18} />
-              Connect Wallet
+          <CardContent className="flex flex-col md:flex-row gap-3 justify-center">
+            {isMetaMaskAvailable && (
+              <Button onClick={connectWallet} className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500">
+                <Wallet className="mr-2" size={18} />
+                Connect with MetaMask
+              </Button>
+            )}
+            <Button onClick={connectWithWalletConnect} variant={isMetaMaskAvailable ? "outline" : "default"} className={isMetaMaskAvailable ? "" : "bg-gradient-to-r from-trustpurple-500 to-trustblue-500"}>
+              <PlugZap className="mr-2" size={18} />
+              {isMetaMaskAvailable ? "Use WalletConnect" : "Connect Wallet"}
             </Button>
           </CardContent>
         </Card>
