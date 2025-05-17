@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Menu, X, ShoppingCart, CheckCircle } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
+import { Link } from 'react-router-dom';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -41,7 +42,9 @@ const Header = () => {
             Buy $NOCAP
           </a>
           <Button variant="outline" className="border-trustpurple-500 text-trustpurple-400 hover:bg-trustpurple-500/10">Connect Wallet</Button>
-          <Button className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 hover:from-trustpurple-600 hover:to-trustblue-600 text-white">Launch App</Button>
+          <Link to="/review-portal">
+            <Button className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 hover:from-trustpurple-600 hover:to-trustblue-600 text-white">Launch App</Button>
+          </Link>
         </div>
         
         <div className="md:hidden flex items-center gap-2">
@@ -72,7 +75,9 @@ const Header = () => {
                 Buy $NOCAP
               </a>
               <Button variant="outline" className="border-trustpurple-500 text-trustpurple-400 hover:bg-trustpurple-500/10">Connect Wallet</Button>
-              <Button className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 hover:from-trustpurple-600 hover:to-trustblue-600 text-white">Launch App</Button>
+              <Link to="/review-portal">
+                <Button className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 hover:from-trustpurple-600 hover:to-trustblue-600 text-white">Launch App</Button>
+              </Link>
             </div>
           </div>
         </div>
