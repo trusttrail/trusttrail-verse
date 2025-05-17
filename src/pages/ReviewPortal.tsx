@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -17,6 +16,17 @@ import CompanyCard from "@/components/review/CompanyCard";
 import NetworkSelector from "@/components/review/NetworkSelector";
 import WalletConnect from "@/components/review/WalletConnect";
 import { useTheme } from '@/hooks/useTheme';
+
+declare global {
+  interface Window {
+    ethereum?: {
+      request: (args: { method: string; params?: any[] }) => Promise<any>;
+      on: (event: string, callback: (...args: any[]) => void) => void;
+      removeListener: (event: string, callback: (...args: any[]) => void) => void;
+      isMetaMask?: boolean;
+    };
+  }
+}
 
 const ReviewPortal = () => {
   const { toast } = useToast();
@@ -76,20 +86,70 @@ const ReviewPortal = () => {
     }
   ];
 
+  // Check if MetaMask is installed
+  const checkIfWalletIsConnected = async () => {
+    try {
+      if (!window.ethereum) {
+        toast({
+          title: "MetaMask Not Found",
+          description: "Please install MetaMask browser extension to connect your wallet.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check if already connected
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      
+      if (accounts.length > 0) {
+        setWalletAddress(accounts[0]);
+        setIsWalletConnected(true);
+        
+        toast({
+          title: "Wallet Connected",
+          description: `Connected to ${accounts[0].substring(0, 6)}...${accounts[0].substring(accounts[0].length - 4)}`,
+        });
+      }
+    } catch (error) {
+      console.error("Error checking if wallet is connected:", error);
+    }
+  };
+
   // Connect wallet handler
   const connectWallet = async () => {
     try {
-      // In a real implementation, this would use web3 libraries like ethers.js
-      // For now, we're just simulating the connection
-      setTimeout(() => {
+      if (!window.ethereum) {
+        toast({
+          title: "MetaMask Not Found",
+          description: "Please install MetaMask browser extension to connect your wallet.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      
+      if (accounts.length > 0) {
+        setWalletAddress(accounts[0]);
         setIsWalletConnected(true);
-        const mockAddress = "0x" + Math.random().toString(16).substr(2, 40);
-        setWalletAddress(mockAddress);
+        
         toast({
           title: "Wallet Connected",
-          description: `Connected to ${mockAddress.substring(0, 6)}...${mockAddress.substring(mockAddress.length - 4)}`,
+          description: `Connected to ${accounts[0].substring(0, 6)}...${accounts[0].substring(accounts[0].length - 4)}`,
         });
-      }, 1000);
+
+        // Check network
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        
+        // Polygon Mainnet: 0x89
+        if (chainId !== '0x89') {
+          toast({
+            title: "Wrong Network",
+            description: "Please switch to Polygon network in your MetaMask wallet.",
+            variant: "destructive",
+          });
+        }
+      }
     } catch (error) {
       console.error("Error connecting wallet:", error);
       toast({
@@ -126,6 +186,62 @@ const ReviewPortal = () => {
       description: `Switched to ${network.charAt(0).toUpperCase() + network.slice(1)} network.`,
     });
   };
+
+  // Listen for account changes
+  useEffect(() => {
+    const handleAccountsChanged = (accounts: string[]) => {
+      if (accounts.length === 0) {
+        // User disconnected their wallet
+        setIsWalletConnected(false);
+        setWalletAddress("");
+        toast({
+          title: "Wallet Disconnected",
+          description: "Your wallet has been disconnected.",
+        });
+      } else if (accounts[0] !== walletAddress) {
+        // User switched accounts
+        setWalletAddress(accounts[0]);
+        toast({
+          title: "Account Changed",
+          description: `Connected to ${accounts[0].substring(0, 6)}...${accounts[0].substring(accounts[0].length - 4)}`,
+        });
+      }
+    };
+
+    const handleChainChanged = (chainId: string) => {
+      // Polygon Mainnet: 0x89
+      if (chainId !== '0x89') {
+        toast({
+          title: "Wrong Network",
+          description: "Please switch to Polygon network in your MetaMask wallet.",
+          variant: "destructive",
+        });
+      } else {
+        setCurrentNetwork("polygon");
+        toast({
+          title: "Network Changed",
+          description: "Connected to Polygon network.",
+        });
+      }
+    };
+
+    // Check if wallet is connected when component mounts
+    checkIfWalletIsConnected();
+
+    // Set up event listeners
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      window.ethereum.on('chainChanged', handleChainChanged);
+    }
+
+    // Clean up event listeners
+    return () => {
+      if (window.ethereum) {
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+        window.ethereum.removeListener('chainChanged', handleChainChanged);
+      }
+    };
+  }, [walletAddress, toast]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">

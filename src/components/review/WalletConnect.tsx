@@ -7,6 +7,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Wallet, LogOut, ExternalLink, Copy, Check } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface WalletConnectProps {
   isConnected: boolean;
@@ -18,6 +19,7 @@ interface WalletConnectProps {
 const WalletConnect = ({ isConnected, address, onConnect, onDisconnect }: WalletConnectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
   
   const shortenAddress = (addr: string) => {
     return addr ? `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}` : '';
