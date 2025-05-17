@@ -93,11 +93,19 @@ export const useWalletConnection = (): WalletConnectionHook => {
 
   // Disconnect wallet handler
   const disconnectWallet = () => {
+    // Clear local connection state
     setIsWalletConnected(false);
     setWalletAddress("");
+    
+    // Local storage could be used to remember disconnection preference
+    localStorage.setItem('wallet_disconnected', 'true');
+    
+    // Note: MetaMask doesn't have a direct method to disconnect
+    // We simply clear our app's connection state
+    
     toast({
       title: "Wallet Disconnected",
-      description: "Your wallet has been disconnected.",
+      description: "Your wallet has been disconnected. Refresh the page to reconnect.",
     });
   };
 
@@ -156,8 +164,13 @@ export const useWalletConnection = (): WalletConnectionHook => {
       }
     };
 
-    // Check if wallet is connected when component mounts
-    checkIfWalletIsConnected();
+    // Check if user has previously disconnected the wallet
+    const hasDisconnected = localStorage.getItem('wallet_disconnected') === 'true';
+    
+    // Only auto-connect if user hasn't explicitly disconnected
+    if (!hasDisconnected) {
+      checkIfWalletIsConnected();
+    }
 
     // Set up event listeners
     if (window.ethereum) {

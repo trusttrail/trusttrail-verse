@@ -6,8 +6,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Wallet, LogOut, ExternalLink, Copy, Check } from "lucide-react";
+import { Wallet, ExternalLink, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Unlink } from "lucide-react";
 
 interface WalletConnectProps {
   isConnected: boolean;
@@ -29,11 +30,21 @@ const WalletConnect = ({ isConnected, address, onConnect, onDisconnect }: Wallet
     navigator.clipboard.writeText(address);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+    
+    toast({
+      title: "Address Copied",
+      description: "Wallet address copied to clipboard",
+    });
   };
   
   const handleDisconnect = () => {
     onDisconnect();
     setIsOpen(false);
+    
+    toast({
+      title: "Wallet Disconnected",
+      description: "Your wallet has been disconnected successfully",
+    });
   };
 
   return isConnected ? (
@@ -82,7 +93,7 @@ const WalletConnect = ({ isConnected, address, onConnect, onDisconnect }: Wallet
               className="w-full" 
               onClick={handleDisconnect}
             >
-              <LogOut size={14} className="mr-2" />
+              <Unlink size={14} className="mr-2" />
               Disconnect
             </Button>
           </div>
