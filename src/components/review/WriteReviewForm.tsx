@@ -238,6 +238,7 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
                     role="combobox"
                     aria-expanded={openCompanySelect}
                     className="w-full justify-between"
+                    type="button"
                   >
                     {companyName ? companyName : "Select company..."}
                     <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -249,8 +250,9 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
                       placeholder="Search companies..." 
                       value={companyName}
                       onValueChange={handleCompanySearch}
+                      autoFocus={true}
                     />
-                    <CommandEmpty>No company found. Type to add a new one.</CommandEmpty>
+                    <CommandEmpty>No company found. You can still use this name.</CommandEmpty>
                     <CommandGroup className="max-h-64 overflow-y-auto">
                       {filteredCompanies.map((company) => (
                         <CommandItem

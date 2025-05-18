@@ -38,12 +38,27 @@ export const useWalletConnection = (): WalletConnectionHook => {
       
       if (accounts.length > 0) {
         setWalletAddress(accounts[0]);
-        setIsWalletConnected(true);
         
-        toast({
-          title: "Wallet Connected",
-          description: `Connected to ${accounts[0].substring(0, 6)}...${accounts[0].substring(accounts[0].length - 4)}`,
-        });
+        // Check if on correct network before showing connected state
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        
+        // Polygon Mainnet: 0x89
+        if (chainId === '0x89') {
+          setIsWalletConnected(true);
+          
+          toast({
+            title: "Wallet Connected",
+            description: `Connected to ${accounts[0].substring(0, 6)}...${accounts[0].substring(accounts[0].length - 4)}`,
+          });
+        } else {
+          // Auto-disconnect if on wrong network
+          setIsWalletConnected(false);
+          toast({
+            title: "Wrong Network",
+            description: "Please switch to Polygon network in your MetaMask wallet to connect.",
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       console.error("Error checking if wallet is connected:", error);
@@ -68,22 +83,24 @@ export const useWalletConnection = (): WalletConnectionHook => {
       
       if (accounts.length > 0) {
         setWalletAddress(accounts[0]);
-        setIsWalletConnected(true);
         
-        toast({
-          title: "Wallet Connected",
-          description: `Connected to ${accounts[0].substring(0, 6)}...${accounts[0].substring(accounts[0].length - 4)}`,
-        });
-
         // Check network
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
         
         // Polygon Mainnet: 0x89
         if (chainId !== '0x89') {
+          setIsWalletConnected(false);
           toast({
             title: "Wrong Network",
-            description: "Please switch to Polygon network in your MetaMask wallet.",
+            description: "Please switch to Polygon network in your MetaMask wallet to connect.",
             variant: "destructive",
+          });
+        } else {
+          setIsWalletConnected(true);
+          
+          toast({
+            title: "Wallet Connected",
+            description: `Connected to ${accounts[0].substring(0, 6)}...${accounts[0].substring(accounts[0].length - 4)}`,
           });
         }
       }
@@ -181,9 +198,18 @@ export const useWalletConnection = (): WalletConnectionHook => {
       } else if (accounts[0] !== walletAddress) {
         // User switched accounts
         setWalletAddress(accounts[0]);
-        toast({
-          title: "Account Changed",
-          description: `Connected to ${accounts[0].substring(0, 6)}...${accounts[0].substring(accounts[0].length - 4)}`,
+        
+        // Check if new account is on correct network before showing connected state
+        window.ethereum?.request({ method: 'eth_chainId' }).then((chainId) => {
+          if (chainId === '0x89') {
+            setIsWalletConnected(true);
+            toast({
+              title: "Account Changed",
+              description: `Connected to ${accounts[0].substring(0, 6)}...${accounts[0].substring(accounts[0].length - 4)}`,
+            });
+          } else {
+            setIsWalletConnected(false);
+          }
         });
       }
     };
@@ -191,17 +217,23 @@ export const useWalletConnection = (): WalletConnectionHook => {
     const handleChainChanged = (chainId: string) => {
       // Polygon Mainnet: 0x89
       if (chainId !== '0x89') {
+        // Auto disconnect if network changes to unsupported one
+        setIsWalletConnected(false);
         toast({
           title: "Wrong Network",
-          description: "Please switch to Polygon network in your MetaMask wallet.",
+          description: "Wallet disconnected. Please switch to Polygon network and reconnect.",
           variant: "destructive",
         });
       } else {
-        setCurrentNetwork("polygon");
-        toast({
-          title: "Network Changed",
-          description: "Connected to Polygon network.",
-        });
+        // If we have an address but were disconnected due to wrong network, reconnect
+        if (walletAddress && !isWalletConnected) {
+          setIsWalletConnected(true);
+          setCurrentNetwork("polygon");
+          toast({
+            title: "Network Changed",
+            description: "Connected to Polygon network.",
+          });
+        }
       }
     };
 
@@ -226,7 +258,7 @@ export const useWalletConnection = (): WalletConnectionHook => {
         window.ethereum.removeListener('chainChanged', handleChainChanged);
       }
     };
-  }, [walletAddress, toast]);
+  }, [walletAddress, isWalletConnected, toast]);
 
   return {
     isWalletConnected,
