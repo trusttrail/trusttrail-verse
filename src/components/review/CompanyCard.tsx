@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Star } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface CompanyCardProps {
   company: {
@@ -15,8 +16,21 @@ interface CompanyCardProps {
 }
 
 const CompanyCard = ({ company }: CompanyCardProps) => {
+  const { toast } = useToast();
+
+  const handleCardClick = () => {
+    // In a real app, this would navigate to the company detail page
+    toast({
+      title: `${company.name}`,
+      description: `Viewing details for ${company.name}. This would navigate to a company detail page in a full implementation.`,
+    });
+  };
+
   return (
-    <Card className="hover:border-trustpurple-500/30 hover:shadow-sm transition-all cursor-pointer">
+    <Card 
+      className="hover:border-trustpurple-500/30 hover:shadow-sm transition-all cursor-pointer"
+      onClick={handleCardClick}
+    >
       <CardContent className="p-6">
         <div className="flex items-center justify-center mb-4">
           <img 

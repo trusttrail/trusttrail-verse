@@ -21,13 +21,28 @@ const PortalContent = ({
   onWriteReviewClick,
   onExploreClick
 }: PortalContentProps) => {
+  // Extract the data needed for search suggestions
+  const searchCompanies = topCompanies.map(company => ({
+    id: company.id,
+    name: company.name,
+    category: company.category
+  }));
+  
+  const searchCategories = categories.map(category => ({
+    id: category.id,
+    name: category.name
+  }));
+
   return (
     <div className="space-y-10">
       <PortalHero 
         onWriteReviewClick={onWriteReviewClick} 
         onExploreClick={onExploreClick} 
       />
-      <SearchBar />
+      <SearchBar 
+        companies={searchCompanies}
+        categories={searchCategories}
+      />
       <CategoriesSection categories={categories} />
       <TopCompaniesSection companies={topCompanies} />
       <RecentReviewsSection reviews={recentReviews} />

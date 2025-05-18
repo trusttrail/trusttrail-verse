@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Edit, Grid3X3, Building, Award } from "lucide-react";
+import { Edit, Grid3X3, Building, Award, Home } from "lucide-react";
 
 // Component imports
 import NetworkSelector from "@/components/review/NetworkSelector";
@@ -32,7 +32,7 @@ declare global {
 
 const ReviewPortal = () => {
   const { theme } = useTheme();
-  const [activeTab, setActiveTab] = useState<string>("portal");
+  const [activeTab, setActiveTab] = useState<string>("home");
   
   // Use the custom wallet hook
   const {
@@ -111,13 +111,17 @@ const ReviewPortal = () => {
       <Header />
       <div className="flex-grow container mx-auto px-4 pt-24 pb-16">
         {/* Main Tabs */}
-        <Tabs defaultValue="portal" className="w-full" value={activeTab} onValueChange={setActiveTab}>
+        <Tabs defaultValue="home" className="w-full" value={activeTab} onValueChange={setActiveTab}>
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-trustpurple-300 to-trustblue-400 bg-clip-text text-transparent">
               TrustTrail Review Portal
             </h1>
             <div className="flex items-center gap-4">
               <TabsList className="hidden md:flex">
+                <TabsTrigger value="home" className="flex items-center gap-1.5">
+                  <Home size={16} />
+                  <span className="hidden sm:inline">Home</span>
+                </TabsTrigger>
                 <TabsTrigger value="write-review" className="flex items-center gap-1.5">
                   <Edit size={16} />
                   <span className="hidden sm:inline">Write a Review</span>
@@ -157,6 +161,10 @@ const ReviewPortal = () => {
           
           {/* Mobile Tabs */}
           <TabsList className="w-full mb-6 md:hidden">
+            <TabsTrigger value="home" className="flex items-center gap-1.5">
+              <Home size={16} />
+              <span>Home</span>
+            </TabsTrigger>
             <TabsTrigger value="write-review" className="flex items-center gap-1.5">
               <Edit size={16} />
               <span>Write</span>
@@ -175,8 +183,8 @@ const ReviewPortal = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Portal Content (Default Tab) */}
-          <TabsContent value="portal">
+          {/* Home Content (renamed from portal) */}
+          <TabsContent value="home">
             <PortalContent 
               categories={categories}
               topCompanies={topCompanies}
