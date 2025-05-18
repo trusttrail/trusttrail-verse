@@ -3,84 +3,19 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Wallet, PlugZap, Upload, Search } from "lucide-react";
-import { Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
-import { 
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from "@/components/ui/form";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import StarRating from './StarRating';
+import FileUpload from './FileUpload';
+import CompanySelector from './CompanySelector';
+import CategorySelector from './CategorySelector';
+import WalletConnectCard from './WalletConnectCard';
+import { sampleCompanies, categories, Company } from '@/data/companyData';
 
 interface WriteReviewFormProps {
   isWalletConnected: boolean;
   connectWallet: () => void;
 }
-
-// Extended companies data for demonstration
-const sampleCompanies = [
-  { id: 1, name: "QuickSwap", category: "DeFi" },
-  { id: 2, name: "OpenSea", category: "NFT Marketplaces" },
-  { id: 3, name: "Axie Infinity", category: "Gaming" },
-  { id: 4, name: "Uniswap", category: "DeFi" },
-  { id: 5, name: "Twitter", category: "Social Media" },
-  { id: 6, name: "Google", category: "Search" },
-  { id: 7, name: "Airbnb", category: "Hospitality" },
-  { id: 8, name: "Amazon", category: "E-commerce" },
-  { id: 9, name: "Netflix", category: "Entertainment" },
-  { id: 10, name: "Uber", category: "Transport" },
-  { id: 11, name: "Binance", category: "Exchange" },
-  { id: 12, name: "Coinbase", category: "Exchange" },
-  { id: 13, name: "Aave", category: "Lending" },
-  { id: 14, name: "Compound", category: "Lending" },
-  { id: 15, name: "Spotify", category: "Entertainment" },
-  { id: 16, name: "Apple", category: "Technology" },
-  { id: 17, name: "Microsoft", category: "Technology" },
-  { id: 18, name: "Facebook", category: "Social Media" },
-  { id: 19, name: "LinkedIn", category: "Professional Network" },
-  { id: 20, name: "Shopify", category: "E-commerce" }
-];
-
-// Generalized categories without Web2/Web3 designation
-const categories = [
-  { id: "defi", name: "DeFi" },
-  { id: "nft", name: "NFT Marketplaces" },
-  { id: "gaming", name: "Gaming" },
-  { id: "dao", name: "DAOs" },
-  { id: "infrastructure", name: "Infrastructure" },
-  { id: "social", name: "Social Media" },
-  { id: "ecommerce", name: "E-commerce" },
-  { id: "finance", name: "Finance" },
-  { id: "search", name: "Search" },
-  { id: "entertainment", name: "Entertainment" },
-  { id: "transport", name: "Transport" },
-  { id: "hospitality", name: "Hospitality" },
-  { id: "saas", name: "SaaS" },
-  { id: "exchange", name: "Exchange" },
-  { id: "lending", name: "Lending" },
-  { id: "technology", name: "Technology" },
-  { id: "professional", name: "Professional Network" },
-];
 
 const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormProps) => {
   const { toast } = useToast();
@@ -98,28 +33,7 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFileError(null);
-    const file = e.target.files?.[0];
-    
-    if (file) {
-      // Check file type
-      const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
-      if (!validTypes.includes(file.type)) {
-        setFileError('Invalid file format. Please upload PDF, PNG, JPEG, or JPG files only.');
-        setSelectedFile(null);
-        return;
-      }
-      
-      setSelectedFile(file);
-      toast({
-        title: "File Uploaded",
-        description: `${file.name} has been uploaded successfully.`,
-      });
-    }
-  };
-
-  const handleCompanySelect = (company: { id: number; name: string; category: string }) => {
+  const handleCompanySelect = (company: Company) => {
     setCompanyName(company.name);
     
     // Auto-set the category based on the company selection
@@ -206,102 +120,34 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
       <p className="text-muted-foreground mb-6">Your review will be signed with your wallet and stored on the blockchain</p>
       
       {!isWalletConnected ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Wallet Connection Required</CardTitle>
-            <CardDescription>
-              Connect your wallet to sign and submit your review to the blockchain.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col md:flex-row gap-3 justify-center">
-            {isMetaMaskAvailable && (
-              <Button onClick={connectWallet} className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500">
-                <Wallet className="mr-2" size={18} />
-                Connect with MetaMask
-              </Button>
-            )}
-            <Button onClick={connectWithWalletConnect} variant={isMetaMaskAvailable ? "outline" : "default"} className={isMetaMaskAvailable ? "" : "bg-gradient-to-r from-trustpurple-500 to-trustblue-500"}>
-              <PlugZap className="mr-2" size={18} />
-              {isMetaMaskAvailable ? "Use WalletConnect" : "Connect Wallet"}
-            </Button>
-          </CardContent>
-        </Card>
+        <WalletConnectCard 
+          isMetaMaskAvailable={isMetaMaskAvailable}
+          connectWallet={connectWallet}
+          connectWithWalletConnect={connectWithWalletConnect}
+        />
       ) : (
         <form onSubmit={handleSubmitReview} className="space-y-6">
           <div className="space-y-4">
-            <div>
-              <label htmlFor="company" className="block text-sm font-medium mb-2">Company Name</label>
-              <Popover open={openCompanySelect} onOpenChange={setOpenCompanySelect}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={openCompanySelect}
-                    className="w-full justify-between"
-                    type="button"
-                  >
-                    {companyName ? companyName : "Select company..."}
-                    <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                  <Command>
-                    <CommandInput 
-                      placeholder="Search companies..." 
-                      value={companyName}
-                      onValueChange={handleCompanySearch}
-                      autoFocus={true}
-                    />
-                    <CommandEmpty>No company found. You can still use this name.</CommandEmpty>
-                    <CommandGroup className="max-h-64 overflow-y-auto">
-                      {filteredCompanies.map((company) => (
-                        <CommandItem
-                          key={company.id}
-                          onSelect={() => handleCompanySelect(company)}
-                          className="cursor-pointer"
-                        >
-                          <div className="flex flex-col">
-                            <span>{company.name}</span>
-                            <span className="text-xs text-muted-foreground">{company.category}</span>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
+            <CompanySelector
+              companyName={companyName}
+              setCompanyName={setCompanyName}
+              setCategory={setCategory}
+              openCompanySelect={openCompanySelect}
+              setOpenCompanySelect={setOpenCompanySelect}
+              filteredCompanies={filteredCompanies}
+              handleCompanySearch={handleCompanySearch}
+              handleCompanySelect={handleCompanySelect}
+            />
             
-            <div>
-              <label htmlFor="category" className="block text-sm font-medium mb-2">Category</label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent className="max-h-80">
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <CategorySelector
+              category={category}
+              setCategory={setCategory}
+              categories={categories}
+            />
             
             <div>
               <label className="block text-sm font-medium mb-2">Rating</label>
-              <div className="flex">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    size={24}
-                    className={`cursor-pointer ${
-                      star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                    }`}
-                    onClick={() => setRating(star)}
-                  />
-                ))}
-              </div>
+              <StarRating rating={rating} setRating={setRating} />
             </div>
             
             <div>
@@ -327,39 +173,12 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
               />
             </div>
             
-            <div>
-              <label htmlFor="proof" className="block text-sm font-medium mb-2">
-                Proof of Purchase (Required)
-              </label>
-              <div className="border-2 border-dashed rounded-lg p-6 text-center border-gray-300 hover:border-trustpurple-500 transition-colors">
-                <input
-                  type="file"
-                  id="proof"
-                  accept=".pdf,.png,.jpg,.jpeg"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-                <label htmlFor="proof" className="cursor-pointer">
-                  <div className="flex flex-col items-center">
-                    <Upload className="h-10 w-10 text-trustpurple-400 mb-2" />
-                    <span className="font-medium mb-1">
-                      {selectedFile ? selectedFile.name : "Click to upload file"}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      PDF, PNG, JPG or JPEG (max. 5MB)
-                    </span>
-                  </div>
-                </label>
-              </div>
-              {fileError && (
-                <p className="text-destructive text-sm mt-2">{fileError}</p>
-              )}
-              {selectedFile && (
-                <p className="text-green-600 text-sm mt-2">
-                  File uploaded: {selectedFile.name}
-                </p>
-              )}
-            </div>
+            <FileUpload
+              selectedFile={selectedFile}
+              setSelectedFile={setSelectedFile}
+              fileError={fileError}
+              setFileError={setFileError}
+            />
             
             <div className="pt-4">
               <Button 
