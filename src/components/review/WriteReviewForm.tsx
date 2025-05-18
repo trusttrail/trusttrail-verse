@@ -37,36 +37,49 @@ interface WriteReviewFormProps {
   connectWallet: () => void;
 }
 
-// Sample companies data for demonstration
+// Extended companies data for demonstration
 const sampleCompanies = [
-  { id: 1, name: "QuickSwap", category: "DeFi - Web3" },
-  { id: 2, name: "OpenSea", category: "NFT - Web3" },
-  { id: 3, name: "Axie Infinity", category: "Gaming - Web3" },
-  { id: 4, name: "Uniswap", category: "DeFi - Web3" },
-  { id: 5, name: "Twitter", category: "Social Media - Web2" },
-  { id: 6, name: "Google", category: "Search - Web2" },
-  { id: 7, name: "Airbnb", category: "Hospitality - Web2" },
-  { id: 8, name: "Amazon", category: "E-commerce - Web2" },
-  { id: 9, name: "Netflix", category: "Entertainment - Web2" },
-  { id: 10, name: "Uber", category: "Transport - Web2" },
+  { id: 1, name: "QuickSwap", category: "DeFi" },
+  { id: 2, name: "OpenSea", category: "NFT Marketplaces" },
+  { id: 3, name: "Axie Infinity", category: "Gaming" },
+  { id: 4, name: "Uniswap", category: "DeFi" },
+  { id: 5, name: "Twitter", category: "Social Media" },
+  { id: 6, name: "Google", category: "Search" },
+  { id: 7, name: "Airbnb", category: "Hospitality" },
+  { id: 8, name: "Amazon", category: "E-commerce" },
+  { id: 9, name: "Netflix", category: "Entertainment" },
+  { id: 10, name: "Uber", category: "Transport" },
+  { id: 11, name: "Binance", category: "Exchange" },
+  { id: 12, name: "Coinbase", category: "Exchange" },
+  { id: 13, name: "Aave", category: "Lending" },
+  { id: 14, name: "Compound", category: "Lending" },
+  { id: 15, name: "Spotify", category: "Entertainment" },
+  { id: 16, name: "Apple", category: "Technology" },
+  { id: 17, name: "Microsoft", category: "Technology" },
+  { id: 18, name: "Facebook", category: "Social Media" },
+  { id: 19, name: "LinkedIn", category: "Professional Network" },
+  { id: 20, name: "Shopify", category: "E-commerce" }
 ];
 
-// Extended categories including both Web2 and Web3
-const extendedCategories = [
-  { id: "defi", name: "DeFi - Web3" },
-  { id: "nft", name: "NFT Marketplaces - Web3" },
-  { id: "gaming", name: "Gaming - Web3" },
-  { id: "dao", name: "DAOs - Web3" },
-  { id: "infrastructure", name: "Infrastructure - Web3" },
-  { id: "social", name: "Social - Web3" },
-  { id: "ecommerce", name: "E-commerce - Web2" },
-  { id: "finance", name: "Finance - Web2" },
-  { id: "socialmedia", name: "Social Media - Web2" },
-  { id: "search", name: "Search - Web2" },
-  { id: "entertainment", name: "Entertainment - Web2" },
-  { id: "transport", name: "Transport - Web2" },
-  { id: "hospitality", name: "Hospitality - Web2" },
-  { id: "saas", name: "SaaS - Web2" },
+// Generalized categories without Web2/Web3 designation
+const categories = [
+  { id: "defi", name: "DeFi" },
+  { id: "nft", name: "NFT Marketplaces" },
+  { id: "gaming", name: "Gaming" },
+  { id: "dao", name: "DAOs" },
+  { id: "infrastructure", name: "Infrastructure" },
+  { id: "social", name: "Social Media" },
+  { id: "ecommerce", name: "E-commerce" },
+  { id: "finance", name: "Finance" },
+  { id: "search", name: "Search" },
+  { id: "entertainment", name: "Entertainment" },
+  { id: "transport", name: "Transport" },
+  { id: "hospitality", name: "Hospitality" },
+  { id: "saas", name: "SaaS" },
+  { id: "exchange", name: "Exchange" },
+  { id: "lending", name: "Lending" },
+  { id: "technology", name: "Technology" },
+  { id: "professional", name: "Professional Network" },
 ];
 
 const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormProps) => {
@@ -79,6 +92,7 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
   const [category, setCategory] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openCompanySelect, setOpenCompanySelect] = useState(false);
+  const [filteredCompanies, setFilteredCompanies] = useState(sampleCompanies);
   
   // File upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -109,8 +123,8 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
     setCompanyName(company.name);
     
     // Auto-set the category based on the company selection
-    const categoryId = extendedCategories.find(
-      cat => company.category.includes(cat.name)
+    const categoryId = categories.find(
+      cat => company.category.includes(cat.name) || cat.name.includes(company.category)
     )?.id || "";
     
     if (categoryId) {
@@ -118,6 +132,20 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
     }
     
     setOpenCompanySelect(false);
+  };
+
+  const handleCompanySearch = (value: string) => {
+    setCompanyName(value);
+    
+    // Filter companies based on input
+    if (value) {
+      const filtered = sampleCompanies.filter(company => 
+        company.name.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilteredCompanies(filtered);
+    } else {
+      setFilteredCompanies(sampleCompanies);
+    }
   };
 
   const handleSubmitReview = (e: React.FormEvent) => {
@@ -217,10 +245,14 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
                 </PopoverTrigger>
                 <PopoverContent className="w-full p-0">
                   <Command>
-                    <CommandInput placeholder="Search companies..." />
-                    <CommandEmpty>No company found.</CommandEmpty>
+                    <CommandInput 
+                      placeholder="Search companies..." 
+                      value={companyName}
+                      onValueChange={handleCompanySearch}
+                    />
+                    <CommandEmpty>No company found. Type to add a new one.</CommandEmpty>
                     <CommandGroup className="max-h-64 overflow-y-auto">
-                      {sampleCompanies.map((company) => (
+                      {filteredCompanies.map((company) => (
                         <CommandItem
                           key={company.id}
                           onSelect={() => handleCompanySelect(company)}
@@ -245,7 +277,7 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent className="max-h-80">
-                  {extendedCategories.map((cat) => (
+                  {categories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>
                       {cat.name}
                     </SelectItem>
