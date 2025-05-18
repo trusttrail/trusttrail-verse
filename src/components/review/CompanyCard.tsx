@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 interface CompanyCardProps {
   company: {
@@ -12,6 +13,7 @@ interface CompanyCardProps {
     rating: number;
     reviewCount: number;
     category: string;
+    hasPendingReviews?: boolean;
   }
 }
 
@@ -22,7 +24,7 @@ const CompanyCard = ({ company }: CompanyCardProps) => {
     // In a real app, this would navigate to the company detail page
     toast({
       title: `${company.name}`,
-      description: `Viewing details for ${company.name}. This would navigate to a company detail page in a full implementation.`,
+      description: `Viewing details for ${company.name}. This would navigate to a company detail page showing all reviews.`,
     });
   };
 
@@ -39,7 +41,12 @@ const CompanyCard = ({ company }: CompanyCardProps) => {
             className="h-16 w-16 object-contain"
           />
         </div>
-        <h3 className="font-semibold text-lg text-center mb-2">{company.name}</h3>
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <h3 className="font-semibold text-lg text-center">{company.name}</h3>
+          {company.hasPendingReviews && (
+            <Badge variant="outline" className="text-yellow-600 border-yellow-400 bg-yellow-50">Pending</Badge>
+          )}
+        </div>
         <div className="flex justify-center items-center mb-2">
           {[1, 2, 3, 4, 5].map((star) => (
             <Star

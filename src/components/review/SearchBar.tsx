@@ -11,6 +11,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 interface SearchBarProps {
   companies?: Array<{
@@ -22,11 +23,23 @@ interface SearchBarProps {
     id: string;
     name: string;
   }>;
+  // Only show companies that have reviews
+  recentReviews?: Array<{
+    id: number;
+    companyName: string;
+    reviewerAddress: string;
+  }>;
 }
 
-const SearchBar = ({ companies = [], categories = [] }: SearchBarProps) => {
+const SearchBar = ({ companies = [], categories = [], recentReviews = [] }: SearchBarProps) => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // Filter companies to only those with reviews
+  const companiesWithReviews = companies.filter(company => 
+    recentReviews.some(review => review.companyName === company.name)
+  );
 
   const handleOpenSearch = () => {
     setOpen(true);
@@ -36,8 +49,11 @@ const SearchBar = ({ companies = [], categories = [] }: SearchBarProps) => {
     setOpen(false);
     
     // In a real app, we would navigate to the specific company or category page
-    // For now, we'll just log and show a toast
-    console.log(`Selected ${type}:`, item);
+    // For now, we'll just show a toast
+    toast({
+      title: `Selected ${type}: ${item.name}`,
+      description: `This would navigate to the ${type} detail page in a full implementation.`,
+    });
     
     if (type === 'company') {
       // Navigate to company page (would be implemented in a real app)
@@ -53,7 +69,7 @@ const SearchBar = ({ companies = [], categories = [] }: SearchBarProps) => {
       <div className="relative" onClick={handleOpenSearch}>
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
         <Input 
-          placeholder="Search for a company or category..." 
+          placeholder="Search for reviewed companies or categories..." 
           className="pl-10 h-12 text-lg cursor-pointer" 
           readOnly
           onClick={handleOpenSearch}
@@ -61,13 +77,13 @@ const SearchBar = ({ companies = [], categories = [] }: SearchBarProps) => {
       </div>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Search companies and categories..." />
+        <CommandInput placeholder="Search companies with reviews..." />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           
-          {companies.length > 0 && (
-            <CommandGroup heading="Companies">
-              {companies.map(company => (
+          {companiesWithReviews.length > 0 ? (
+            <CommandGroup heading="Companies with Reviews">
+              {companiesWithReviews.map(company => (
                 <CommandItem 
                   key={`company-${company.id}`}
                   onSelect={() => handleSelectItem('company', company)}
@@ -78,6 +94,12 @@ const SearchBar = ({ companies = [], categories = [] }: SearchBarProps) => {
                   </div>
                 </CommandItem>
               ))}
+            </CommandGroup>
+          ) : (
+            <CommandGroup heading="No Reviewed Companies">
+              <CommandItem disabled>
+                No companies have been reviewed yet
+              </CommandItem>
             </CommandGroup>
           )}
           

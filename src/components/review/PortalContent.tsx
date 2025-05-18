@@ -42,6 +42,7 @@ const PortalContent = ({
       <SearchBar 
         companies={searchCompanies}
         categories={searchCategories}
+        recentReviews={recentReviews}
       />
       <CategoriesSection categories={categories} />
       <TopCompaniesSection companies={topCompanies} />
