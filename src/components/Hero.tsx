@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Shield, Check, Star, AlertCircle, Users } from "lucide-react";
+import { Link } from 'react-router-dom';
 
 const Hero = () => {
   return (
@@ -26,9 +27,11 @@ const Hero = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button size="lg" className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 hover:from-trustpurple-600 hover:to-trustblue-600 text-white font-medium text-lg px-8">
-                Launch Review Portal
-              </Button>
+              <Link to="/review-portal">
+                <Button size="lg" className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 hover:from-trustpurple-600 hover:to-trustblue-600 text-white font-medium text-lg px-8">
+                  Launch Review Portal
+                </Button>
+              </Link>
               <Button size="lg" variant="outline" className="border-trustpurple-500 text-trustpurple-400 hover:bg-trustpurple-500/10 font-medium text-lg">
                 View Whitepaper
               </Button>

@@ -3,10 +3,22 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Menu, X, ShoppingCart, CheckCircle } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
+import WalletConnect from "./review/WalletConnect";
 import { Link } from 'react-router-dom';
+import { useWalletConnection } from '@/hooks/useWalletConnection';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  const {
+    isWalletConnected,
+    walletAddress,
+    connectWallet,
+    disconnectWallet,
+    connectWithWalletConnect,
+    isMetaMaskAvailable,
+    isWalletConnecting
+  } = useWalletConnection();
   
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   
@@ -41,7 +53,15 @@ const Header = () => {
             <ShoppingCart size={18} />
             Buy $NOCAP
           </a>
-          <Button variant="outline" className="border-trustpurple-500 text-trustpurple-400 hover:bg-trustpurple-500/10">Connect Wallet</Button>
+          <WalletConnect 
+            isConnected={isWalletConnected}
+            address={walletAddress}
+            onConnect={connectWallet}
+            onDisconnect={disconnectWallet}
+            onWalletConnectClick={connectWithWalletConnect}
+            isMetaMaskAvailable={isMetaMaskAvailable}
+            isWalletConnecting={isWalletConnecting}
+          />
           <Link to="/review-portal">
             <Button className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 hover:from-trustpurple-600 hover:to-trustblue-600 text-white">Launch App</Button>
           </Link>
@@ -74,9 +94,17 @@ const Header = () => {
                 <ShoppingCart size={18} />
                 Buy $NOCAP
               </a>
-              <Button variant="outline" className="border-trustpurple-500 text-trustpurple-400 hover:bg-trustpurple-500/10">Connect Wallet</Button>
+              <WalletConnect 
+                isConnected={isWalletConnected}
+                address={walletAddress}
+                onConnect={connectWallet}
+                onDisconnect={disconnectWallet}
+                onWalletConnectClick={connectWithWalletConnect}
+                isMetaMaskAvailable={isMetaMaskAvailable}
+                isWalletConnecting={isWalletConnecting}
+              />
               <Link to="/review-portal">
-                <Button className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 hover:from-trustpurple-600 hover:to-trustblue-600 text-white">Launch App</Button>
+                <Button className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 hover:from-trustpurple-600 hover:to-trustblue-600 text-white w-full">Launch App</Button>
               </Link>
             </div>
           </div>

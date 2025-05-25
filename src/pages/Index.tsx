@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
@@ -10,9 +9,14 @@ import FAQ from '@/components/FAQ';
 import Newsletter from '@/components/Newsletter';
 import Footer from '@/components/Footer';
 import { useTheme } from '@/hooks/useTheme';
+import { useWalletConnection } from '@/hooks/useWalletConnection';
 
 const Index = () => {
   const { theme } = useTheme();
+  
+  // Initialize wallet connection on the home page to maintain state across pages
+  const walletConnection = useWalletConnection();
+  
   const particlesContainerRef = useRef<HTMLDivElement>(null);
   const mousePosition = useRef({ x: 0, y: 0 });
   const lastScrollY = useRef(0);
