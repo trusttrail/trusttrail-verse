@@ -6,8 +6,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Edit, Grid3X3, Building, Award, Home } from "lucide-react";
 
 // Component imports
-import NetworkSelector from "@/components/review/NetworkSelector";
-import WalletConnect from "@/components/review/WalletConnect";
 import WriteReviewForm from "@/components/review/WriteReviewForm";
 import CategoriesView from "@/components/review/CategoriesView";
 import BusinessesView from "@/components/review/BusinessesView";
@@ -37,14 +35,7 @@ const ReviewPortal = () => {
   // Use the custom wallet hook
   const {
     isWalletConnected,
-    walletAddress,
-    currentNetwork,
-    connectWallet,
-    disconnectWallet,
-    handleNetworkChange,
-    isMetaMaskAvailable,
-    connectWithWalletConnect,
-    isWalletConnecting
+    connectWallet
   } = useWalletConnection();
 
   // Mock data for demonstration
@@ -139,23 +130,6 @@ const ReviewPortal = () => {
                   <span className="hidden sm:inline">Stake Rewards</span>
                 </TabsTrigger>
               </TabsList>
-              
-              <div className="flex items-center gap-2">
-                <NetworkSelector 
-                  currentNetwork={currentNetwork} 
-                  onChange={handleNetworkChange} 
-                />
-                
-                <WalletConnect 
-                  isConnected={isWalletConnected}
-                  address={walletAddress}
-                  onConnect={connectWallet}
-                  onDisconnect={disconnectWallet}
-                  onWalletConnectClick={connectWithWalletConnect}
-                  isMetaMaskAvailable={isMetaMaskAvailable}
-                  isWalletConnecting={isWalletConnecting}
-                />
-              </div>
             </div>
           </div>
           
