@@ -5,11 +5,12 @@ import { Menu, X, ShoppingCart, CheckCircle } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import WalletConnect from "./review/WalletConnect";
 import NetworkSelector from "./review/NetworkSelector";
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useWalletConnection } from '@/hooks/useWalletConnection';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
   
   const {
     isWalletConnected,
@@ -25,6 +26,24 @@ const Header = () => {
   
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   
+  // Check if we're on the review portal page
+  const isReviewPortalPage = location.pathname === '/review-portal';
+  
+  // Function to handle navigation to home page with hash links
+  const handleNavClick = (hash: string) => {
+    if (location.pathname !== '/') {
+      // If not on home page, navigate to home with hash
+      window.location.href = `/${hash}`;
+    } else {
+      // If on home page, just scroll to section
+      const element = document.querySelector(hash);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+    setIsMenuOpen(false);
+  };
+  
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
@@ -38,11 +57,12 @@ const Header = () => {
         </div>
         
         <nav className="hidden md:flex items-center space-x-8">
-          <a href="#features" className="text-foreground/80 hover:text-foreground transition-colors">Features</a>
-          <a href="#how-it-works" className="text-foreground/80 hover:text-foreground transition-colors">How It Works</a>
-          <a href="#tokenomics" className="text-foreground/80 hover:text-foreground transition-colors">Tokenomics</a>
-          <a href="#dex-details" className="text-foreground/80 hover:text-foreground transition-colors">DEX Details</a>
-          <a href="#faq" className="text-foreground/80 hover:text-foreground transition-colors">FAQ</a>
+          <Link to="/" className="text-foreground/80 hover:text-foreground transition-colors">Home</Link>
+          <button onClick={() => handleNavClick('#features')} className="text-foreground/80 hover:text-foreground transition-colors">Features</button>
+          <button onClick={() => handleNavClick('#how-it-works')} className="text-foreground/80 hover:text-foreground transition-colors">How It Works</button>
+          <button onClick={() => handleNavClick('#tokenomics')} className="text-foreground/80 hover:text-foreground transition-colors">Tokenomics</button>
+          <button onClick={() => handleNavClick('#dex-details')} className="text-foreground/80 hover:text-foreground transition-colors">DEX Details</button>
+          <button onClick={() => handleNavClick('#faq')} className="text-foreground/80 hover:text-foreground transition-colors">FAQ</button>
           <ThemeToggle />
         </nav>
         
@@ -69,9 +89,11 @@ const Header = () => {
             isMetaMaskAvailable={isMetaMaskAvailable}
             isWalletConnecting={isWalletConnecting}
           />
-          <Link to="/review-portal">
-            <Button className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 hover:from-trustpurple-600 hover:to-trustblue-600 text-white">Launch App</Button>
-          </Link>
+          {!isReviewPortalPage && (
+            <Link to="/review-portal">
+              <Button className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 hover:from-trustpurple-600 hover:to-trustblue-600 text-white">Launch App</Button>
+            </Link>
+          )}
         </div>
         
         <div className="md:hidden flex items-center gap-2">
@@ -86,11 +108,12 @@ const Header = () => {
       {isMenuOpen && (
         <div className="md:hidden bg-background border-t border-border">
           <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
-            <a href="#features" className="text-foreground/80 hover:text-foreground py-2 transition-colors" onClick={toggleMenu}>Features</a>
-            <a href="#how-it-works" className="text-foreground/80 hover:text-foreground py-2 transition-colors" onClick={toggleMenu}>How It Works</a>
-            <a href="#tokenomics" className="text-foreground/80 hover:text-foreground py-2 transition-colors" onClick={toggleMenu}>Tokenomics</a>
-            <a href="#dex-details" className="text-foreground/80 hover:text-foreground py-2 transition-colors" onClick={toggleMenu}>DEX Details</a>
-            <a href="#faq" className="text-foreground/80 hover:text-foreground py-2 transition-colors" onClick={toggleMenu}>FAQ</a>
+            <Link to="/" className="text-foreground/80 hover:text-foreground py-2 transition-colors" onClick={toggleMenu}>Home</Link>
+            <button onClick={() => handleNavClick('#features')} className="text-foreground/80 hover:text-foreground py-2 transition-colors text-left">Features</button>
+            <button onClick={() => handleNavClick('#how-it-works')} className="text-foreground/80 hover:text-foreground py-2 transition-colors text-left">How It Works</button>
+            <button onClick={() => handleNavClick('#tokenomics')} className="text-foreground/80 hover:text-foreground py-2 transition-colors text-left">Tokenomics</button>
+            <button onClick={() => handleNavClick('#dex-details')} className="text-foreground/80 hover:text-foreground py-2 transition-colors text-left">DEX Details</button>
+            <button onClick={() => handleNavClick('#faq')} className="text-foreground/80 hover:text-foreground py-2 transition-colors text-left">FAQ</button>
             <div className="flex flex-col space-y-3 pt-3">
               <a 
                 href="https://t.co/slAk2z0KL8" 
@@ -114,9 +137,11 @@ const Header = () => {
                 isMetaMaskAvailable={isMetaMaskAvailable}
                 isWalletConnecting={isWalletConnecting}
               />
-              <Link to="/review-portal">
-                <Button className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 hover:from-trustpurple-600 hover:to-trustblue-600 text-white w-full">Launch App</Button>
-              </Link>
+              {!isReviewPortalPage && (
+                <Link to="/review-portal">
+                  <Button className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 hover:from-trustpurple-600 hover:to-trustblue-600 text-white w-full">Launch App</Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
