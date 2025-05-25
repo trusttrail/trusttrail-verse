@@ -49,13 +49,15 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
   };
 
   const handleCompanySearch = (value: string) => {
-    setCompanyName(value);
+    console.log("Company search value:", value);
     
     // Filter companies based on input
-    if (value) {
+    if (value.trim()) {
       const filtered = sampleCompanies.filter(company => 
-        company.name.toLowerCase().includes(value.toLowerCase())
+        company.name.toLowerCase().includes(value.toLowerCase()) ||
+        company.category.toLowerCase().includes(value.toLowerCase())
       );
+      console.log("Filtered companies:", filtered);
       setFilteredCompanies(filtered);
     } else {
       setFilteredCompanies(sampleCompanies);
@@ -106,6 +108,7 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
         setReviewContent("");
         setCategory("");
         setSelectedFile(null);
+        setFilteredCompanies(sampleCompanies);
         setIsSubmitting(false);
         
         // In a real app, this would navigate the user back to the home page
