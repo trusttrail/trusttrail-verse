@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +32,11 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
 
+  console.log("WriteReviewForm render - companyName:", companyName);
+  console.log("WriteReviewForm render - filteredCompanies:", filteredCompanies.length);
+
   const handleCompanySelect = (company: Company) => {
+    console.log("handleCompanySelect called with:", company);
     setCompanyName(company.name);
     
     // Auto-set the category based on the company selection
