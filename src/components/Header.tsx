@@ -1,12 +1,19 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Menu, X, ShoppingCart, CheckCircle } from "lucide-react";
+import { Menu, X, ShoppingCart, CheckCircle, ChevronDown } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import WalletConnect from "./review/WalletConnect";
 import NetworkSelector from "./review/NetworkSelector";
 import { Link, useLocation } from 'react-router-dom';
 import { useWalletConnection } from '@/hooks/useWalletConnection';
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -63,6 +70,28 @@ const Header = () => {
           <button onClick={() => handleNavClick('#tokenomics')} className="text-foreground/80 hover:text-foreground transition-colors">Tokenomics</button>
           <button onClick={() => handleNavClick('#dex-details')} className="text-foreground/80 hover:text-foreground transition-colors">DEX Details</button>
           <button onClick={() => handleNavClick('#faq')} className="text-foreground/80 hover:text-foreground transition-colors">FAQ</button>
+          
+          {/* Testnet Navigation Menu */}
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="text-foreground/80 hover:text-foreground">
+                  Testnet
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <div className="w-48 p-2">
+                    <Link 
+                      to="/testnet-faucet" 
+                      className="block px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
+                    >
+                      🚰 Faucet
+                    </Link>
+                  </div>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+          
           <ThemeToggle />
         </nav>
         
@@ -114,6 +143,19 @@ const Header = () => {
             <button onClick={() => handleNavClick('#tokenomics')} className="text-foreground/80 hover:text-foreground py-2 transition-colors text-left">Tokenomics</button>
             <button onClick={() => handleNavClick('#dex-details')} className="text-foreground/80 hover:text-foreground py-2 transition-colors text-left">DEX Details</button>
             <button onClick={() => handleNavClick('#faq')} className="text-foreground/80 hover:text-foreground py-2 transition-colors text-left">FAQ</button>
+            
+            {/* Mobile Testnet Menu */}
+            <div className="py-2">
+              <p className="text-foreground/60 text-sm mb-2">Testnet</p>
+              <Link 
+                to="/testnet-faucet" 
+                className="block pl-4 py-2 text-foreground/80 hover:text-foreground transition-colors text-left"
+                onClick={toggleMenu}
+              >
+                🚰 Faucet
+              </Link>
+            </div>
+            
             <div className="flex flex-col space-y-3 pt-3">
               <a 
                 href="https://t.co/slAk2z0KL8" 

@@ -67,7 +67,7 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
     }
   };
 
-  const handleSubmitReview = (e: React.FormEvent) => {
+  const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isWalletConnected) {
@@ -90,34 +90,90 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
     
     setIsSubmitting(true);
     
-    // Simulate blockchain interaction
-    setTimeout(() => {
+    try {
+      // Show initial confirmation
       toast({
-        title: "Review Pending Confirmation",
-        description: "Waiting for wallet signature...",
+        title: "Preparing Transaction",
+        description: "Preparing your review for blockchain submission...",
       });
       
-      // Simulate wallet signature request
-      setTimeout(() => {
-        toast({
-          title: "Review Submitted",
-          description: "Your review has been signed and submitted to the blockchain with status: Pending Review.",
-        });
-        
-        // Reset form
-        setCompanyName("");
-        setRating(0);
-        setReviewTitle("");
-        setReviewContent("");
-        setCategory("");
-        setSelectedFile(null);
-        setFilteredCompanies(sampleCompanies);
-        setIsSubmitting(false);
-        
-        // In a real app, this would navigate the user back to the home page
-        // navigate('/review-portal');
-      }, 2000);
-    }, 1500);
+      // In production, this would interact with your smart contract
+      // Example pseudo-code for real implementation:
+      /*
+      const reviewData = {
+        company: companyName,
+        rating,
+        title: reviewTitle,
+        content: reviewContent,
+        category,
+        timestamp: Date.now(),
+        reviewer: walletAddress
+      };
+      
+      // Call smart contract function
+      const tx = await reviewContract.submitReview(
+        reviewData.company,
+        reviewData.rating,
+        reviewData.title,
+        reviewData.content,
+        reviewData.category
+      );
+      
+      // Wait for transaction confirmation
+      const receipt = await tx.wait();
+      const txHash = receipt.transactionHash;
+      */
+      
+      // Simulate MetaMask interaction
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      toast({
+        title: "Review Pending Confirmation",
+        description: "Please confirm the transaction in your MetaMask wallet...",
+      });
+      
+      // Simulate wallet signature request and blockchain confirmation
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // Mock transaction hash for demo
+      const mockTxHash = "0x" + Math.random().toString(16).substr(2, 64);
+      
+      toast({
+        title: "Review Submitted Successfully!",
+        description: (
+          <div className="space-y-2">
+            <p>Your review has been recorded on the Polygon blockchain.</p>
+            <a 
+              href={`https://polygonscan.com/tx/${mockTxHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:text-blue-600 underline text-sm"
+            >
+              View on PolygonScan: {mockTxHash.substring(0, 10)}...
+            </a>
+          </div>
+        ),
+      });
+      
+      // Reset form
+      setCompanyName("");
+      setRating(0);
+      setReviewTitle("");
+      setReviewContent("");
+      setCategory("");
+      setSelectedFile(null);
+      setFilteredCompanies(sampleCompanies);
+      
+    } catch (error: any) {
+      console.error("Review submission error:", error);
+      toast({
+        title: "Transaction Failed",
+        description: error.message || "Failed to submit review. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
