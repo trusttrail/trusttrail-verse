@@ -11,10 +11,12 @@ import { useToast } from "@/hooks/use-toast";
 import Header from '@/components/Header';
 import { Star, CheckCircle, XCircle, Clock, Eye, Download } from 'lucide-react';
 
+type ReviewStatus = 'pending' | 'approved' | 'rejected';
+
 const AdminDashboard = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState('pending');
+  const [activeTab, setActiveTab] = useState<ReviewStatus>('pending');
   const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
 
   // Check if user is admin
@@ -53,7 +55,7 @@ const AdminDashboard = () => {
 
   // Update review status mutation
   const updateReviewMutation = useMutation({
-    mutationFn: async ({ reviewId, status, notes }: { reviewId: string, status: string, notes?: string }) => {
+    mutationFn: async ({ reviewId, status, notes }: { reviewId: string, status: ReviewStatus, notes?: string }) => {
       const { data: session } = await supabase.auth.getSession();
       
       const { error } = await supabase
@@ -152,7 +154,7 @@ const AdminDashboard = () => {
           <p className="text-muted-foreground">Manage and moderate user reviews</p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ReviewStatus)}>
           <TabsList className="mb-6">
             <TabsTrigger value="pending" className="flex items-center gap-2">
               <Clock size={16} />
