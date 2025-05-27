@@ -9,7 +9,87 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_admin: boolean | null
+          updated_at: string | null
+          wallet_address: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          is_admin?: boolean | null
+          updated_at?: string | null
+          wallet_address?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_admin?: boolean | null
+          updated_at?: string | null
+          wallet_address?: string | null
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          admin_notes: string | null
+          category: string
+          company_name: string
+          content: string
+          created_at: string
+          id: string
+          proof_file_name: string | null
+          proof_file_url: string | null
+          rating: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["review_status"]
+          title: string
+          updated_at: string
+          user_id: string | null
+          wallet_address: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          category: string
+          company_name: string
+          content: string
+          created_at?: string
+          id?: string
+          proof_file_name?: string | null
+          proof_file_url?: string | null
+          rating: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["review_status"]
+          title: string
+          updated_at?: string
+          user_id?: string | null
+          wallet_address: string
+        }
+        Update: {
+          admin_notes?: string | null
+          category?: string
+          company_name?: string
+          content?: string
+          created_at?: string
+          id?: string
+          proof_file_name?: string | null
+          proof_file_url?: string | null
+          rating?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["review_status"]
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +98,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      review_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +213,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      review_status: ["pending", "approved", "rejected"],
+    },
   },
 } as const

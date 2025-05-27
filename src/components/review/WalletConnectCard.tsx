@@ -2,7 +2,8 @@
 import React from 'react';
 import { Card, CardHeader, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, PlugZap } from "lucide-react";
+import { Wallet, PlugZap, LogIn } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface WalletConnectCardProps {
   isMetaMaskAvailable: boolean;
@@ -15,29 +16,50 @@ const WalletConnectCard = ({
   connectWallet, 
   connectWithWalletConnect 
 }: WalletConnectCardProps) => {
+  const navigate = useNavigate();
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Wallet Connection Required</CardTitle>
+        <CardTitle>Authentication Required</CardTitle>
         <CardDescription>
-          Connect your wallet to sign and submit your review to the blockchain.
+          Sign in to your account to submit and manage reviews.
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col md:flex-row gap-3 justify-center">
-        {isMetaMaskAvailable && (
-          <Button onClick={connectWallet} className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500">
-            <Wallet className="mr-2" size={18} />
-            Connect with MetaMask
-          </Button>
-        )}
+      <CardContent className="space-y-4">
         <Button 
-          onClick={connectWithWalletConnect} 
-          variant={isMetaMaskAvailable ? "outline" : "default"} 
-          className={isMetaMaskAvailable ? "" : "bg-gradient-to-r from-trustpurple-500 to-trustblue-500"}
+          onClick={() => navigate('/auth')} 
+          className="w-full bg-gradient-to-r from-trustpurple-500 to-trustblue-500"
         >
-          <PlugZap className="mr-2" size={18} />
-          {isMetaMaskAvailable ? "Use WalletConnect" : "Connect Wallet"}
+          <LogIn className="mr-2" size={18} />
+          Sign In / Create Account
         </Button>
+        
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">Or connect wallet</span>
+          </div>
+        </div>
+        
+        <div className="flex flex-col md:flex-row gap-3">
+          {isMetaMaskAvailable && (
+            <Button onClick={connectWallet} variant="outline" className="flex-1">
+              <Wallet className="mr-2" size={18} />
+              Connect MetaMask
+            </Button>
+          )}
+          <Button 
+            onClick={connectWithWalletConnect} 
+            variant="outline"
+            className="flex-1"
+          >
+            <PlugZap className="mr-2" size={18} />
+            WalletConnect
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

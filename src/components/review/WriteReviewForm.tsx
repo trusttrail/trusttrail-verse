@@ -1,9 +1,12 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import StarRating from './StarRating';
 import FileUpload from './FileUpload';
 import CompanySelector from './CompanySelector';
@@ -18,7 +21,7 @@ interface WriteReviewFormProps {
 
 const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormProps) => {
   const { toast } = useToast();
-  const { isMetaMaskAvailable, connectWithWalletConnect } = useWalletConnection();
+  const { isMetaMaskAvailable, connectWithWalletConnect, walletAddress } = useWalletConnection();
   const [companyName, setCompanyName] = useState("");
   const [rating, setRating] = useState<number>(0);
   const [reviewTitle, setReviewTitle] = useState("");
@@ -31,6 +34,15 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
   // File upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+
+  // Check if user is authenticated
+  const { data: session } = useQuery({
+    queryKey: ['session'],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getSession();
+      return data.session;
+    }
+  });
 
   console.log("WriteReviewForm render - companyName:", companyName);
   console.log("WriteReviewForm render - filteredCompanies:", filteredCompanies.length);
@@ -67,13 +79,31 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
     }
   };
 
+  const uploadProofFile = async (file: File): Promise<string | null> => {
+    if (!session?.user) return null;
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${session.user.id}/${Date.now()}.${fileExt}`;
+    
+    const { error: uploadError } = await supabase.storage
+      .from('review-proofs')
+      .upload(fileName, file);
+
+    if (uploadError) {
+      console.error('File upload error:', uploadError);
+      throw new Error('Failed to upload proof file');
+    }
+
+    return fileName;
+  };
+
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!isWalletConnected) {
+    if (!session?.user) {
       toast({
-        title: "Wallet Connection Required",
-        description: "Please connect your wallet to submit a review.",
+        title: "Authentication Required",
+        description: "Please sign in to submit a review.",
         variant: "destructive",
       });
       return;
@@ -91,68 +121,38 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
     setIsSubmitting(true);
     
     try {
-      // Show initial confirmation
       toast({
-        title: "Preparing Transaction",
-        description: "Preparing your review for blockchain submission...",
+        title: "Submitting Review",
+        description: "Uploading proof file and saving your review...",
       });
       
-      // In production, this would interact with your smart contract
-      // Example pseudo-code for real implementation:
-      /*
-      const reviewData = {
-        company: companyName,
-        rating,
-        title: reviewTitle,
-        content: reviewContent,
-        category,
-        timestamp: Date.now(),
-        reviewer: walletAddress
-      };
+      // Upload proof file
+      const proofFileUrl = await uploadProofFile(selectedFile);
       
-      // Call smart contract function
-      const tx = await reviewContract.submitReview(
-        reviewData.company,
-        reviewData.rating,
-        reviewData.title,
-        reviewData.content,
-        reviewData.category
-      );
-      
-      // Wait for transaction confirmation
-      const receipt = await tx.wait();
-      const txHash = receipt.transactionHash;
-      */
-      
-      // Simulate MetaMask interaction
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      toast({
-        title: "Review Pending Confirmation",
-        description: "Please confirm the transaction in your MetaMask wallet...",
-      });
-      
-      // Simulate wallet signature request and blockchain confirmation
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Mock transaction hash for demo
-      const mockTxHash = "0x" + Math.random().toString(16).substr(2, 64);
+      // Insert review into database
+      const { error: insertError } = await supabase
+        .from('reviews')
+        .insert({
+          user_id: session.user.id,
+          wallet_address: walletAddress || 'Not connected',
+          company_name: companyName,
+          category,
+          rating,
+          title: reviewTitle,
+          content: reviewContent,
+          proof_file_url: proofFileUrl,
+          proof_file_name: selectedFile.name,
+          status: 'pending'
+        });
+
+      if (insertError) {
+        console.error('Database insert error:', insertError);
+        throw new Error('Failed to save review');
+      }
       
       toast({
         title: "Review Submitted Successfully!",
-        description: (
-          <div className="space-y-2">
-            <p>Your review has been recorded on the Polygon blockchain.</p>
-            <a 
-              href={`https://polygonscan.com/tx/${mockTxHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 hover:text-blue-600 underline text-sm"
-            >
-              View on PolygonScan: {mockTxHash.substring(0, 10)}...
-            </a>
-          </div>
-        ),
+        description: "Your review has been submitted for admin approval and will be visible once approved.",
       });
       
       // Reset form
@@ -167,7 +167,7 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
     } catch (error: any) {
       console.error("Review submission error:", error);
       toast({
-        title: "Transaction Failed",
+        title: "Submission Failed",
         description: error.message || "Failed to submit review. Please try again.",
         variant: "destructive",
       });
@@ -176,12 +176,14 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
     }
   };
 
+  const isAuthenticated = !!session?.user;
+
   return (
     <div className="max-w-3xl mx-auto">
       <h2 className="text-2xl md:text-3xl font-bold mb-2">Write a Verified Review</h2>
-      <p className="text-muted-foreground mb-6">Your review will be signed with your wallet and stored on the blockchain</p>
+      <p className="text-muted-foreground mb-6">Your review will be stored in our database and reviewed by admins before being published</p>
       
-      {!isWalletConnected ? (
+      {!isAuthenticated ? (
         <WalletConnectCard 
           isMetaMaskAvailable={isMetaMaskAvailable}
           connectWallet={connectWallet}
@@ -248,10 +250,10 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
                 className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 w-full"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Signing with wallet..." : "Submit Verified Review"}
+                {isSubmitting ? "Submitting Review..." : "Submit Review for Approval"}
               </Button>
               <p className="text-xs text-muted-foreground mt-2 text-center">
-                Your review will be signed with your wallet address and permanently stored on the blockchain
+                Your review will be reviewed by our admin team before being published
               </p>
             </div>
           </div>
