@@ -13,6 +13,8 @@ import CompanySelector from './CompanySelector';
 import CategorySelector from './CategorySelector';
 import WalletConnectCard from './WalletConnectCard';
 import { sampleCompanies, categories, Company } from '@/data/companyData';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle, Mail, Wallet, CheckCircle } from "lucide-react";
 
 interface WriteReviewFormProps {
   isWalletConnected: boolean;
@@ -31,11 +33,11 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
   const [openCompanySelect, setOpenCompanySelect] = useState(false);
   const [filteredCompanies, setFilteredCompanies] = useState(sampleCompanies);
   
-  // File upload state
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // Multiple file upload state
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
 
-  // Check if user is authenticated
+  // Check if user is authenticated and email verified
   const { data: session } = useQuery({
     queryKey: ['session'],
     queryFn: async () => {
@@ -79,22 +81,48 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
     }
   };
 
-  const uploadProofFile = async (file: File): Promise<string | null> => {
-    if (!session?.user) return null;
+  const uploadProofFiles = async (files: File[]): Promise<string[]> => {
+    if (!session?.user) return [];
 
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${session.user.id}/${Date.now()}.${fileExt}`;
+    const uploadPromises = files.map(async (file) => {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${session.user.id}/${Date.now()}_${Math.random()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('review-proofs')
+        .upload(fileName, file);
+
+      if (uploadError) {
+        console.error('File upload error:', uploadError);
+        throw new Error(`Failed to upload ${file.name}`);
+      }
+
+      return fileName;
+    });
+
+    return Promise.all(uploadPromises);
+  };
+
+  const handleResendVerification = async () => {
+    if (!session?.user?.email) return;
     
-    const { error: uploadError } = await supabase.storage
-      .from('review-proofs')
-      .upload(fileName, file);
-
-    if (uploadError) {
-      console.error('File upload error:', uploadError);
-      throw new Error('Failed to upload proof file');
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: session.user.email
+    });
+    
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to resend verification email.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Verification Email Sent",
+        description: "Please check your email for the verification link.",
+      });
     }
-
-    return fileName;
   };
 
   const handleSubmitReview = async (e: React.FormEvent) => {
@@ -109,7 +137,7 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
       return;
     }
     
-    if (!companyName || !rating || !reviewTitle || !reviewContent || !category || !selectedFile) {
+    if (!companyName || !rating || !reviewTitle || !reviewContent || !category || selectedFiles.length === 0) {
       toast({
         title: "Incomplete Form",
         description: "Please fill out all fields and upload proof of purchase.",
@@ -123,11 +151,12 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
     try {
       toast({
         title: "Submitting Review",
-        description: "Uploading proof file and saving your review...",
+        description: "Uploading proof files and saving your review...",
       });
       
-      // Upload proof file
-      const proofFileUrl = await uploadProofFile(selectedFile);
+      // Upload all proof files
+      const proofFileUrls = await uploadProofFiles(selectedFiles);
+      const proofFileNames = selectedFiles.map(file => file.name);
       
       // Insert review into database
       const { error: insertError } = await supabase
@@ -140,8 +169,9 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
           rating,
           title: reviewTitle,
           content: reviewContent,
-          proof_file_url: proofFileUrl,
-          proof_file_name: selectedFile.name,
+          proof_file_url: proofFileUrls[0], // Keep first file for backward compatibility
+          proof_file_name: proofFileNames[0], // Keep first file name for backward compatibility
+          // TODO: Add support for multiple files in database schema
           status: 'pending'
         });
 
@@ -161,7 +191,7 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
       setReviewTitle("");
       setReviewContent("");
       setCategory("");
-      setSelectedFile(null);
+      setSelectedFiles([]);
       setFilteredCompanies(sampleCompanies);
       
     } catch (error: any) {
@@ -177,19 +207,98 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
   };
 
   const isAuthenticated = !!session?.user;
+  const isEmailVerified = session?.user?.email_confirmed_at;
+  const isWalletConnectedAndRequired = isWalletConnected && walletAddress;
+
+  // Show authentication card if not signed in
+  if (!isAuthenticated) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <h2 className="text-2xl md:text-3xl font-bold mb-2">Write a Verified Review</h2>
+        <p className="text-muted-foreground mb-6">Your review will be stored in our database and reviewed by admins before being published</p>
+        
+        <WalletConnectCard 
+          isMetaMaskAvailable={isMetaMaskAvailable}
+          connectWallet={connectWallet}
+          connectWithWalletConnect={connectWithWalletConnect}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto">
       <h2 className="text-2xl md:text-3xl font-bold mb-2">Write a Verified Review</h2>
       <p className="text-muted-foreground mb-6">Your review will be stored in our database and reviewed by admins before being published</p>
       
-      {!isAuthenticated ? (
-        <WalletConnectCard 
-          isMetaMaskAvailable={isMetaMaskAvailable}
-          connectWallet={connectWallet}
-          connectWithWalletConnect={connectWithWalletConnect}
-        />
-      ) : (
+      {/* Email Verification Alert */}
+      {!isEmailVerified && (
+        <Alert className="mb-6 border-orange-200 bg-orange-50">
+          <AlertTriangle className="h-4 w-4 text-orange-600" />
+          <AlertDescription className="text-orange-800">
+            <div className="flex justify-between items-center">
+              <span>
+                Please verify your email address before submitting reviews. Check your inbox for a verification link.
+              </span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleResendVerification}
+                className="ml-4"
+              >
+                <Mail className="h-4 w-4 mr-1" />
+                Resend
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Email Verified but Wallet Not Connected Alert */}
+      {isEmailVerified && !isWalletConnectedAndRequired && (
+        <Alert className="mb-6 border-blue-200 bg-blue-50">
+          <Wallet className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            <div className="flex justify-between items-center">
+              <span>
+                Please connect your wallet to link it with your verified email address before submitting reviews.
+              </span>
+              <div className="flex gap-2 ml-4">
+                {isMetaMaskAvailable && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={connectWallet}
+                  >
+                    <Wallet className="h-4 w-4 mr-1" />
+                    MetaMask
+                  </Button>
+                )}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={connectWithWalletConnect}
+                >
+                  WalletConnect
+                </Button>
+              </div>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Success Alert - Email Verified and Wallet Connected */}
+      {isEmailVerified && isWalletConnectedAndRequired && (
+        <Alert className="mb-6 border-green-200 bg-green-50">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800">
+            ✅ Email verified and wallet connected ({walletAddress?.substring(0, 6)}...{walletAddress?.substring(walletAddress.length - 4)}). You can now submit reviews!
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Review Form - Only show if email is verified and wallet is connected */}
+      {isEmailVerified && isWalletConnectedAndRequired ? (
         <form onSubmit={handleSubmitReview} className="space-y-6">
           <div className="space-y-4">
             <CompanySelector
@@ -238,8 +347,8 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
             </div>
             
             <FileUpload
-              selectedFile={selectedFile}
-              setSelectedFile={setSelectedFile}
+              selectedFiles={selectedFiles}
+              setSelectedFiles={setSelectedFiles}
               fileError={fileError}
               setFileError={setFileError}
             />
@@ -258,6 +367,12 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
             </div>
           </div>
         </form>
+      ) : (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">
+            Complete email verification and wallet connection to submit reviews.
+          </p>
+        </div>
       )}
     </div>
   );

@@ -7,7 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import Header from '@/components/Header';
-import { Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, LogIn, UserPlus, Mail, CheckCircle } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -15,6 +16,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showVerificationMessage, setShowVerificationMessage] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -22,7 +24,7 @@ const Auth = () => {
     // Check if user is already logged in
     const checkAuth = async () => {
       const { data: session } = await supabase.auth.getSession();
-      if (session.session) {
+      if (session.session?.user?.email_confirmed_at) {
         navigate('/review-portal');
       }
     };
@@ -30,13 +32,31 @@ const Auth = () => {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
+      console.log("Auth event:", event, session);
+      
+      if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
+        navigate('/review-portal');
+      }
+      
+      if (event === 'SIGNED_UP') {
+        setShowVerificationMessage(true);
+        toast({
+          title: "Check Your Email",
+          description: "We've sent you a verification link. Please check your email and click the link to verify your account.",
+        });
+      }
+
+      if (event === 'EMAIL_CONFIRMED') {
+        toast({
+          title: "Email Verified",
+          description: "Your email has been verified successfully!",
+        });
         navigate('/review-portal');
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,29 +64,42 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/review-portal`
+          }
         });
         
         if (error) throw error;
         
+        setShowVerificationMessage(true);
         toast({
           title: "Account Created",
-          description: "Please check your email to verify your account.",
+          description: "Please check your email to verify your account before you can submit reviews.",
         });
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         
         if (error) throw error;
         
-        toast({
-          title: "Signed In",
-          description: "Welcome back!",
-        });
+        if (data.user && !data.user.email_confirmed_at) {
+          setShowVerificationMessage(true);
+          toast({
+            title: "Email Not Verified",
+            description: "Please verify your email address first. Check your inbox for a verification link.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Signed In",
+            description: "Welcome back!",
+          });
+        }
       }
     } catch (error: any) {
       console.error('Auth error:', error);
@@ -77,6 +110,37 @@ const Auth = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!email) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Verification Email Sent",
+        description: "Please check your email for the verification link.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to resend verification email.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -99,6 +163,26 @@ const Auth = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {showVerificationMessage && (
+                <Alert className="mb-4 border-blue-200 bg-blue-50">
+                  <Mail className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-blue-800">
+                    <div className="space-y-2">
+                      <p>Please check your email and click the verification link to activate your account.</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleResendVerification}
+                        className="w-full"
+                      >
+                        <Mail className="h-4 w-4 mr-2" />
+                        Resend Verification Email
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium mb-2">
@@ -153,7 +237,10 @@ const Auth = () => {
                 <Button
                   type="button"
                   variant="link"
-                  onClick={() => setIsSignUp(!isSignUp)}
+                  onClick={() => {
+                    setIsSignUp(!isSignUp);
+                    setShowVerificationMessage(false);
+                  }}
                   className="text-sm"
                 >
                   {isSignUp 
