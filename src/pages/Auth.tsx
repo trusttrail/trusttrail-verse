@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,9 +6,10 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import Header from '@/components/Header';
-import { Eye, EyeOff, LogIn, UserPlus, Mail, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, LogIn, UserPlus, Mail, CheckCircle, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import VerificationTimer from '@/components/VerificationTimer';
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -20,6 +20,7 @@ const Auth = () => {
   const [showVerificationForm, setShowVerificationForm] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [verifyingCode, setVerifyingCode] = useState(false);
+  const [resendingCode, setResendingCode] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -51,17 +52,22 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
+        console.log('Attempting signup for:', email);
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
         });
         
-        if (error) throw error;
+        if (error) {
+          console.error('Signup error:', error);
+          throw error;
+        }
         
+        console.log('Signup response:', data);
         setShowVerificationForm(true);
         toast({
           title: "Verification Code Sent",
-          description: "Please check your email for a 6-digit verification code.",
+          description: "Please check your email for a 6-digit verification code. It should arrive within 1-2 minutes.",
         });
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -110,20 +116,24 @@ const Auth = () => {
     setVerifyingCode(true);
 
     try {
+      console.log('Verifying OTP for email:', email, 'with code:', verificationCode);
       const { data, error } = await supabase.auth.verifyOtp({
         email,
         token: verificationCode,
         type: 'signup'
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('OTP verification error:', error);
+        throw error;
+      }
       
+      console.log('OTP verification success:', data);
       toast({
         title: "Email Verified",
         description: "Your email has been verified successfully!",
       });
       
-      // Navigate to review portal after successful verification
       navigate('/review-portal');
     } catch (error: any) {
       console.error('Verification error:', error);
@@ -147,24 +157,34 @@ const Auth = () => {
       return;
     }
 
+    setResendingCode(true);
+
     try {
+      console.log('Resending verification code to:', email);
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email: email
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Resend error:', error);
+        throw error;
+      }
       
+      console.log('Verification code resent successfully');
       toast({
         title: "Verification Code Sent",
         description: "A new verification code has been sent to your email.",
       });
     } catch (error: any) {
+      console.error('Resend error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to resend verification code.",
         variant: "destructive",
       });
+    } finally {
+      setResendingCode(false);
     }
   };
 
@@ -204,6 +224,15 @@ const Auth = () => {
                     <Mail className="h-4 w-4 text-blue-600" />
                     <AlertDescription className="text-blue-800">
                       We've sent a 6-digit verification code to <strong>{email}</strong>
+                      <br />
+                      <span className="text-sm">Expected delivery: 1-2 minutes</span>
+                    </AlertDescription>
+                  </Alert>
+
+                  <Alert className="border-orange-200 bg-orange-50">
+                    <AlertCircle className="h-4 w-4 text-orange-600" />
+                    <AlertDescription className="text-orange-800 text-sm">
+                      <strong>Email not arriving?</strong> Check your spam/junk folder. Some email providers may take longer to deliver.
                     </AlertDescription>
                   </Alert>
 
@@ -238,16 +267,11 @@ const Auth = () => {
                       {verifyingCode ? 'Verifying...' : 'Verify Email'}
                     </Button>
 
-                    <div className="text-center">
-                      <Button
-                        type="button"
-                        variant="link"
-                        onClick={handleResendCode}
-                        className="text-sm"
-                      >
-                        Didn't receive the code? Resend
-                      </Button>
-                    </div>
+                    <VerificationTimer
+                      initialTime={90}
+                      onResend={handleResendCode}
+                      isLoading={resendingCode}
+                    />
 
                     <div className="text-center">
                       <Button
