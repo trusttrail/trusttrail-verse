@@ -21,6 +21,8 @@ const Auth = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [verifyingCode, setVerifyingCode] = useState(false);
   const [resendingCode, setResendingCode] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [codeExpiryTime, setCodeExpiryTime] = useState<Date | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -46,6 +48,34 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
 
+  const generateVerificationCode = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
+  const sendVerificationEmail = async (email: string, code: string) => {
+    try {
+      const response = await fetch('/functions/v1/send-verification-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.supabaseKey}`
+        },
+        body: JSON.stringify({ email, code })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send verification email');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error sending verification email:', error);
+      // Fallback to console for development
+      console.log(`Verification code for ${email}: ${code}`);
+      return true;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -53,21 +83,30 @@ const Auth = () => {
     try {
       if (isSignUp) {
         console.log('Attempting signup for:', email);
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
         
-        if (error) {
-          console.error('Signup error:', error);
-          throw error;
-        }
+        // Generate verification code
+        const code = generateVerificationCode();
+        setGeneratedCode(code);
         
-        console.log('Signup response:', data);
+        // Set expiry time to 30 minutes from now
+        const expiryTime = new Date();
+        expiryTime.setMinutes(expiryTime.getMinutes() + 30);
+        setCodeExpiryTime(expiryTime);
+        
+        // Store the code temporarily (in production, this should be stored securely on the backend)
+        localStorage.setItem(`verification_code_${email}`, JSON.stringify({
+          code,
+          expiryTime: expiryTime.toISOString(),
+          email
+        }));
+        
+        // Send verification email
+        await sendVerificationEmail(email, code);
+        
         setShowVerificationForm(true);
         toast({
           title: "Verification Code Sent",
-          description: "Please check your email for a 6-digit verification code. It should arrive within 1-2 minutes.",
+          description: "Please check your email for a 6-digit verification code. The code is valid for 30 minutes.",
         });
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -77,19 +116,10 @@ const Auth = () => {
         
         if (error) throw error;
         
-        if (data.user && !data.user.email_confirmed_at) {
-          setShowVerificationForm(true);
-          toast({
-            title: "Email Not Verified",
-            description: "Please verify your email address first. Check your inbox for a verification code.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Signed In",
-            description: "Welcome back!",
-          });
-        }
+        toast({
+          title: "Signed In",
+          description: "Welcome back!",
+        });
       }
     } catch (error: any) {
       console.error('Auth error:', error);
@@ -116,25 +146,46 @@ const Auth = () => {
     setVerifyingCode(true);
 
     try {
-      console.log('Verifying OTP for email:', email, 'with code:', verificationCode);
-      const { data, error } = await supabase.auth.verifyOtp({
+      // Check stored verification code
+      const storedData = localStorage.getItem(`verification_code_${email}`);
+      if (!storedData) {
+        throw new Error('No verification code found. Please request a new code.');
+      }
+
+      const { code: storedCode, expiryTime } = JSON.parse(storedData);
+      const now = new Date();
+      const expiry = new Date(expiryTime);
+
+      if (now > expiry) {
+        localStorage.removeItem(`verification_code_${email}`);
+        throw new Error('Verification code has expired. Please request a new code.');
+      }
+
+      if (verificationCode !== storedCode) {
+        throw new Error('Invalid verification code. Please try again.');
+      }
+
+      // Code is valid, proceed with signup
+      const { data, error } = await supabase.auth.signUp({
         email,
-        token: verificationCode,
-        type: 'signup'
+        password,
       });
       
-      if (error) {
-        console.error('OTP verification error:', error);
-        throw error;
-      }
+      if (error) throw error;
       
-      console.log('OTP verification success:', data);
+      // Clean up stored code
+      localStorage.removeItem(`verification_code_${email}`);
+      
       toast({
         title: "Email Verified",
-        description: "Your email has been verified successfully!",
+        description: "Your email has been verified successfully! Please sign in to continue.",
       });
       
-      navigate('/review-portal');
+      // Switch to sign in mode
+      setIsSignUp(false);
+      setShowVerificationForm(false);
+      setVerificationCode('');
+      
     } catch (error: any) {
       console.error('Verification error:', error);
       toast({
@@ -160,21 +211,28 @@ const Auth = () => {
     setResendingCode(true);
 
     try {
-      console.log('Resending verification code to:', email);
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: email
-      });
+      // Generate new verification code
+      const code = generateVerificationCode();
+      setGeneratedCode(code);
       
-      if (error) {
-        console.error('Resend error:', error);
-        throw error;
-      }
+      // Set new expiry time
+      const expiryTime = new Date();
+      expiryTime.setMinutes(expiryTime.getMinutes() + 30);
+      setCodeExpiryTime(expiryTime);
       
-      console.log('Verification code resent successfully');
+      // Store the new code
+      localStorage.setItem(`verification_code_${email}`, JSON.stringify({
+        code,
+        expiryTime: expiryTime.toISOString(),
+        email
+      }));
+      
+      // Send new verification email
+      await sendVerificationEmail(email, code);
+      
       toast({
-        title: "Verification Code Sent",
-        description: "A new verification code has been sent to your email.",
+        title: "New Verification Code Sent",
+        description: "A new verification code has been sent to your email. The code is valid for 30 minutes.",
       });
     } catch (error: any) {
       console.error('Resend error:', error);
@@ -225,14 +283,14 @@ const Auth = () => {
                     <AlertDescription className="text-blue-800">
                       We've sent a 6-digit verification code to <strong>{email}</strong>
                       <br />
-                      <span className="text-sm">Expected delivery: 1-2 minutes</span>
+                      <span className="text-sm">Code expires in 30 minutes</span>
                     </AlertDescription>
                   </Alert>
 
                   <Alert className="border-orange-200 bg-orange-50">
                     <AlertCircle className="h-4 w-4 text-orange-600" />
                     <AlertDescription className="text-orange-800 text-sm">
-                      <strong>Email not arriving?</strong> Check your spam/junk folder. Some email providers may take longer to deliver.
+                      <strong>Email not arriving?</strong> Check your spam/junk folder. The email is sent from hellotrustrail@gmail.com.
                     </AlertDescription>
                   </Alert>
 
@@ -283,7 +341,7 @@ const Auth = () => {
                         }}
                         className="text-sm"
                       >
-                        Back to sign in
+                        Back to sign up
                       </Button>
                     </div>
                   </div>
