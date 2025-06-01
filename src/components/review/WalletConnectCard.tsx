@@ -22,6 +22,11 @@ const WalletConnectCard = ({
 }: WalletConnectCardProps) => {
   const navigate = useNavigate();
 
+  const handleAuthRedirect = () => {
+    console.log('Redirecting to auth page');
+    navigate('/auth');
+  };
+
   if (!isWalletConnected) {
     return (
       <Card>
@@ -54,7 +59,7 @@ const WalletConnectCard = ({
       </CardHeader>
       <CardContent className="space-y-4">
         <Button 
-          onClick={() => navigate('/auth')} 
+          onClick={handleAuthRedirect} 
           className="w-full bg-gradient-to-r from-trustpurple-500 to-trustblue-500"
         >
           <LogIn className="mr-2" size={18} />

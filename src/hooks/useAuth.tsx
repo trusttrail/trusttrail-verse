@@ -11,10 +11,17 @@ export const useAuth = () => {
   useEffect(() => {
     // Get initial session
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('useAuth - Initial session check:', { session, error });
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+      } catch (error) {
+        console.error('useAuth - Error getting session:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     getSession();
@@ -22,6 +29,7 @@ export const useAuth = () => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('useAuth - Auth state change:', { event, session });
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -32,7 +40,12 @@ export const useAuth = () => {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      console.log('useAuth - Signing out');
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('useAuth - Error signing out:', error);
+    }
   };
 
   return {

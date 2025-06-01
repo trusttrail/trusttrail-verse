@@ -21,8 +21,11 @@ const Auth = () => {
   useEffect(() => {
     // Check if user is already logged in
     const checkAuth = async () => {
-      const { data: session } = await supabase.auth.getSession();
-      if (session.session?.user?.email_confirmed_at) {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      console.log('Current session check:', { session, error });
+      
+      if (session?.user) {
+        console.log('User already authenticated, redirecting to review portal');
         navigate('/review-portal');
       }
     };
@@ -32,7 +35,8 @@ const Auth = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth event:", event, session);
       
-      if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('User signed in, redirecting to review portal');
         navigate('/review-portal');
       }
     });
@@ -44,6 +48,8 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
     
+    console.log('Attempting sign up with:', { email });
+    
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -53,7 +59,12 @@ const Auth = () => {
         }
       });
 
-      if (error) throw error;
+      console.log('Sign up response:', { data, error });
+
+      if (error) {
+        console.error('Sign up error:', error);
+        throw error;
+      }
 
       if (data.user && !data.session) {
         toast({
@@ -65,9 +76,10 @@ const Auth = () => {
           title: "Account created successfully!",
           description: "Welcome to TrustTrail!",
         });
-        navigate('/review-portal');
+        // Navigation will be handled by auth state change listener
       }
     } catch (error: any) {
+      console.error('Sign up failed:', error);
       toast({
         title: "Sign up failed",
         description: error.message || "An error occurred during sign up",
@@ -82,22 +94,30 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
     
+    console.log('Attempting sign in with:', { email });
+    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      console.log('Sign in response:', { data, error });
 
-      if (data.user) {
+      if (error) {
+        console.error('Sign in error:', error);
+        throw error;
+      }
+
+      if (data.user && data.session) {
         toast({
           title: "Welcome back!",
           description: "You've been signed in successfully.",
         });
-        navigate('/review-portal');
+        // Navigation will be handled by auth state change listener
       }
     } catch (error: any) {
+      console.error('Sign in failed:', error);
       toast({
         title: "Sign in failed",
         description: error.message || "Invalid email or password",
@@ -140,6 +160,7 @@ const Auth = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 
@@ -156,6 +177,7 @@ const Auth = () => {
                     placeholder="Your password"
                     required
                     minLength={6}
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -173,6 +195,7 @@ const Auth = () => {
                   variant="link"
                   onClick={() => setIsSignUp(!isSignUp)}
                   className="text-sm"
+                  disabled={isLoading}
                 >
                   {isSignUp 
                     ? 'Already have an account? Sign in' 
