@@ -42,6 +42,25 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
   });
 
   const [files, setFiles] = useState<File[]>([]);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [openCompanySelect, setOpenCompanySelect] = useState(false);
+
+  // Mock data for company search
+  const mockCompanies = [
+    { id: 1, name: "QuickSwap", category: "DeFi" },
+    { id: 2, name: "OpenSea", category: "NFT" },
+    { id: 3, name: "Uniswap", category: "DeFi" },
+    { id: 4, name: "Axie Infinity", category: "Gaming" }
+  ];
+
+  const mockCategories = [
+    { id: "defi", name: "DeFi" },
+    { id: "nft", name: "NFT Marketplaces" },
+    { id: "gaming", name: "Gaming" },
+    { id: "dao", name: "DAOs" }
+  ];
+
+  const [filteredCompanies, setFilteredCompanies] = useState(mockCompanies);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -69,6 +88,21 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
     setFormData(prev => ({
       ...prev,
       companyName: company
+    }));
+  };
+
+  const handleCompanySearch = (value: string) => {
+    const filtered = mockCompanies.filter(company =>
+      company.name.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredCompanies(filtered);
+  };
+
+  const handleCompanySelect = (company: { id: number; name: string; category: string }) => {
+    setFormData(prev => ({
+      ...prev,
+      companyName: company.name,
+      category: company.category
     }));
   };
 
@@ -157,8 +191,14 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
           <div className="space-y-2">
             <Label htmlFor="company">Company/Project *</Label>
             <CompanySelector
-              value={formData.companyName}
-              onChange={handleCompanyChange}
+              companyName={formData.companyName}
+              setCompanyName={handleCompanyChange}
+              setCategory={handleCategoryChange}
+              openCompanySelect={openCompanySelect}
+              setOpenCompanySelect={setOpenCompanySelect}
+              filteredCompanies={filteredCompanies}
+              handleCompanySearch={handleCompanySearch}
+              handleCompanySelect={handleCompanySelect}
             />
           </div>
 
@@ -166,8 +206,9 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
           <div className="space-y-2">
             <Label htmlFor="category">Category *</Label>
             <CategorySelector
-              value={formData.category}
-              onChange={handleCategoryChange}
+              category={formData.category}
+              setCategory={handleCategoryChange}
+              categories={mockCategories}
             />
           </div>
 
@@ -176,8 +217,7 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
             <Label>Overall Rating *</Label>
             <StarRating
               rating={formData.rating}
-              onRatingChange={handleRatingChange}
-              size="lg"
+              setRating={handleRatingChange}
             />
           </div>
 
@@ -237,7 +277,12 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormPr
           {/* File Upload */}
           <div className="space-y-2">
             <Label>Supporting Documents (Optional)</Label>
-            <FileUpload onFileUpload={handleFileUpload} />
+            <FileUpload
+              selectedFiles={files}
+              setSelectedFiles={setFiles}
+              fileError={fileError}
+              setFileError={setFileError}
+            />
             {files.length > 0 && (
               <div className="text-sm text-muted-foreground">
                 {files.length} file(s) selected
