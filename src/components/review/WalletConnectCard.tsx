@@ -2,28 +2,54 @@
 import React from 'react';
 import { Card, CardHeader, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, PlugZap, LogIn } from "lucide-react";
+import { LogIn, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface WalletConnectCardProps {
   isMetaMaskAvailable: boolean;
   connectWallet: () => void;
   connectWithWalletConnect: () => void;
+  isWalletConnected: boolean;
+  walletAddress: string;
 }
 
 const WalletConnectCard = ({ 
   isMetaMaskAvailable, 
   connectWallet, 
-  connectWithWalletConnect 
+  connectWithWalletConnect,
+  isWalletConnected,
+  walletAddress
 }: WalletConnectCardProps) => {
   const navigate = useNavigate();
+
+  if (!isWalletConnected) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Wallet Connection Required</CardTitle>
+          <CardDescription>
+            Please connect your wallet first from the top right corner, then proceed to sign in or create an account.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-center p-6 border-2 border-dashed border-gray-300 rounded-lg">
+            <Wallet className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <p className="text-sm text-gray-600">
+              Connect your wallet using the "Connect Wallet" button in the top navigation bar to continue.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Authentication Required</CardTitle>
         <CardDescription>
-          Sign in to your account to submit and manage reviews.
+          Wallet connected ({walletAddress.substring(0, 6)}...{walletAddress.substring(walletAddress.length - 4)}). 
+          Now sign in to your account to submit and manage reviews.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -34,32 +60,6 @@ const WalletConnectCard = ({
           <LogIn className="mr-2" size={18} />
           Sign In / Create Account
         </Button>
-        
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">Or connect wallet</span>
-          </div>
-        </div>
-        
-        <div className="flex flex-col md:flex-row gap-3">
-          {isMetaMaskAvailable && (
-            <Button onClick={connectWallet} variant="outline" className="flex-1">
-              <Wallet className="mr-2" size={18} />
-              Connect MetaMask
-            </Button>
-          )}
-          <Button 
-            onClick={connectWithWalletConnect} 
-            variant="outline"
-            className="flex-1"
-          >
-            <PlugZap className="mr-2" size={18} />
-            WalletConnect
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );

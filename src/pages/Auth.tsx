@@ -35,7 +35,7 @@ const Auth = () => {
   }, [navigate, toast]);
 
   const handleSignUpRedirect = () => {
-    window.location.href = 'https://ydvgnptdqnqxmueflhxq.supabase.co/auth/v1/authorize?redirect_to=https://trusttrail-verse.lovable.app/';
+    window.location.href = 'https://ydvgnptdqnqxmueflhxq.supabase.co/auth/v1/authorize?provider=email&redirect_to=https://trusttrail-verse.lovable.app/';
   };
 
   return (
