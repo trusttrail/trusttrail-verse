@@ -9,8 +9,8 @@ const createDOMPurify = () => {
   // For server-side rendering, create a JSDOM instance
   const createDOMPurifyServer = require('dompurify');
   const { JSDOM } = require('jsdom');
-  const window = new JSDOM('').window;
-  return createDOMPurifyServer(window);
+  const jsdomWindow = new JSDOM('').window;
+  return createDOMPurifyServer(jsdomWindow);
 };
 
 const purify = createDOMPurify();

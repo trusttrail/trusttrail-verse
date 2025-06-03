@@ -3,11 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { sanitizeInput, sanitizeWalletAddress, validateFileType, validateFileSize } from "./inputSanitization";
 
 export interface ReviewFormData {
-  company: string;
+  companyName: string;
   category: string;
   rating: number;
   title: string;
-  content: string;
+  review: string;
+  pros: string;
+  cons: string;
 }
 
 export const submitReview = async (
@@ -20,17 +22,17 @@ export const submitReview = async (
   
   // Sanitize all inputs
   const sanitizedData = {
-    company: sanitizeInput(formData.company),
+    companyName: sanitizeInput(formData.companyName),
     category: sanitizeInput(formData.category),
     rating: Math.max(1, Math.min(5, Math.floor(formData.rating))), // Ensure rating is 1-5
     title: sanitizeInput(formData.title),
-    content: sanitizeInput(formData.content)
+    review: sanitizeInput(formData.review)
   };
   
   const sanitizedWalletAddress = sanitizeWalletAddress(walletAddress);
   
   // Validate sanitized data
-  if (!sanitizedData.company || !sanitizedData.category || !sanitizedData.title || !sanitizedData.content) {
+  if (!sanitizedData.companyName || !sanitizedData.category || !sanitizedData.title || !sanitizedData.review) {
     throw new Error('All fields are required and must contain valid data');
   }
   
@@ -87,11 +89,11 @@ export const submitReview = async (
       .insert({
         user_id: userId,
         wallet_address: sanitizedWalletAddress,
-        company_name: sanitizedData.company,
+        company_name: sanitizedData.companyName,
         category: sanitizedData.category,
         rating: sanitizedData.rating,
         title: sanitizedData.title,
-        content: sanitizedData.content,
+        content: sanitizedData.review,
         proof_file_url: uploadedFiles[0], // Primary file
         proof_file_name: files[0].name,
         status: 'pending'

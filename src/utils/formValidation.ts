@@ -2,19 +2,21 @@
 import { sanitizeInput } from "./inputSanitization";
 
 export interface ReviewFormData {
-  company: string;
+  companyName: string;
   category: string;
   rating: number;
   title: string;
-  content: string;
+  review: string;
+  pros: string;
+  cons: string;
 }
 
 export const validateReviewForm = (formData: ReviewFormData): string | null => {
   // Sanitize inputs first
-  const sanitizedCompany = sanitizeInput(formData.company);
+  const sanitizedCompany = sanitizeInput(formData.companyName);
   const sanitizedCategory = sanitizeInput(formData.category);
   const sanitizedTitle = sanitizeInput(formData.title);
-  const sanitizedContent = sanitizeInput(formData.content);
+  const sanitizedContent = sanitizeInput(formData.review);
 
   // Check required fields
   if (!sanitizedCompany || sanitizedCompany.length < 2) {
