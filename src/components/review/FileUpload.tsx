@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { Upload, X, FileText, Image } from "lucide-react";
+import { Upload, X, FileText, Image, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { validateFileType, validateFileSize } from "@/utils/inputSanitization";
 
 interface FileUploadProps {
   selectedFiles: File[];
@@ -18,7 +19,9 @@ const FileUpload = ({
   setFileError 
 }: FileUploadProps) => {
   const { toast } = useToast();
-  const MAX_TOTAL_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+  const MAX_TOTAL_SIZE = 25 * 1024 * 1024; // 25MB total
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB per file
+  const MAX_FILES = 5;
 
   const calculateTotalSize = (files: File[]) => {
     return files.reduce((total, file) => total + file.size, 0);
@@ -38,21 +41,55 @@ const FileUpload = ({
     
     if (newFiles.length === 0) return;
 
-    // Check file types
-    const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
-    const invalidFiles = newFiles.filter(file => !validTypes.includes(file.type));
-    
-    if (invalidFiles.length > 0) {
-      setFileError('Invalid file format. Please upload PDF, PNG, JPEG, or JPG files only.');
+    // Security validations
+    for (const file of newFiles) {
+      // Validate file type
+      if (!validateFileType(file)) {
+        setFileError(`Invalid file type: ${file.name}. Only PDF, PNG, JPEG, and JPG files are allowed.`);
+        e.target.value = '';
+        return;
+      }
+
+      // Validate individual file size
+      if (!validateFileSize(file, 5)) {
+        setFileError(`File too large: ${file.name}. Maximum size is 5MB per file.`);
+        e.target.value = '';
+        return;
+      }
+
+      // Additional security checks
+      if (file.name.length > 255) {
+        setFileError(`Filename too long: ${file.name}. Maximum 255 characters.`);
+        e.target.value = '';
+        return;
+      }
+
+      // Check for suspicious file extensions in filename
+      const suspiciousExtensions = ['.exe', '.bat', '.cmd', '.scr', '.pif', '.vbs', '.js'];
+      const hassuspicious = suspiciousExtensions.some(ext => 
+        file.name.toLowerCase().includes(ext)
+      );
+      
+      if (hassuspicious) {
+        setFileError(`Suspicious file detected: ${file.name}. This file type is not allowed.`);
+        e.target.value = '';
+        return;
+      }
+    }
+
+    // Check total file count
+    const allFiles = [...selectedFiles, ...newFiles];
+    if (allFiles.length > MAX_FILES) {
+      setFileError(`Too many files. Maximum ${MAX_FILES} files allowed.`);
+      e.target.value = '';
       return;
     }
 
-    // Combine with existing files
-    const allFiles = [...selectedFiles, ...newFiles];
+    // Check total size
     const totalSize = calculateTotalSize(allFiles);
-    
     if (totalSize > MAX_TOTAL_SIZE) {
-      setFileError(`Total file size exceeds 10MB limit. Current total: ${formatFileSize(totalSize)}`);
+      setFileError(`Total file size exceeds ${formatFileSize(MAX_TOTAL_SIZE)} limit. Current total: ${formatFileSize(totalSize)}`);
+      e.target.value = '';
       return;
     }
     
@@ -69,6 +106,7 @@ const FileUpload = ({
   const removeFile = (indexToRemove: number) => {
     const updatedFiles = selectedFiles.filter((_, index) => index !== indexToRemove);
     setSelectedFiles(updatedFiles);
+    setFileError(null);
     
     toast({
       title: "File Removed",
@@ -107,24 +145,27 @@ const FileUpload = ({
               Click to upload files
             </span>
             <span className="text-sm text-muted-foreground">
-              PDF, PNG, JPG or JPEG (Total max: 10MB)
+              PDF, PNG, JPG or JPEG (Max: {MAX_FILES} files, 5MB each, {formatFileSize(MAX_TOTAL_SIZE)} total)
             </span>
           </div>
         </label>
       </div>
 
       {fileError && (
-        <p className="text-destructive text-sm mt-2">{fileError}</p>
+        <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md flex items-start gap-2">
+          <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
+          <p className="text-red-700 text-sm">{fileError}</p>
+        </div>
       )}
 
       {selectedFiles.length > 0 && (
         <div className="mt-4 space-y-2">
           <div className="flex justify-between items-center">
             <p className="text-sm font-medium">
-              Uploaded Files ({selectedFiles.length})
+              Uploaded Files ({selectedFiles.length}/{MAX_FILES})
             </p>
             <p className="text-sm text-muted-foreground">
-              Total: {formatFileSize(totalSize)} / 10MB
+              Total: {formatFileSize(totalSize)} / {formatFileSize(MAX_TOTAL_SIZE)}
             </p>
           </div>
           
