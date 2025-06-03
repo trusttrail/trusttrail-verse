@@ -8,19 +8,30 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import Header from '@/components/Header';
-import { LogIn, UserPlus, Mail, Lock, Clock } from 'lucide-react';
+import { LogIn, UserPlus, Mail, Lock, Wallet } from 'lucide-react';
 import VerificationTimer from '@/components/VerificationTimer';
+import { useWalletConnection } from '@/hooks/useWalletConnection';
+import { linkWalletToProfile } from '@/utils/authUtils';
 
 const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [isSignUp, setIsSignUp] = useState(false);
+  const { walletAddress, isWalletConnected, needsSignup, existingUser } = useWalletConnection();
+  const [isSignUp, setIsSignUp] = useState(needsSignup);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
-  const [verificationCode, setVerificationCode] = useState('');
   const [showVerification, setShowVerification] = useState(false);
+
+  // Update signup mode based on wallet connection state
+  useEffect(() => {
+    if (needsSignup) {
+      setIsSignUp(true);
+    } else if (existingUser) {
+      setIsSignUp(false);
+    }
+  }, [needsSignup, existingUser]);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -36,12 +47,22 @@ const Auth = () => {
     checkAuth();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth page - Auth event:", event, session);
       
       if (event === 'SIGNED_IN' && session?.user) {
         if (session.user.email_confirmed_at) {
-          console.log('User signed in and verified, redirecting to review portal');
+          console.log('User signed in and verified');
+          
+          // Link wallet if connected
+          if (isWalletConnected && walletAddress) {
+            await linkWalletToProfile(session.user.id, walletAddress);
+            toast({
+              title: "Account Complete!",
+              description: "Your wallet has been linked to your account.",
+            });
+          }
+          
           navigate('/review-portal');
         } else {
           console.log('User signed in but email not verified yet');
@@ -55,16 +76,15 @@ const Auth = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, toast]);
+  }, [navigate, toast, isWalletConnected, walletAddress]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    console.log('Attempting sign up with:', { email: email.toLowerCase().trim() });
+    console.log('Attempting sign up with:', { email: email.toLowerCase().trim(), walletConnected: isWalletConnected, walletAddress });
     
     try {
-      // Clean the email address
       const cleanEmail = email.toLowerCase().trim();
       
       const { data, error } = await supabase.auth.signUp({
@@ -73,7 +93,8 @@ const Auth = () => {
         options: {
           emailRedirectTo: `${window.location.origin}/review-portal`,
           data: {
-            email_confirm: true
+            email_confirm: true,
+            wallet_address: isWalletConnected ? walletAddress : null
           }
         }
       });
@@ -90,9 +111,13 @@ const Auth = () => {
         setShowVerification(true);
         toast({
           title: "Verification email sent!",
-          description: `We've sent a confirmation link to ${cleanEmail}. Please check your email (including spam folder) and click the link to verify your account.`,
+          description: `We've sent a confirmation link to ${cleanEmail}. After verification, your ${isWalletConnected ? 'wallet will be automatically linked' : 'account will be ready'}.`,
         });
       } else if (data.session) {
+        // Link wallet immediately if connected
+        if (isWalletConnected && walletAddress) {
+          await linkWalletToProfile(data.user.id, walletAddress);
+        }
         toast({
           title: "Account created successfully!",
           description: "Welcome to TrustTrail!",
@@ -104,6 +129,7 @@ const Auth = () => {
       let errorMessage = "An error occurred during sign up";
       if (error.message?.includes('already registered')) {
         errorMessage = "This email is already registered. Try signing in instead.";
+        setIsSignUp(false);
       } else if (error.message?.includes('invalid email')) {
         errorMessage = "Please enter a valid email address.";
       } else if (error.message?.includes('weak password')) {
@@ -126,7 +152,7 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    console.log('Attempting sign in with:', { email: email.toLowerCase().trim() });
+    console.log('Attempting sign in with:', { email: email.toLowerCase().trim(), walletConnected: isWalletConnected, walletAddress });
     
     try {
       const cleanEmail = email.toLowerCase().trim();
@@ -145,10 +171,19 @@ const Auth = () => {
 
       if (data.user && data.session) {
         if (data.user.email_confirmed_at) {
-          toast({
-            title: "Welcome back!",
-            description: "You've been signed in successfully.",
-          });
+          // Link wallet if connected
+          if (isWalletConnected && walletAddress) {
+            await linkWalletToProfile(data.user.id, walletAddress);
+            toast({
+              title: "Welcome back!",
+              description: "Your wallet has been linked to your account.",
+            });
+          } else {
+            toast({
+              title: "Welcome back!",
+              description: "You've been signed in successfully.",
+            });
+          }
         } else {
           setShowVerification(true);
           toast({
@@ -242,6 +277,11 @@ const Auth = () => {
                   <p className="text-sm text-gray-600 mb-4">
                     Please check your email <strong>{email}</strong> and click the verification link to activate your account.
                   </p>
+                  {isWalletConnected && (
+                    <p className="text-xs text-green-600 mb-2">
+                      ✓ Wallet {walletAddress.substring(0, 6)}...{walletAddress.substring(walletAddress.length - 4)} will be automatically linked after verification
+                    </p>
+                  )}
                   <p className="text-xs text-gray-500">
                     Don't forget to check your spam/junk folder if you don't see the email in your inbox.
                   </p>
@@ -285,13 +325,37 @@ const Auth = () => {
                 {isSignUp ? 'Create Account' : 'Welcome Back'}
               </CardTitle>
               <CardDescription>
+                {isWalletConnected && (
+                  <div className="flex items-center justify-center gap-2 mb-2 text-green-600">
+                    <Wallet size={16} />
+                    <span className="text-sm">
+                      Wallet {walletAddress.substring(0, 6)}...{walletAddress.substring(walletAddress.length - 4)} connected
+                    </span>
+                  </div>
+                )}
                 {isSignUp 
-                  ? 'Create your account to start writing reviews' 
-                  : 'Sign in to your account to continue'
+                  ? needsSignup 
+                    ? 'Create your account to link this new wallet'
+                    : 'Create your account to start writing reviews'
+                  : existingUser
+                    ? 'Sign in to continue with your existing account'
+                    : 'Sign in to your account to continue'
                 }
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {!isWalletConnected && (
+                <div className="mb-4 p-4 border-2 border-dashed border-orange-200 rounded-lg bg-orange-50">
+                  <div className="flex items-center gap-2 text-orange-600 mb-2">
+                    <Wallet size={16} />
+                    <span className="text-sm font-medium">Connect Wallet First</span>
+                  </div>
+                  <p className="text-xs text-orange-600">
+                    Please connect your wallet using the button in the top navigation to link it with your account.
+                  </p>
+                </div>
+              )}
+              
               <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="flex items-center gap-2">
