@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { checkWalletExists, linkWalletToProfile } from '@/utils/authUtils';
 import { useAuth } from '@/hooks/useAuth';
+import { AMOY_CHAIN_ID, AMOY_NETWORK_NAME } from "@/constants/network";
+import { useWalletNetwork } from "@/hooks/wallet/useWalletNetwork";
 
 export interface WalletConnectionHook {
   isWalletConnected: boolean;
@@ -27,10 +29,6 @@ export const useWalletConnection = (): WalletConnectionHook => {
   const [isWalletConnecting, setIsWalletConnecting] = useState<boolean>(false);
   const [needsSignup, setNeedsSignup] = useState<boolean>(false);
   const [existingUser, setExistingUser] = useState<boolean>(false);
-
-  // Set Amoy as default network
-  const AMOY_CHAIN_ID = '0x13882'; // 80002 (Amoy, Polygon testnet)
-  const AMOY_NETWORK_NAME = 'Polygon Amoy (Testnet)';
 
   // Check if MetaMask is installed
   useEffect(() => {
@@ -340,6 +338,9 @@ export const useWalletConnection = (): WalletConnectionHook => {
       }
     }
   }, [isAuthenticated, user, isWalletConnected, walletAddress]);
+
+  // Use extracted network effect
+  useWalletNetwork(walletAddress, setIsWalletConnected, setCurrentNetwork, toast, setWalletAddress);
 
   return {
     isWalletConnected,
