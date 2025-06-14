@@ -35,8 +35,14 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
-            <div className="w-8 h-8 bg-gradient-to-r from-trustpurple-500 to-trustblue-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">TT</span>
+            <div className="w-8 h-8 bg-gradient-to-r from-trustpurple-500 to-trustblue-500 rounded-lg flex items-center justify-center relative">
+              <span className="text-white font-bold text-sm">T</span>
+              <span className="absolute -bottom-1 -right-1 flex items-center">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <circle cx="7" cy="7" r="7" fill="#FFF"/>
+                  <path d="M4.4 7.4l1.4 1.4 3-3" stroke="#1DAD6C" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </span>
             </div>
             <span className="font-bold text-lg clip-text hidden sm:block">TrustTrail</span>
           </Link>
