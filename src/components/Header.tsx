@@ -41,6 +41,19 @@ const Header = () => {
     setIsMobileMenuOpen(false);
   };
 
+  const handleTestnetFaucet = () => {
+    navigate('/testnet-faucet');
+    setIsMobileMenuOpen(false);
+  };
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+    setIsMobileMenuOpen(false);
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -54,9 +67,21 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-4">
+          <nav className="hidden md:flex items-center space-x-6">
+            <Button variant="ghost" size="sm" onClick={() => scrollToSection('features')}>
+              Features
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => scrollToSection('how-it-works')}>
+              How it Works
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => scrollToSection('faq')}>
+              FAQ
+            </Button>
             <Button variant="ghost" size="sm" onClick={handleReviewPortal}>
               Review Portal
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleTestnetFaucet}>
+              Testnet Faucet
             </Button>
             
             {/* Network Selector */}
@@ -115,8 +140,20 @@ const Header = () => {
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-border mt-4 py-4">
             <div className="flex flex-col space-y-3">
+              <Button variant="ghost" className="justify-start" onClick={() => scrollToSection('features')}>
+                Features
+              </Button>
+              <Button variant="ghost" className="justify-start" onClick={() => scrollToSection('how-it-works')}>
+                How it Works
+              </Button>
+              <Button variant="ghost" className="justify-start" onClick={() => scrollToSection('faq')}>
+                FAQ
+              </Button>
               <Button variant="ghost" className="justify-start" onClick={handleReviewPortal}>
                 Review Portal
+              </Button>
+              <Button variant="ghost" className="justify-start" onClick={handleTestnetFaucet}>
+                Testnet Faucet
               </Button>
               
               {/* Mobile Network Selector */}
