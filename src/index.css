@@ -59,6 +59,13 @@
 
   body {
     @apply bg-background text-foreground font-sans overflow-x-hidden;
+    font-size: 14px;
+  }
+
+  @media (min-width: 640px) {
+    body {
+      font-size: 16px;
+    }
   }
   
   .clip-text {
@@ -96,7 +103,7 @@
   }
 
   .section-padding {
-    @apply py-20 px-4 md:px-8 lg:px-12;
+    @apply py-12 px-4 md:py-20 md:px-8 lg:px-12;
   }
   
   .animated-bg {
@@ -126,5 +133,57 @@
 
   .animate-pulse-slow {
     animation: pulse-slow 8s infinite ease-in-out;
+  }
+
+  /* Mobile-specific improvements */
+  @media (max-width: 768px) {
+    .container {
+      @apply px-4;
+    }
+
+    .text-4xl {
+      @apply text-2xl;
+    }
+
+    .text-3xl {
+      @apply text-xl;
+    }
+
+    .text-2xl {
+      @apply text-lg;
+    }
+
+    .space-y-8 > * + * {
+      @apply mt-4;
+    }
+
+    .space-y-6 > * + * {
+      @apply mt-3;
+    }
+  }
+
+  /* Touch targets for mobile */
+  @media (max-width: 768px) {
+    button, 
+    [role="button"],
+    input[type="submit"],
+    input[type="button"] {
+      @apply min-h-[44px];
+    }
+  }
+
+  /* Improved readability on mobile */
+  @media (max-width: 768px) {
+    .text-sm {
+      @apply text-sm leading-5;
+    }
+
+    .text-base {
+      @apply text-base leading-6;
+    }
+
+    p {
+      @apply leading-relaxed;
+    }
   }
 }
