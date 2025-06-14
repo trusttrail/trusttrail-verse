@@ -41,8 +41,8 @@ const Header = () => {
     setIsMobileMenuOpen(false);
   };
 
-  const handleTestnetFaucet = () => {
-    navigate('/testnet-faucet');
+  const handleTestnet = () => {
+    window.open('https://faucets.chain.link/polygon-amoy', '_blank');
     setIsMobileMenuOpen(false);
   };
 
@@ -80,8 +80,8 @@ const Header = () => {
             <Button variant="ghost" size="sm" onClick={handleReviewPortal}>
               Review Portal
             </Button>
-            <Button variant="ghost" size="sm" onClick={handleTestnetFaucet}>
-              Testnet Faucet
+            <Button variant="ghost" size="sm" onClick={handleTestnet}>
+              Testnet
             </Button>
             
             {/* Network Selector */}
@@ -152,8 +152,8 @@ const Header = () => {
               <Button variant="ghost" className="justify-start" onClick={handleReviewPortal}>
                 Review Portal
               </Button>
-              <Button variant="ghost" className="justify-start" onClick={handleTestnetFaucet}>
-                Testnet Faucet
+              <Button variant="ghost" className="justify-start" onClick={handleTestnet}>
+                Testnet
               </Button>
               
               {/* Mobile Network Selector */}
