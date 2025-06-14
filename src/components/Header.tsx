@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Menu, X } from "lucide-react";
+import { Moon, Sun, Menu, X, CheckCircle } from "lucide-react";
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useNavigate } from 'react-router-dom';
@@ -35,16 +34,10 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
-            <div className="w-8 h-8 bg-gradient-to-r from-trustpurple-500 to-trustblue-500 rounded-lg flex items-center justify-center relative">
-              <span className="text-white font-bold text-sm">T</span>
-              <span className="absolute -bottom-1 -right-1 flex items-center">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <circle cx="7" cy="7" r="7" fill="#FFF"/>
-                  <path d="M4.4 7.4l1.4 1.4 3-3" stroke="#1DAD6C" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </span>
+            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-trustpurple-500 to-trustblue-500 flex items-center justify-center">
+              <CheckCircle size={18} className="text-white" />
             </div>
-            <span className="font-bold text-lg clip-text hidden sm:block">TrustTrail</span>
+            <span className="font-bold text-lg bg-gradient-to-r from-trustpurple-300 to-trustblue-400 bg-clip-text text-transparent hidden sm:block">TrustTrail</span>
           </Link>
 
           {/* Desktop Navigation */}
