@@ -32,37 +32,50 @@ const Auth = () => {
     const error = searchParams.get('error');
     const errorDescription = searchParams.get('error_description');
     
+    // Also check hash parameters as Supabase sometimes uses those
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const hashType = hashParams.get('type');
+    const hashAccessToken = hashParams.get('access_token');
+    const hashRefreshToken = hashParams.get('refresh_token');
+    const hashError = hashParams.get('error');
+    const hashErrorDescription = hashParams.get('error_description');
+    
     console.log('Auth page URL params:', { 
-      type, 
-      accessToken: !!accessToken, 
-      refreshToken: !!refreshToken,
-      error,
-      errorDescription,
+      type: type || hashType, 
+      accessToken: !!(accessToken || hashAccessToken), 
+      refreshToken: !!(refreshToken || hashRefreshToken),
+      error: error || hashError,
+      errorDescription: errorDescription || hashErrorDescription,
       fullURL: window.location.href
     });
 
     // Handle error cases
-    if (error) {
-      console.error('Auth error from URL:', error, errorDescription);
+    if (error || hashError) {
+      console.error('Auth error from URL:', error || hashError, errorDescription || hashErrorDescription);
       toast({
         title: "Authentication Error",
-        description: errorDescription || error,
+        description: (errorDescription || hashErrorDescription) || (error || hashError),
         variant: "destructive",
       });
       return;
     }
     
-    // Handle password recovery flow - check for type=recovery first
-    if (type === 'recovery') {
+    // Handle password recovery flow - check for type=recovery
+    if (type === 'recovery' || hashType === 'recovery') {
       console.log('Password reset flow detected');
       setShowPasswordReset(true);
       
-      // If we have tokens, set the session
-      if (accessToken && refreshToken) {
-        console.log('Setting session with tokens from URL');
+      // Use tokens from either query params or hash params
+      const tokens = {
+        access_token: accessToken || hashAccessToken,
+        refresh_token: refreshToken || hashRefreshToken
+      };
+      
+      if (tokens.access_token && tokens.refresh_token) {
+        console.log('Setting session with tokens');
         supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token
         }).then(({ data, error }) => {
           console.log('Session set result:', { data: !!data, error });
           if (error) {
@@ -79,32 +92,14 @@ const Auth = () => {
           }
         });
       } else {
-        // Sometimes the tokens come as hash parameters instead of query parameters
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const hashAccessToken = hashParams.get('access_token');
-        const hashRefreshToken = hashParams.get('refresh_token');
-        
-        if (hashAccessToken && hashRefreshToken) {
-          console.log('Setting session with hash tokens');
-          supabase.auth.setSession({
-            access_token: hashAccessToken,
-            refresh_token: hashRefreshToken
-          }).then(({ data, error }) => {
-            console.log('Session set from hash result:', { data: !!data, error });
-            if (error) {
-              console.error('Error setting session from hash:', error);
-              toast({
-                title: "Invalid reset link",
-                description: "This password reset link is invalid or expired. Please request a new one.",
-                variant: "destructive",
-              });
-              setShowPasswordReset(false);
-              setShowForgotPassword(true);
-            }
-          });
-        } else {
-          console.log('No tokens found, showing password reset form anyway');
-        }
+        console.log('No tokens found for password reset');
+        toast({
+          title: "Invalid reset link",
+          description: "This password reset link is missing required information. Please request a new one.",
+          variant: "destructive",
+        });
+        setShowPasswordReset(false);
+        setShowForgotPassword(true);
       }
     }
   }, [searchParams, toast]);
