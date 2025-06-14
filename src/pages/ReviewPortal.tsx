@@ -11,6 +11,7 @@ import BusinessesView from "@/components/review/BusinessesView";
 import StakeRewardsView from "@/components/review/StakeRewardsView";
 import PortalContent from "@/components/review/PortalContent";
 import DeploymentTester from "@/components/blockchain/DeploymentTester";
+import AnalyticsDashboard from "@/components/analytics/AnalyticsDashboard";
 
 // Custom hooks
 import { useWalletConnection } from '@/hooks/useWalletConnection';
@@ -137,12 +138,16 @@ const ReviewPortal = () => {
                   <Zap size={16} />
                   <span className="hidden sm:inline">Deploy & Test</span>
                 </TabsTrigger>
+                <TabsTrigger value="analytics" className="flex items-center gap-1.5">
+                  📊
+                  <span className="hidden sm:inline">Analytics</span>
+                </TabsTrigger>
               </TabsList>
             </div>
           </div>
           
           {/* Mobile Tabs */}
-          <TabsList className="w-full mb-6 grid grid-cols-6 md:hidden">
+          <TabsList className="w-full mb-6 grid grid-cols-7 md:hidden">
             <TabsTrigger value="home" className="flex items-center gap-1.5">
               <Home size={16} />
               <span>Home</span>
@@ -166,6 +171,10 @@ const ReviewPortal = () => {
             <TabsTrigger value="deployment" className="flex items-center gap-1.5">
               <Zap size={16} />
               <span>Deploy</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-1.5">
+              📊
+              <span>Analytics</span>
             </TabsTrigger>
           </TabsList>
 
@@ -218,6 +227,12 @@ const ReviewPortal = () => {
             </div>
             <DeploymentTester />
           </TabsContent>
+
+          {/* Analytics Dashboard Tab */}
+          <TabsContent value="analytics">
+            <AnalyticsDashboard />
+          </TabsContent>
+
         </Tabs>
       </div>
       <Footer />
