@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import HomeTab from "@/components/review/portal/HomeTab";
@@ -10,6 +9,7 @@ import LiquidityTab from "@/components/review/portal/LiquidityTab";
 import StakingTab from "@/components/review/portal/StakingTab";
 import DeploymentTab from "@/components/review/portal/DeploymentTab";
 import AnalyticsTab from "@/components/review/portal/AnalyticsTab";
+import PassportTab from "@/components/review/portal/PassportTab";
 import { portalTabs, categories, topCompanies, recentReviews } from "./portalTabsData";
 
 interface PortalTabsProps {
@@ -75,6 +75,9 @@ export const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connect
       </TabsContent>
       <TabsContent value="staking">
         <StakingTab isWalletConnected={isWalletConnected} connectWallet={connectWallet} />
+      </TabsContent>
+      <TabsContent value="passport">
+        <PassportTab isWalletConnected={isWalletConnected} connectWallet={connectWallet} />
       </TabsContent>
       <TabsContent value="deployment">
         <div className="mb-4 text-foreground/70 text-sm border border-border rounded bg-muted/40 p-3">

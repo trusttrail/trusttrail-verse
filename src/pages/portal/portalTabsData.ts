@@ -1,5 +1,4 @@
-
-import { Edit, Grid3X3, Building, Award, Home, Zap, Coins, ShoppingBag, Droplets } from "lucide-react";
+import { Edit, Grid3X3, Building, Award, Home, Zap, Coins, ShoppingBag, Droplets, Building2, Image, Shield, Rocket, BarChart3 } from "lucide-react";
 
 // Export lucide tab icons as references, not JSX
 export const categories = [
@@ -31,12 +30,13 @@ export const recentReviews = [
 // Export lucide tab icons as references, not JSX/Fragments
 export const portalTabs = [
   { id: "home", label: "Home", icon: Home },
-  { id: "write-review", label: "Write a Review", icon: Edit },
-  { id: "categories", label: "Explore Categories", icon: Grid3X3 },
-  { id: "businesses", label: "For Businesses", icon: Building },
-  { id: "nft-marketplace", label: "NFT Marketplace", icon: ShoppingBag },
-  { id: "liquidity", label: "Liquidity Pool", icon: Droplets },
-  { id: "staking", label: "Staking Pools", icon: Coins },
-  { id: "deployment", label: "Deploy & Test", icon: Zap },
-  { id: "analytics", label: "Analytics", icon: "📊" },
+  { id: "write-review", label: "Write Review", icon: Edit },
+  { id: "categories", label: "Categories", icon: Grid3X3 },
+  { id: "businesses", label: "Businesses", icon: Building2 },
+  { id: "nft-marketplace", label: "NFT Market", icon: Image },
+  { id: "liquidity", label: "Liquidity", icon: Droplets },
+  { id: "staking", label: "Staking", icon: Coins },
+  { id: "passport", label: "Passport", icon: Shield },
+  { id: "deployment", label: "Deploy & Test", icon: Rocket },
+  { id: "analytics", label: "Analytics", icon: BarChart3 }
 ];
