@@ -27,7 +27,8 @@ const Footer = () => {
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center transition-colors hover:bg-trustpurple-500/20"
               >
-                <Twitter size={20} className="text-foreground/70" />
+                {/* Stylized "X" for X (formerly Twitter) */}
+                <span className="font-black text-lg text-foreground/80">X</span>
               </a>
               <a 
                 href="#" 

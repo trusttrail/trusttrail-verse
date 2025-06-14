@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -46,7 +45,11 @@ const ReviewPortal = () => {
     { id: "gaming", name: "Gaming", icon: "🎮", count: 124 },
     { id: "dao", name: "DAOs", icon: "🏛️", count: 67 },
     { id: "infrastructure", name: "Infrastructure", icon: "🏗️", count: 45 },
-    { id: "social", name: "Social", icon: "👥", count: 38 }
+    { id: "social", name: "Social", icon: "👥", count: 38 },
+    { id: "education", name: "Education", icon: "🎓", count: 25 },
+    { id: "security", name: "Security", icon: "🛡️", count: 31 },
+    { id: "exchange", name: "Exchanges", icon: "💱", count: 110 },
+    { id: "staking", name: "Staking", icon: "🔒", count: 41 }
   ];
 
   const topCompanies = [
@@ -120,7 +123,7 @@ const ReviewPortal = () => {
                 </TabsTrigger>
                 <TabsTrigger value="categories" className="flex items-center gap-1.5">
                   <Grid3X3 size={16} />
-                  <span className="hidden sm:inline">Categories</span>
+                  <span className="hidden sm:inline">Explore Categories</span>
                 </TabsTrigger>
                 <TabsTrigger value="businesses" className="flex items-center gap-1.5">
                   <Building size={16} />
@@ -166,7 +169,7 @@ const ReviewPortal = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Home Content (renamed from portal) */}
+          {/* Home Content */}
           <TabsContent value="home">
             <PortalContent 
               categories={categories}
@@ -182,6 +185,9 @@ const ReviewPortal = () => {
             <WriteReviewForm 
               isWalletConnected={isWalletConnected} 
               connectWallet={connectWallet} 
+              categories={categories}
+              // TODO: accept/merge extended companies list here
+              // For now still works with small mock, will be enhanced in next iteration with a proper file upload/import.
             />
           </TabsContent>
 
@@ -205,6 +211,11 @@ const ReviewPortal = () => {
 
           {/* Deployment & Testing Tab */}
           <TabsContent value="deployment">
+            {/* Quick summary for user */}
+            <div className="mb-4 text-foreground/70 text-sm border border-border rounded bg-muted/40 p-3">
+              <strong>What is Deploy & Test?</strong> <br />
+              Use this area to deploy mock smart contracts and test blockchain features. Perfect for verifying functionality on Polygon Amoy testnet before going live!
+            </div>
             <DeploymentTester />
           </TabsContent>
         </Tabs>

@@ -70,23 +70,19 @@ const Header = () => {
           <button onClick={() => handleNavClick('#dex-details')} className="text-foreground/80 hover:text-foreground transition-colors">DEX Details</button>
           <button onClick={() => handleNavClick('#faq')} className="text-foreground/80 hover:text-foreground transition-colors">FAQ</button>
           
-          {/* Testnet Navigation Menu */}
+          {/* Testnet Navigation Menu with external link */}
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="text-foreground/80 hover:text-foreground">
-                  Testnet
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <div className="w-48 p-2">
-                    <Link 
-                      to="/testnet-faucet" 
-                      className="block px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
-                    >
-                      🧪 Testnet Dashboard
-                    </Link>
-                  </div>
-                </NavigationMenuContent>
+                <a
+                  href="https://faucets.chain.link/polygon-amoy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-foreground/80 hover:text-foreground transition-colors block px-3 py-2 text-sm rounded-md"
+                  style={{ minWidth: 0 }}
+                >
+                  🧪 Testnet Dashboard
+                </a>
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
@@ -146,13 +142,15 @@ const Header = () => {
             {/* Mobile Testnet Menu */}
             <div className="py-2">
               <p className="text-foreground/60 text-sm mb-2">Testnet</p>
-              <Link 
-                to="/testnet-faucet" 
+              <a 
+                href="https://faucets.chain.link/polygon-amoy"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="block pl-4 py-2 text-foreground/80 hover:text-foreground transition-colors text-left"
                 onClick={toggleMenu}
               >
                 🧪 Testnet Dashboard
-              </Link>
+              </a>
             </div>
             
             <div className="flex flex-col space-y-3 pt-3">

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 
 export interface ReviewFormData {
@@ -26,12 +25,21 @@ export const useReviewForm = () => {
   const [fileError, setFileError] = useState<string | null>(null);
   const [openCompanySelect, setOpenCompanySelect] = useState(false);
 
-  // Mock data for company search
+  // Stub for large company list (simulate 500+ companies)
   const mockCompanies = [
     { id: 1, name: "QuickSwap", category: "DeFi" },
     { id: 2, name: "OpenSea", category: "NFT" },
     { id: 3, name: "Uniswap", category: "DeFi" },
-    { id: 4, name: "Axie Infinity", category: "Gaming" }
+    { id: 4, name: "Axie Infinity", category: "Gaming" },
+    { id: 5, name: "Binance", category: "Exchange" },
+    { id: 6, name: "Coinbase", category: "Exchange" },
+    { id: 7, name: "Polygon Labs", category: "Infrastructure" },
+    { id: 8, name: "Ethereum Foundation", category: "Infrastructure" },
+    { id: 9, name: "Coursera", category: "Education" },
+    { id: 10, name: "Udemy", category: "Education" },
+    { id: 11, name: "Chainlink", category: "Security" },
+    { id: 12, name: "CertiK", category: "Security" },
+    { id: 500, name: "Google", category: "Infrastructure" }
   ];
 
   const mockCategories = [

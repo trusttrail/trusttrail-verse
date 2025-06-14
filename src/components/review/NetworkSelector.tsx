@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import {
@@ -17,52 +16,39 @@ interface NetworkSelectorProps {
 const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
-  const [actualNetwork, setActualNetwork] = useState<string>("polygon");
-  
+  const [actualNetwork, setActualNetwork] = useState<string>("amoy");
+
+  // Only support Polygon Amoy network now
   const networks = [
-    { id: "polygon", name: "Polygon", icon: "🟣", supported: true },
-    { id: "ethereum", name: "Ethereum", icon: "🔷", supported: false },
-    { id: "arbitrum", name: "Arbitrum", icon: "🔵", supported: false },
-    { id: "optimism", name: "Optimism", icon: "🔴", supported: false },
-    { id: "base", name: "Base", icon: "🔘", supported: false }
+    { id: "amoy", name: "Polygon Amoy", icon: "🟣", supported: true }
   ];
 
-  // Check current network from MetaMask
+  // Listen for "amoy" (Polygon Amoy testnet) chainId: 80002 / 0x13882
   useEffect(() => {
+    const desiredChainId = '0x13882'; // Polygon Amoy
     const checkNetwork = async () => {
       if (window.ethereum) {
         try {
           const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-          // Polygon Mainnet: 0x89, for demo we'll assume other chains for wrong network display
-          if (chainId === '0x89') {
-            setActualNetwork("polygon");
+          if (chainId === desiredChainId) {
+            setActualNetwork("amoy");
           } else {
-            // For demo, we'll show ethereum for other networks
-            setActualNetwork("ethereum");
+            setActualNetwork("wrong");
           }
         } catch (error) {
           console.error("Error checking network:", error);
         }
       }
     };
-
     checkNetwork();
-
-    // Listen for network changes
     if (window.ethereum) {
       const handleChainChanged = (chainId: string) => {
-        if (chainId === '0x89') {
-          setActualNetwork("polygon");
-        } else {
-          setActualNetwork("ethereum");
-        }
+        if (chainId === desiredChainId) setActualNetwork("amoy");
+        else setActualNetwork("wrong");
       };
-
       window.ethereum.on('chainChanged', handleChainChanged);
       return () => {
-        if (window.ethereum) {
-          window.ethereum.removeListener('chainChanged', handleChainChanged);
-        }
+        window.ethereum?.removeListener('chainChanged', handleChainChanged);
       };
     }
   }, []);
@@ -71,22 +57,16 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
     if (!supported) {
       toast({
         title: "Network Not Supported",
-        description: `${networkId.charAt(0).toUpperCase() + networkId.slice(1)} network is not supported yet. Please switch to Polygon.`,
+        description: `Currently only Polygon Amoy Testnet is supported.`,
         variant: "destructive",
       });
       return;
     }
-    
     onChange(networkId);
     setIsOpen(false);
   };
 
-  const getCurrentNetworkDetails = () => {
-    return networks.find(network => network.id === actualNetwork);
-  };
-
-  const currentNetworkDetails = getCurrentNetworkDetails();
-  const isWrongNetwork = actualNetwork !== "polygon";
+  const isWrongNetwork = actualNetwork !== "amoy";
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -94,10 +74,10 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
         <Button variant="outline" className={`flex items-center gap-2 ${isWrongNetwork ? 'border-red-500 text-red-400' : ''}`}>
           {isWrongNetwork ? <AlertTriangle size={16} /> : <Globe size={16} />}
           <span className="hidden sm:inline">
-            {isWrongNetwork ? "Wrong Network" : `${currentNetworkDetails?.icon} ${currentNetworkDetails?.name}`}
+            {isWrongNetwork ? "Wrong Network" : `🟣 Polygon Amoy`}
           </span>
           <span className="sm:hidden">
-            {isWrongNetwork ? "❌" : currentNetworkDetails?.icon}
+            {isWrongNetwork ? "❌" : "🟣"}
           </span>
         </Button>
       </PopoverTrigger>
@@ -105,24 +85,20 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
         <div className="py-1">
           {isWrongNetwork && (
             <div className="px-3 py-2 text-sm text-red-400 border-b border-border">
-              Please switch to Polygon network in MetaMask
+              Please switch to Polygon Amoy Testnet in MetaMask
             </div>
           )}
-          {networks.map(network => (
-            <button
-              key={network.id}
-              className={`w-full px-3 py-2 text-left flex items-center hover:bg-muted ${
-                actualNetwork === network.id ? "bg-muted" : ""
-              }`}
-              onClick={() => handleNetworkSelect(network.id, network.supported)}
-            >
-              <span className="mr-2">{network.icon}</span>
-              <span>{network.name}</span>
-              {!network.supported && (
-                <span className="ml-auto text-xs text-muted-foreground">Soon</span>
-              )}
-            </button>
-          ))}
+          <button
+            key="amoy"
+            className={`w-full px-3 py-2 text-left flex items-center hover:bg-muted ${
+              actualNetwork === "amoy" ? "bg-muted" : ""
+            }`}
+            onClick={() => handleNetworkSelect("amoy", true)}
+          >
+            <span className="mr-2">🟣</span>
+            <span>Polygon Amoy</span>
+            {/* Only network */}
+          </button>
         </div>
       </PopoverContent>
     </Popover>
