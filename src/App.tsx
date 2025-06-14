@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -13,15 +14,20 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Auth from "./pages/Auth";
 import RecentActivityOverlay from "@/components/RecentActivityOverlay";
 import { RecentActivityProvider, useRecentActivity } from "@/hooks/useRecentActivity";
+import { useAuth } from "@/hooks/useAuth";
 
 const queryClient = new QueryClient();
 
 // DEMO: use demo activity events unless in production/live setup
 const DemoActivityInjector: React.FC = () => {
   const { pushNotification } = useRecentActivity();
+  const { isAuthenticated } = useAuth();
 
   React.useEffect(() => {
-    // Demo: Fire a new review every 12s and reward every 21s
+    // Only show demo notifications when user is not authenticated to avoid confusion
+    if (isAuthenticated) return;
+    
+    // Demo: Fire a new review every 15s and reward every 25s (reduced frequency)
     const demoWallets = [
       "0xA12b...F38C", "0x93ad...FbD1", "0xE54b...4a0d"
     ];
@@ -39,7 +45,7 @@ const DemoActivityInjector: React.FC = () => {
         message: `⭐ ${rating}/5 review for ${name}`,
         wallet
       });
-    }, 12000);
+    }, 15000);
 
     rewardInt = setInterval(() => {
       const amount = (Math.random() * 5 + 1).toFixed(2);
@@ -49,13 +55,13 @@ const DemoActivityInjector: React.FC = () => {
         message: `You earned ${amount} $TRAIL tokens 💰`,
         wallet
       });
-    }, 21000);
+    }, 25000);
 
     return () => {
       clearInterval(reviewInt);
       clearInterval(rewardInt);
     };
-  }, [pushNotification]);
+  }, [pushNotification, isAuthenticated]);
 
   return null;
 };

@@ -17,6 +17,15 @@ export const useAuth = () => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Clear any stale notifications on auth state changes
+        if (event === 'SIGNED_OUT' || !session) {
+          // Clear any notification state that might be persisted
+          setTimeout(() => {
+            // Force clean up any residual state
+            cleanupAuthState();
+          }, 100);
+        }
       }
     );
 
@@ -55,20 +64,18 @@ export const useAuth = () => {
       console.log('useAuth - Signing out');
       setLoading(true);
       
+      // Clear states immediately to prevent UI issues
+      setUser(null);
+      setSession(null);
+      
       const result = await performGlobalSignOut();
       
-      if (result.success) {
-        // Force page reload for clean state
-        window.location.href = '/auth';
-      } else {
-        console.error('Sign out failed:', result.error);
-        // Force reload anyway to clear state
-        window.location.href = '/auth';
-      }
+      // performGlobalSignOut will handle the redirect
+      return result;
     } catch (error) {
       console.error('useAuth - Error signing out:', error);
       // Force reload to clear state
-      window.location.href = '/auth';
+      window.location.href = '/';
     }
   };
 

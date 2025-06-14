@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface WalletState {
   isWalletConnected: boolean;
@@ -14,6 +15,7 @@ export interface WalletState {
 
 export const useWalletState = () => {
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
   const [isWalletConnected, setIsWalletConnected] = useState<boolean>(false);
   const [walletAddress, setWalletAddress] = useState<string>("");
   const [currentNetwork, setCurrentNetwork] = useState<string>("amoy");
@@ -27,6 +29,15 @@ export const useWalletState = () => {
     setIsMetaMaskAvailable(!!window.ethereum);
   }, []);
 
+  // Clear wallet states when user logs out
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setNeedsSignup(false);
+      setExistingUser(false);
+      // Don't auto-disconnect wallet, let user manually control it
+    }
+  }, [isAuthenticated]);
+
   const disconnectWallet = () => {
     setIsWalletConnected(false);
     setWalletAddress("");
@@ -38,7 +49,7 @@ export const useWalletState = () => {
     
     toast({
       title: "Wallet Disconnected",
-      description: "Your wallet has been disconnected. Refresh the page to reconnect.",
+      description: "Your wallet has been disconnected successfully.",
     });
   };
 

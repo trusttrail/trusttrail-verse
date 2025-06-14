@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export const cleanupAuthState = () => {
@@ -24,16 +23,22 @@ export const cleanupAuthState = () => {
       }
     });
   }
+  
+  // Clear wallet connection state and notifications
+  localStorage.removeItem('wallet_disconnected');
+  localStorage.removeItem('connected_wallet_address');
 };
 
 export const performGlobalSignOut = async () => {
   try {
     console.log('Performing global sign out');
-    cleanupAuthState();
     
-    // Clear wallet connection state
+    // Clear wallet connection state first
     localStorage.removeItem('wallet_disconnected');
     localStorage.removeItem('connected_wallet_address');
+    
+    // Clear all auth state
+    cleanupAuthState();
     
     // Attempt global sign out
     const { error } = await supabase.auth.signOut({ scope: 'global' });
@@ -41,9 +46,18 @@ export const performGlobalSignOut = async () => {
       console.warn('Global sign out warning:', error);
     }
     
+    // Force a complete page reload to clear all state
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 100);
+    
     return { success: true };
   } catch (error) {
     console.error('Error during global sign out:', error);
+    // Force reload anyway to clear state
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 100);
     return { success: false, error };
   }
 };
