@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,28 +10,78 @@ import ReviewPortal from "./pages/ReviewPortal";
 import TestnetFaucet from "./pages/TestnetFaucet";
 import AdminDashboard from "./pages/AdminDashboard";
 import Auth from "./pages/Auth";
+import RecentActivityOverlay from "@/components/RecentActivityOverlay";
+import { RecentActivityProvider, useRecentActivity } from "@/hooks/useRecentActivity";
 
 const queryClient = new QueryClient();
+
+// DEMO: use demo activity events unless in production/live setup
+const DemoActivityInjector: React.FC = () => {
+  const { pushNotification } = useRecentActivity();
+
+  React.useEffect(() => {
+    // Demo: Fire a new review every 12s and reward every 21s
+    const demoWallets = [
+      "0xA12b...F38C", "0x93ad...FbD1", "0xE54b...4a0d"
+    ];
+    const demoNames = [
+      "Uniswap", "OpenSea", "QuickSwap", "Axie Infinity"
+    ];
+    let reviewInt: NodeJS.Timeout, rewardInt: NodeJS.Timeout;
+
+    reviewInt = setInterval(() => {
+      const name = demoNames[Math.floor(Math.random() * demoNames.length)];
+      const rating = 3 + Math.floor(Math.random() * 3);
+      const wallet = demoWallets[Math.floor(Math.random() * demoWallets.length)];
+      pushNotification({
+        type: "review",
+        message: `⭐ ${rating}/5 review for ${name}`,
+        wallet
+      });
+    }, 12000);
+
+    rewardInt = setInterval(() => {
+      const amount = (Math.random() * 5 + 1).toFixed(2);
+      const wallet = demoWallets[Math.floor(Math.random() * demoWallets.length)];
+      pushNotification({
+        type: "reward",
+        message: `You earned ${amount} $TRAIL tokens 💰`,
+        wallet
+      });
+    }, 21000);
+
+    return () => {
+      clearInterval(reviewInt);
+      clearInterval(rewardInt);
+    };
+  }, [pushNotification]);
+
+  return null;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <TooltipProvider>
-        <div className="transition-colors duration-300">
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/review-portal" element={<ReviewPortal />} />
-              <Route path="/testnet-faucet" element={<TestnetFaucet />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/auth" element={<Auth />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </div>
+        <RecentActivityProvider>
+          <div className="transition-colors duration-300">
+            <RecentActivityOverlay />
+            <DemoActivityInjector />
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/review-portal" element={<ReviewPortal />} />
+                <Route path="/testnet-faucet" element={<TestnetFaucet />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/auth" element={<Auth />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </div>
+        </RecentActivityProvider>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
