@@ -25,7 +25,10 @@ export const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connect
           <TabsList className="hidden md:flex">
             {portalTabs.map(({ id, label, icon }) => (
               <TabsTrigger key={id} value={id} className="flex items-center gap-1.5">
-                {icon}
+                {/* Render icon: component or string */}
+                {typeof icon === "string"
+                  ? <span>{icon}</span>
+                  : React.createElement(icon, { size: 16 })}
                 <span className="hidden sm:inline">{label}</span>
               </TabsTrigger>
             ))}
@@ -36,7 +39,9 @@ export const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connect
       <TabsList className="w-full mb-6 grid grid-cols-7 md:hidden">
         {portalTabs.map(({ id, label, icon }) => (
           <TabsTrigger key={id} value={id} className="flex items-center gap-1.5">
-            {icon}
+            {typeof icon === "string"
+              ? <span>{icon}</span>
+              : React.createElement(icon, { size: 16 })}
             <span>{label.split(" ")[0]}</span>
           </TabsTrigger>
         ))}
