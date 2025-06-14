@@ -31,11 +31,33 @@ const Auth = () => {
   useEffect(() => {
     const type = searchParams.get('type');
     const accessToken = searchParams.get('access_token');
+    const refreshToken = searchParams.get('refresh_token');
     
-    if (type === 'recovery' && accessToken) {
+    console.log('Auth page URL params:', { type, accessToken: !!accessToken, refreshToken: !!refreshToken });
+    
+    if (type === 'recovery' && accessToken && refreshToken) {
+      console.log('Password reset flow detected');
       setShowPasswordReset(true);
+      
+      // Set the session with the tokens from URL
+      supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken
+      }).then(({ data, error }) => {
+        console.log('Session set result:', { data, error });
+        if (error) {
+          console.error('Error setting session:', error);
+          toast({
+            title: "Invalid reset link",
+            description: "This password reset link is invalid or expired. Please request a new one.",
+            variant: "destructive",
+          });
+          setShowPasswordReset(false);
+          setShowForgotPassword(true);
+        }
+      });
     }
-  }, [searchParams]);
+  }, [searchParams, toast]);
 
   // Update signup mode based on wallet connection state
   useEffect(() => {
@@ -120,6 +142,7 @@ const Auth = () => {
       });
 
       if (error) {
+        console.error('Password update error:', error);
         throw error;
       }
 
@@ -336,7 +359,7 @@ const Auth = () => {
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth?type=recovery`,
+        redirectTo: `${window.location.origin}/auth`,
       });
 
       if (error) {
