@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Twitter, Shield, MessageSquare, ExternalLink } from "lucide-react";
+import { Twitter, Shield, MessageSquare, ExternalLink, CheckCircle } from "lucide-react";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -12,7 +11,9 @@ const Footer = () => {
           <div>
             <div className="flex items-center mb-4">
               <a href="https://x.com/trusttrail69" target="_blank" rel="noopener noreferrer" className="flex items-center">
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-trustpurple-500 to-trustblue-500 mr-2"></div>
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-trustpurple-500 to-trustblue-500 flex items-center justify-center mr-2">
+                  <CheckCircle size={18} className="text-white" />
+                </div>
                 <span className="text-xl font-bold bg-gradient-to-r from-trustpurple-300 to-trustblue-400 bg-clip-text text-transparent">TrustTrail</span>
               </a>
             </div>
