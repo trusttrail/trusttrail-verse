@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -34,7 +33,7 @@ export const useWalletState = () => {
     if (!isAuthenticated) {
       setNeedsSignup(false);
       setExistingUser(false);
-      // Don't auto-disconnect wallet, let user manually control it
+      // Keep wallet connection state - don't auto-disconnect
     }
   }, [isAuthenticated]);
 
@@ -70,7 +69,6 @@ export const useWalletState = () => {
   };
 
   return {
-    // State
     isWalletConnected,
     walletAddress,
     currentNetwork,
@@ -78,14 +76,12 @@ export const useWalletState = () => {
     isWalletConnecting,
     needsSignup,
     existingUser,
-    // Setters
     setIsWalletConnected,
     setWalletAddress,
     setCurrentNetwork,
     setIsWalletConnecting,
     setNeedsSignup,
     setExistingUser,
-    // Actions
     disconnectWallet,
     handleNetworkChange,
   };

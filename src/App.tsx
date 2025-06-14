@@ -24,10 +24,10 @@ const DemoActivityInjector: React.FC = () => {
   const { isAuthenticated } = useAuth();
 
   React.useEffect(() => {
-    // Only show demo notifications when user is not authenticated to avoid confusion
+    // Only show demo notifications when user is not authenticated
     if (isAuthenticated) return;
     
-    // Demo: Fire a new review every 15s and reward every 25s (reduced frequency)
+    // Demo: Fire a new review every 20s and reward every 35s (reduced frequency for better UX)
     const demoWallets = [
       "0xA12b...F38C", "0x93ad...FbD1", "0xE54b...4a0d"
     ];
@@ -45,7 +45,7 @@ const DemoActivityInjector: React.FC = () => {
         message: `⭐ ${rating}/5 review for ${name}`,
         wallet
       });
-    }, 15000);
+    }, 20000);
 
     rewardInt = setInterval(() => {
       const amount = (Math.random() * 5 + 1).toFixed(2);
@@ -55,7 +55,7 @@ const DemoActivityInjector: React.FC = () => {
         message: `You earned ${amount} $TRAIL tokens 💰`,
         wallet
       });
-    }, 25000);
+    }, 35000);
 
     return () => {
       clearInterval(reviewInt);

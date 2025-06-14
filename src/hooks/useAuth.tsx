@@ -10,28 +10,30 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener first
+    let mounted = true;
+    
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (!mounted) return;
+        
         console.log('useAuth - Auth state change:', { event, session, userVerified: session?.user?.email_confirmed_at });
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
         
-        // Clear any stale notifications on auth state changes
-        if (event === 'SIGNED_OUT' || !session) {
-          // Clear any notification state that might be persisted
-          setTimeout(() => {
-            // Force clean up any residual state
-            cleanupAuthState();
-          }, 100);
+        // Clean up notifications only on sign out
+        if (event === 'SIGNED_OUT') {
+          cleanupAuthState();
         }
       }
     );
 
-    // Then get initial session
+    // Get initial session
     const getSession = async () => {
       try {
+        if (!mounted) return;
+        
         const { data: { session }, error } = await supabase.auth.getSession();
         console.log('useAuth - Initial session check:', { 
           session, 
@@ -41,22 +43,35 @@ export const useAuth = () => {
         
         if (error) {
           console.error('useAuth - Session error:', error);
-          cleanupAuthState();
+          if (mounted) {
+            setSession(null);
+            setUser(null);
+          }
+        } else {
+          if (mounted) {
+            setSession(session);
+            setUser(session?.user ?? null);
+          }
         }
-        
-        setSession(session);
-        setUser(session?.user ?? null);
       } catch (error) {
         console.error('useAuth - Error getting session:', error);
-        cleanupAuthState();
+        if (mounted) {
+          setSession(null);
+          setUser(null);
+        }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     getSession();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
@@ -69,8 +84,6 @@ export const useAuth = () => {
       setSession(null);
       
       const result = await performGlobalSignOut();
-      
-      // performGlobalSignOut will handle the redirect
       return result;
     } catch (error) {
       console.error('useAuth - Error signing out:', error);

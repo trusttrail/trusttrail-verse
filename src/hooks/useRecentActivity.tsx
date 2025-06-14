@@ -1,50 +1,51 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
 
-export type ActivityType = 'review' | 'reward';
-
-export interface ActivityNotification {
+interface Notification {
   id: string;
-  type: ActivityType;
+  type: 'review' | 'reward';
   message: string;
-  wallet?: string;
-  timestamp: number;
+  wallet: string;
 }
 
-interface RecentActivityContextProps {
-  notifications: ActivityNotification[];
-  pushNotification: (notification: Omit<ActivityNotification, 'id' | 'timestamp'>) => void;
+interface RecentActivityContextType {
+  notifications: Notification[];
+  pushNotification: (notification: Omit<Notification, 'id'>) => void;
+  clearNotifications: () => void;
 }
 
-const RecentActivityContext = createContext<RecentActivityContextProps | undefined>(undefined);
+const RecentActivityContext = createContext<RecentActivityContextType | undefined>(undefined);
 
 export const RecentActivityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [notifications, setNotifications] = useState<ActivityNotification[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  const pushNotification = useCallback(
-    (notification: Omit<ActivityNotification, 'id' | 'timestamp'>) => {
-      const id = `notif-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-      setNotifications((prev) => [
-        ...prev,
-        { ...notification, id, timestamp: Date.now() }
-      ]);
-      // Remove after 6 seconds
-      setTimeout(() => {
-        setNotifications((prev) => prev.filter((item) => item.id !== id));
-      }, 6000);
-    },
-    []
-  );
+  const pushNotification = useCallback((notification: Omit<Notification, 'id'>) => {
+    const id = Math.random().toString(36).substring(7);
+    const newNotification = { ...notification, id };
+    
+    setNotifications(prev => [...prev, newNotification]);
+    
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 4000);
+  }, []);
+
+  const clearNotifications = useCallback(() => {
+    setNotifications([]);
+  }, []);
 
   return (
-    <RecentActivityContext.Provider value={{ notifications, pushNotification }}>
+    <RecentActivityContext.Provider value={{ notifications, pushNotification, clearNotifications }}>
       {children}
     </RecentActivityContext.Provider>
   );
 };
 
 export const useRecentActivity = () => {
-  const ctx = useContext(RecentActivityContext);
-  if (!ctx) throw new Error('useRecentActivity must be used within RecentActivityProvider');
-  return ctx;
+  const context = useContext(RecentActivityContext);
+  if (!context) {
+    throw new Error('useRecentActivity must be used within a RecentActivityProvider');
+  }
+  return context;
 };
