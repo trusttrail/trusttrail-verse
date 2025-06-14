@@ -15,6 +15,12 @@ import { submitReview } from '@/utils/formSubmission';
 interface WriteReviewFormProps {
   isWalletConnected: boolean;
   connectWallet: () => void;
+  categories: {
+    id: string;
+    name: string;
+    icon: string;
+    count: number;
+  }[];
 }
 
 const WriteReviewForm = ({ isWalletConnected, connectWallet }: WriteReviewFormProps) => {
