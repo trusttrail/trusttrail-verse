@@ -1,4 +1,3 @@
-
 const { ethers } = require("hardhat");
 const fs = require("fs");
 const path = require("path");
@@ -92,15 +91,15 @@ function updateContractAddresses(network, tokenAddress, reviewsAddress) {
   const web3ServicePath = path.join(__dirname, "../src/services/web3Service.ts");
   let content = fs.readFileSync(web3ServicePath, "utf8");
   
-  if (network === "mumbai") {
+  if (network === "amoy") {
     content = content.replace(
       /mumbai: {[\s\S]*?}/,
-      `mumbai: {
+      `amoy: {
     reviewPlatform: '${reviewsAddress}',
     rewardToken: '${tokenAddress}',
-    chainId: 80001,
-    rpcUrl: 'https://rpc-mumbai.maticvigil.com/',
-    explorerUrl: 'https://mumbai.polygonscan.com/'
+    chainId: 80002,
+    rpcUrl: 'https://rpc-amoy.polygon.technology/',
+    explorerUrl: 'https://amoy.polygonscan.com/'
   }`
     );
   } else if (network === "polygon") {
