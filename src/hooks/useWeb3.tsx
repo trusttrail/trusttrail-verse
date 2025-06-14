@@ -1,0 +1,103 @@
+
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { web3Service, Web3Service } from '../services/web3Service';
+import { useToast } from './use-toast';
+
+interface Web3ContextType {
+  web3Service: Web3Service;
+  isConnected: boolean;
+  address: string;
+  currentNetwork: string;
+  connectWallet: () => Promise<void>;
+  isLoading: boolean;
+  tokenBalance: string;
+  refreshBalance: () => Promise<void>;
+}
+
+const Web3Context = createContext<Web3ContextType | undefined>(undefined);
+
+interface Web3ProviderProps {
+  children: ReactNode;
+}
+
+export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
+  const [isConnected, setIsConnected] = useState(false);
+  const [address, setAddress] = useState('');
+  const [currentNetwork, setCurrentNetwork] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [tokenBalance, setTokenBalance] = useState('0');
+  const { toast } = useToast();
+
+  const connectWallet = async () => {
+    try {
+      setIsLoading(true);
+      const walletAddress = await web3Service.connect();
+      setAddress(walletAddress);
+      setIsConnected(true);
+      setCurrentNetwork(web3Service.getCurrentNetwork());
+      
+      // Get token balance
+      await refreshBalance();
+      
+      toast({
+        title: "Wallet Connected",
+        description: `Connected to ${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`,
+      });
+    } catch (error) {
+      console.error('Failed to connect wallet:', error);
+      toast({
+        title: "Connection Failed",
+        description: "Failed to connect to Web3 wallet",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshBalance = async () => {
+    if (address) {
+      try {
+        const balance = await web3Service.getTokenBalance(address);
+        setTokenBalance(balance);
+      } catch (error) {
+        console.error('Failed to get token balance:', error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    // Check if wallet is already connected
+    if (window.ethereum && window.ethereum.selectedAddress) {
+      setAddress(window.ethereum.selectedAddress);
+      setIsConnected(true);
+      setCurrentNetwork(web3Service.getCurrentNetwork());
+      refreshBalance();
+    }
+  }, []);
+
+  const value: Web3ContextType = {
+    web3Service,
+    isConnected,
+    address,
+    currentNetwork,
+    connectWallet,
+    isLoading,
+    tokenBalance,
+    refreshBalance
+  };
+
+  return (
+    <Web3Context.Provider value={value}>
+      {children}
+    </Web3Context.Provider>
+  );
+};
+
+export const useWeb3 = (): Web3ContextType => {
+  const context = useContext(Web3Context);
+  if (!context) {
+    throw new Error('useWeb3 must be used within a Web3Provider');
+  }
+  return context;
+};
