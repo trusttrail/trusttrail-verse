@@ -36,8 +36,35 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
   const [gitcoinVerified, setGitcoinVerified] = useState(false);
   const [spamCheckPassed, setSpamCheckPassed] = useState(false);
 
+  // Mock companies for CompanySelector
+  const mockCompanies = [
+    { id: 1, name: "QuickSwap", category: "DeFi" },
+    { id: 2, name: "OpenSea", category: "NFT" },
+    { id: 3, name: "Uniswap", category: "DeFi" },
+    { id: 4, name: "Axie Infinity", category: "Gaming" },
+    { id: 5, name: "Binance", category: "Exchange" },
+  ];
+
+  const [filteredCompanies, setFilteredCompanies] = useState(mockCompanies);
+  const [openCompanySelect, setOpenCompanySelect] = useState(false);
+
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCompanySearch = (value: string) => {
+    const filtered = mockCompanies.filter(company =>
+      company.name.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredCompanies(filtered);
+  };
+
+  const handleCompanySelect = (company: { id: number; name: string; category: string }) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      company: company.name,
+      category: company.category 
+    }));
   };
 
   const handleVerifyGitcoin = async () => {
@@ -266,15 +293,23 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
               <div className="space-y-2">
                 <Label htmlFor="company">Company/Project *</Label>
                 <CompanySelector
-                  onChange={(value) => handleInputChange('company', value)}
+                  companyName={formData.company}
+                  setCompanyName={(name) => handleInputChange('company', name)}
+                  setCategory={(category) => handleInputChange('category', category)}
+                  openCompanySelect={openCompanySelect}
+                  setOpenCompanySelect={setOpenCompanySelect}
+                  filteredCompanies={filteredCompanies}
+                  handleCompanySearch={handleCompanySearch}
+                  handleCompanySelect={handleCompanySelect}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="category">Category *</Label>
                 <CategorySelector
-                  categories={categories}
-                  onChange={(value) => handleInputChange('category', value)}
+                  category={formData.category}
+                  setCategory={(category) => handleInputChange('category', category)}
+                  categories={categories.map(cat => ({ id: cat.id, name: cat.name }))}
                 />
               </div>
             </div>
@@ -312,7 +347,10 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
             <div className="space-y-2">
               <Label>Supporting Documents (Optional)</Label>
               <FileUpload
-                onChange={(files) => handleInputChange('proofFiles', files)}
+                selectedFiles={formData.proofFiles}
+                setSelectedFiles={(files) => handleInputChange('proofFiles', files)}
+                fileError={null}
+                setFileError={() => {}}
               />
             </div>
           </CardContent>
@@ -339,4 +377,3 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
 };
 
 export default WriteReviewForm;
-
