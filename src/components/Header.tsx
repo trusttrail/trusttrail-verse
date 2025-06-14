@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Moon, Sun, Menu, X, CheckCircle } from "lucide-react";
@@ -5,11 +6,23 @@ import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useNavigate } from 'react-router-dom';
 import { useWalletConnection } from '@/hooks/useWalletConnection';
+import NetworkSelector from '@/components/review/NetworkSelector';
+import WalletConnect from '@/components/review/WalletConnect';
 
 const Header = () => {
   const { theme, toggleTheme } = useTheme();
   const { user, signOut, isAuthenticated } = useAuth();
-  const { isWalletConnected, walletAddress, connectWallet } = useWalletConnection();
+  const { 
+    isWalletConnected, 
+    walletAddress, 
+    currentNetwork,
+    connectWallet, 
+    connectWithWalletConnect,
+    disconnectWallet,
+    handleNetworkChange,
+    isMetaMaskAvailable,
+    isWalletConnecting
+  } = useWalletConnection();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -41,36 +54,43 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
+          <nav className="hidden md:flex items-center space-x-4">
             <Button variant="ghost" size="sm" onClick={handleReviewPortal}>
               Review Portal
             </Button>
+            
+            {/* Network Selector */}
+            <NetworkSelector 
+              currentNetwork={currentNetwork}
+              onChange={handleNetworkChange}
+            />
+            
+            {/* Wallet Connect */}
+            <WalletConnect
+              isConnected={isWalletConnected}
+              address={walletAddress}
+              onConnect={connectWallet}
+              onDisconnect={disconnectWallet}
+              onWalletConnectClick={connectWithWalletConnect}
+              isMetaMaskAvailable={isMetaMaskAvailable}
+              isWalletConnecting={isWalletConnecting}
+            />
+            
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-muted-foreground hidden lg:block">
                   Welcome, {user?.email?.split('@')[0]}
                 </span>
-                {isWalletConnected && (
-                  <span className="text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300 px-2 py-1 rounded-full hidden lg:block">
-                    {walletAddress.substring(0, 6)}...{walletAddress.substring(walletAddress.length - 4)}
-                  </span>
-                )}
                 <Button variant="outline" size="sm" onClick={handleSignOut}>
                   Sign Out
                 </Button>
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
-                {!isWalletConnected && (
-                  <Button variant="outline" size="sm" onClick={connectWallet}>
-                    Connect Wallet
-                  </Button>
-                )}
-                <Button size="sm" onClick={handleAuth}>
-                  Sign In
-                </Button>
-              </div>
+              <Button size="sm" onClick={handleAuth}>
+                Sign In
+              </Button>
             )}
+            
             <Button variant="ghost" size="sm" onClick={toggleTheme}>
               {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
             </Button>
@@ -98,33 +118,41 @@ const Header = () => {
               <Button variant="ghost" className="justify-start" onClick={handleReviewPortal}>
                 Review Portal
               </Button>
+              
+              {/* Mobile Network Selector */}
+              <div className="px-3">
+                <NetworkSelector 
+                  currentNetwork={currentNetwork}
+                  onChange={handleNetworkChange}
+                />
+              </div>
+              
+              {/* Mobile Wallet Connect */}
+              <div className="px-3">
+                <WalletConnect
+                  isConnected={isWalletConnected}
+                  address={walletAddress}
+                  onConnect={connectWallet}
+                  onDisconnect={disconnectWallet}
+                  onWalletConnectClick={connectWithWalletConnect}
+                  isMetaMaskAvailable={isMetaMaskAvailable}
+                  isWalletConnecting={isWalletConnecting}
+                />
+              </div>
+              
               {isAuthenticated ? (
                 <>
                   <div className="px-3 py-2 text-sm text-muted-foreground">
                     Welcome, {user?.email?.split('@')[0]}
                   </div>
-                  {isWalletConnected && (
-                    <div className="px-3 py-1">
-                      <span className="text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300 px-2 py-1 rounded-full">
-                        {walletAddress.substring(0, 6)}...{walletAddress.substring(walletAddress.length - 4)}
-                      </span>
-                    </div>
-                  )}
                   <Button variant="outline" className="justify-start" onClick={handleSignOut}>
                     Sign Out
                   </Button>
                 </>
               ) : (
-                <>
-                  {!isWalletConnected && (
-                    <Button variant="outline" className="justify-start" onClick={connectWallet}>
-                      Connect Wallet
-                    </Button>
-                  )}
-                  <Button className="justify-start" onClick={handleAuth}>
-                    Sign In
-                  </Button>
-                </>
+                <Button className="justify-start" onClick={handleAuth}>
+                  Sign In
+                </Button>
               )}
             </div>
           </div>

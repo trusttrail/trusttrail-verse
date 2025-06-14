@@ -1,5 +1,5 @@
 
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import { AMOY_CHAIN_ID, AMOY_NETWORK_NAME } from "@/constants/network";
 import { useToast } from "@/hooks/use-toast";
 
@@ -7,11 +7,13 @@ export const useWalletNetwork = (
   walletAddress: string,
   setIsWalletConnected: (val: boolean) => void,
   setCurrentNetwork: (val: string) => void,
-  toast: any,
   setWalletAddress: (val: string) => void,
 ) => {
+  const { toast } = useToast();
+
   useEffect(() => {
     if (!window.ethereum) return;
+    
     const handleAccountsChanged = (accounts: string[]) => {
       if (accounts.length === 0) {
         setIsWalletConnected(false);
@@ -51,10 +53,10 @@ export const useWalletNetwork = (
 
     window.ethereum.on("accountsChanged", handleAccountsChanged);
     window.ethereum.on("chainChanged", handleChainChanged);
+    
     return () => {
       window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
       window.ethereum.removeListener("chainChanged", handleChainChanged);
     };
-    // eslint-disable-next-line
-  }, [walletAddress, toast]);
+  }, [walletAddress, toast, setIsWalletConnected, setWalletAddress, setCurrentNetwork]);
 };

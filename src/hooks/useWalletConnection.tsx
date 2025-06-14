@@ -62,12 +62,11 @@ export const useWalletConnection = (): WalletConnectionHook => {
     checkIfWalletIsConnected
   );
 
-  // Use extracted network effect
+  // Use network effect with correct parameters
   useWalletNetwork(
     walletAddress,
     setIsWalletConnected,
     setCurrentNetwork,
-    { toast: () => {} }, // This will be replaced by the actual toast from useWalletNetwork
     setWalletAddress
   );
 
