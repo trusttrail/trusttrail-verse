@@ -18,21 +18,41 @@ const RecentActivityContext = createContext<RecentActivityContextType | undefine
 
 export const RecentActivityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [recentMessages, setRecentMessages] = useState<Set<string>>(new Set());
 
   const pushNotification = useCallback((notification: Omit<Notification, 'id'>) => {
+    // Create a unique key for the notification to prevent duplicates
+    const notificationKey = `${notification.type}-${notification.message}-${notification.wallet}`;
+    
+    // Check if we've already shown this notification recently (within 5 seconds)
+    if (recentMessages.has(notificationKey)) {
+      return;
+    }
+    
     const id = Math.random().toString(36).substring(7);
     const newNotification = { ...notification, id };
     
     setNotifications(prev => [...prev, newNotification]);
+    setRecentMessages(prev => new Set(prev).add(notificationKey));
     
-    // Auto-remove after 4 seconds
+    // Auto-remove notification after 4 seconds
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id));
     }, 4000);
-  }, []);
+    
+    // Remove from recent messages after 5 seconds to allow future notifications
+    setTimeout(() => {
+      setRecentMessages(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(notificationKey);
+        return newSet;
+      });
+    }, 5000);
+  }, [recentMessages]);
 
   const clearNotifications = useCallback(() => {
     setNotifications([]);
+    setRecentMessages(new Set());
   }, []);
 
   return (

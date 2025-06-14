@@ -27,54 +27,29 @@ export const useWalletAuth = (
 
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
 
-        // Accept Amoy testnet as valid
         if (chainId === AMOY_CHAIN_ID) {
           setIsWalletConnected(true);
           setCurrentNetwork("amoy");
           localStorage.setItem('connected_wallet_address', address);
 
-          // Only check database if user is NOT authenticated
+          // Only check database and show notifications if user is NOT authenticated
           if (!isAuthenticated) {
             const { exists } = await checkWalletExists(address);
             
             if (exists) {
               setExistingUser(true);
               setNeedsSignup(false);
-              toast({
-                title: "Wallet Connected - Account Found",
-                description: "Please sign in to continue with your existing account.",
-              });
             } else {
               setNeedsSignup(true);
               setExistingUser(false);
-              toast({
-                title: "Wallet Connected - New Wallet",
-                description: "Please create an account to link this wallet.",
-              });
             }
           } else if (isAuthenticated && user) {
-            // Link wallet to current user if already authenticated
+            // Silently link wallet to current user if already authenticated
             await linkWalletToProfile(user.id, address);
-            toast({
-              title: "Wallet Connected",
-              description: `Connected to ${address.substring(0, 6)}...${address.substring(address.length - 4)}`,
-            });
-          } else {
-            // Just connected, no auth state determined yet
-            toast({
-              title: "Wallet Connected",
-              description: `Connected to ${address.substring(0, 6)}...${address.substring(address.length - 4)}`,
-            });
           }
         } else {
-          // Auto-disconnect if on wrong network
           setIsWalletConnected(false);
           setCurrentNetwork("wrong");
-          toast({
-            title: "Wrong Network",
-            description: `Please switch to ${AMOY_NETWORK_NAME} in your MetaMask wallet to connect.`,
-            variant: "destructive",
-          });
         }
       }
     } catch (error) {
@@ -96,7 +71,6 @@ export const useWalletAuth = (
         return;
       }
 
-      // Clear any previous disconnect flag
       localStorage.removeItem('wallet_disconnected');
 
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
@@ -120,6 +94,12 @@ export const useWalletAuth = (
           setIsWalletConnected(true);
           setCurrentNetwork("amoy");
           
+          // Show success notification only once
+          toast({
+            title: "Wallet Connected",
+            description: `Connected to ${address.substring(0, 6)}...${address.substring(address.length - 4)}`,
+          });
+          
           // Only check database if user is NOT authenticated
           if (!isAuthenticated) {
             const { exists } = await checkWalletExists(address);
@@ -127,17 +107,9 @@ export const useWalletAuth = (
             if (exists) {
               setExistingUser(true);
               setNeedsSignup(false);
-              toast({
-                title: "Wallet Connected - Account Found",
-                description: "Please sign in to continue with your existing account.",
-              });
             } else {
               setNeedsSignup(true);
               setExistingUser(false);
-              toast({
-                title: "Wallet Connected - New Wallet",
-                description: "Please create an account to link this wallet and start writing reviews.",
-              });
             }
           } else if (isAuthenticated && user) {
             // Link wallet to current user
@@ -145,17 +117,7 @@ export const useWalletAuth = (
             if (linkResult.success) {
               setNeedsSignup(false);
               setExistingUser(false);
-              toast({
-                title: "Wallet Linked",
-                description: `Wallet connected and linked to your account!`,
-              });
             }
-          } else {
-            // Just connected, show success
-            toast({
-              title: "Wallet Connected",
-              description: `Connected to ${address.substring(0, 6)}...${address.substring(address.length - 4)}`,
-            });
           }
         }
       }
