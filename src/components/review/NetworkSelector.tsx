@@ -1,11 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Globe, AlertTriangle } from "lucide-react";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Globe, AlertTriangle, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface NetworkSelectorProps {
@@ -15,12 +17,16 @@ interface NetworkSelectorProps {
 
 const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => {
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
   const [actualNetwork, setActualNetwork] = useState<string>("amoy");
 
-  // Only support Polygon Amoy network now
+  // Network options for display (only Polygon Amoy is functional)
   const networks = [
-    { id: "amoy", name: "Polygon Amoy", icon: "🟣", supported: true }
+    { id: "ethereum", name: "Ethereum Mainnet", icon: "⟠", supported: false },
+    { id: "polygon", name: "Polygon Mainnet", icon: "🟣", supported: false },
+    { id: "amoy", name: "Polygon Amoy (Testnet)", icon: "🟣", supported: true },
+    { id: "arbitrum", name: "Arbitrum One", icon: "🔵", supported: false },
+    { id: "optimism", name: "Optimism", icon: "🔴", supported: false },
+    { id: "base", name: "Base", icon: "🔵", supported: false },
   ];
 
   // Listen for "amoy" (Polygon Amoy testnet) chainId: 80002 / 0x13882
@@ -63,45 +69,53 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
       return;
     }
     onChange(networkId);
-    setIsOpen(false);
   };
 
   const isWrongNetwork = actualNetwork !== "amoy";
+  const selectedNetwork = networks.find(n => n.id === "amoy") || networks[2];
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
         <Button variant="outline" className={`flex items-center gap-2 ${isWrongNetwork ? 'border-red-500 text-red-400' : ''}`}>
           {isWrongNetwork ? <AlertTriangle size={16} /> : <Globe size={16} />}
           <span className="hidden sm:inline">
-            {isWrongNetwork ? "Wrong Network" : `🟣 Polygon Amoy`}
+            {isWrongNetwork ? "Wrong Network" : selectedNetwork.name}
           </span>
           <span className="sm:hidden">
-            {isWrongNetwork ? "❌" : "🟣"}
+            {isWrongNetwork ? "❌" : selectedNetwork.icon}
           </span>
+          <ChevronDown size={14} />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-48 p-0">
-        <div className="py-1">
-          {isWrongNetwork && (
-            <div className="px-3 py-2 text-sm text-red-400 border-b border-border">
-              Please switch to Polygon Amoy Testnet in MetaMask
-            </div>
-          )}
-          <button
-            key="amoy"
-            className={`w-full px-3 py-2 text-left flex items-center hover:bg-muted ${
-              actualNetwork === "amoy" ? "bg-muted" : ""
-            }`}
-            onClick={() => handleNetworkSelect("amoy", true)}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56 bg-background border-border z-50">
+        {isWrongNetwork && (
+          <div className="px-3 py-2 text-sm text-red-400 border-b border-border mb-1">
+            Please switch to Polygon Amoy Testnet in MetaMask
+          </div>
+        )}
+        {networks.map((network) => (
+          <DropdownMenuItem
+            key={network.id}
+            className={`flex items-center gap-3 cursor-pointer ${
+              actualNetwork === network.id && network.supported ? "bg-muted" : ""
+            } ${!network.supported ? "opacity-60" : ""}`}
+            onClick={() => handleNetworkSelect(network.id, network.supported)}
           >
-            <span className="mr-2">🟣</span>
-            <span>Polygon Amoy</span>
-            {/* Only network */}
-          </button>
-        </div>
-      </PopoverContent>
-    </Popover>
+            <span className="text-lg">{network.icon}</span>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">{network.name}</span>
+              {!network.supported && (
+                <span className="text-xs text-muted-foreground">Coming Soon</span>
+              )}
+              {network.supported && actualNetwork === network.id && (
+                <span className="text-xs text-green-600">Connected</span>
+              )}
+            </div>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 
