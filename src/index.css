@@ -79,7 +79,7 @@
   }
   
   .light .glass-card {
-    @apply bg-white/80 backdrop-blur-xl border-black/8 shadow-lg rounded-2xl border;
+    @apply bg-white/80 backdrop-blur-xl border-gray-200 shadow-lg rounded-2xl border;
   }
   
   .crypto-gradient {
