@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import HomeTab from "@/components/review/portal/HomeTab";
@@ -19,8 +20,7 @@ interface PortalTabsProps {
 export const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connectWallet }: PortalTabsProps) => {
   return (
     <Tabs defaultValue="home" className="w-full" value={activeTab} onValueChange={setActiveTab}>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-trustpurple-300 to-trustblue-400 bg-clip-text text-transparent">TrustTrail Review Portal</h1>
+      <div className="flex justify-end items-center mb-8">
         <div className="flex items-center gap-4">
           <TabsList className="hidden md:flex">
             {portalTabs.map(({ id, label, icon }) => (
