@@ -26,32 +26,32 @@
 
 ## Deployment Steps
 
-### 1. Deploy to Mumbai Testnet
+### 1. Deploy to Amoy Testnet
 
 ```bash
 # Deploy contracts
-npx hardhat run scripts/deploy.js --network mumbai
+npx hardhat run scripts/deploy.cjs --network amoy
 
 # Verify contracts (optional)
-npx hardhat run scripts/verify.js deployments/mumbai-[timestamp].json
+npx hardhat run scripts/verify.cjs deployments/amoy-[timestamp].json
 ```
 
 ### 2. Test Integration
 
 ```bash
-# Update contract addresses in scripts/test-integration.js
+# Update contract addresses in scripts/test-integration.cjs
 # Then run integration tests
-npx hardhat run scripts/test-integration.js --network mumbai
+npx hardhat run scripts/test-integration.cjs --network amoy
 ```
 
 ### 3. Deploy to Polygon Mainnet (Production)
 
 ```bash
 # Deploy contracts
-npx hardhat run scripts/deploy.js --network polygon
+npx hardhat run scripts/deploy.cjs --network polygon
 
 # Verify contracts
-npx hardhat run scripts/verify.js deployments/polygon-[timestamp].json
+npx hardhat run scripts/verify.cjs deployments/polygon-[timestamp].json
 ```
 
 ## Verification
@@ -59,8 +59,8 @@ npx hardhat run scripts/verify.js deployments/polygon-[timestamp].json
 After deployment, you can verify your contracts on Polygonscan:
 
 ```bash
-# For Mumbai
-npx hardhat verify --network mumbai CONTRACT_ADDRESS "CONSTRUCTOR_ARG1" "CONSTRUCTOR_ARG2"
+# For Amoy
+npx hardhat verify --network amoy CONTRACT_ADDRESS "CONSTRUCTOR_ARG1" "CONSTRUCTOR_ARG2"
 
 # For Polygon
 npx hardhat verify --network polygon CONTRACT_ADDRESS "CONSTRUCTOR_ARG1" "CONSTRUCTOR_ARG2"
@@ -102,5 +102,5 @@ After successful deployment:
 
 - Never commit your private key to version control
 - Use hardware wallets for mainnet deployments
-- Test thoroughly on Mumbai before mainnet deployment
+- Test thoroughly on Amoy before mainnet deployment
 - Consider using multi-sig wallets for admin functions

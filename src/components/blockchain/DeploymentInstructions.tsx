@@ -57,7 +57,7 @@ export const DeploymentInstructions: React.FC = () => {
             Deployment Instructions
           </CardTitle>
           <CardDescription>
-            Follow these steps to deploy your TrustTrail smart contracts to Mumbai testnet
+            Follow these steps to deploy your TrustTrail smart contracts to Amoy testnet
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -72,7 +72,7 @@ export const DeploymentInstructions: React.FC = () => {
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription>
-                First, set up your environment variables. You'll need a MetaMask private key and Mumbai MATIC tokens.
+                First, set up your environment variables. You'll need a MetaMask private key and Amoy MATIC tokens.
               </AlertDescription>
             </Alert>
 
@@ -88,7 +88,7 @@ export const DeploymentInstructions: React.FC = () => {
               <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">Required in .env file:</h4>
               <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
                 <li>• <code>PRIVATE_KEY</code> - Your MetaMask private key (without 0x prefix)</li>
-                <li>• <code>MUMBAI_RPC_URL</code> - Already configured</li>
+                <li>• <code>AMOY_RPC_URL</code> - Already configured</li>
                 <li>• <code>POLYGONSCAN_API_KEY</code> - Optional, for contract verification</li>
               </ul>
             </div>
@@ -99,7 +99,7 @@ export const DeploymentInstructions: React.FC = () => {
               className="w-full"
             >
               <ExternalLink className="mr-2 h-4 w-4" />
-              Get Mumbai MATIC Tokens
+              Get Amoy MATIC Tokens
             </Button>
           </div>
 
@@ -107,7 +107,7 @@ export const DeploymentInstructions: React.FC = () => {
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Badge variant="outline">Step 2</Badge>
-              <h3 className="text-lg font-semibold">Deploy to Mumbai Testnet</h3>
+              <h3 className="text-lg font-semibold">Deploy to Amoy Testnet</h3>
             </div>
             
             <Alert>
@@ -118,7 +118,7 @@ export const DeploymentInstructions: React.FC = () => {
             </Alert>
 
             <CommandBlock 
-              command="npx hardhat run scripts/deploy.js --network mumbai" 
+              command="npx hardhat run scripts/deploy.cjs --network amoy" 
               label="Deploy command"
             />
 
@@ -142,7 +142,7 @@ export const DeploymentInstructions: React.FC = () => {
             </div>
             
             <CommandBlock 
-              command="npx hardhat run scripts/verify.js deployments/mumbai-[timestamp].json" 
+              command="npx hardhat run scripts/verify.cjs deployments/amoy-[timestamp].json" 
               label="Verify command"
             />
 
@@ -162,7 +162,7 @@ export const DeploymentInstructions: React.FC = () => {
               <div className="space-y-2">
                 <h4 className="font-medium">Command Line Testing:</h4>
                 <CommandBlock 
-                  command="npx hardhat run scripts/test-integration.js --network mumbai" 
+                  command="npx hardhat run scripts/test-integration.cjs --network amoy" 
                   label="Test command"
                 />
               </div>
