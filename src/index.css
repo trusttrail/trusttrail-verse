@@ -1,4 +1,5 @@
 
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -140,26 +141,6 @@
     .container {
       @apply px-4;
     }
-
-    .text-4xl {
-      @apply text-2xl;
-    }
-
-    .text-3xl {
-      @apply text-xl;
-    }
-
-    .text-2xl {
-      @apply text-lg;
-    }
-
-    .space-y-8 > * + * {
-      @apply mt-4;
-    }
-
-    .space-y-6 > * + * {
-      @apply mt-3;
-    }
   }
 
   /* Touch targets for mobile */
@@ -171,19 +152,5 @@
       @apply min-h-[44px];
     }
   }
-
-  /* Improved readability on mobile */
-  @media (max-width: 768px) {
-    .text-sm {
-      @apply text-sm leading-5;
-    }
-
-    .text-base {
-      @apply text-base leading-6;
-    }
-
-    p {
-      @apply leading-relaxed;
-    }
-  }
 }
+

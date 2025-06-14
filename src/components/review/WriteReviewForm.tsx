@@ -266,7 +266,6 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
               <div className="space-y-2">
                 <Label htmlFor="company">Company/Project *</Label>
                 <CompanySelector
-                  value={formData.company}
                   onChange={(value) => handleInputChange('company', value)}
                 />
               </div>
@@ -275,7 +274,6 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
                 <Label htmlFor="category">Category *</Label>
                 <CategorySelector
                   categories={categories}
-                  value={formData.category}
                   onChange={(value) => handleInputChange('category', value)}
                 />
               </div>
@@ -296,7 +294,7 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
               <Label htmlFor="rating">Rating *</Label>
               <StarRating
                 rating={formData.rating}
-                onRatingChange={(rating) => handleInputChange('rating', rating)}
+                setRating={(rating) => handleInputChange('rating', rating)}
               />
             </div>
 
@@ -314,7 +312,6 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
             <div className="space-y-2">
               <Label>Supporting Documents (Optional)</Label>
               <FileUpload
-                files={formData.proofFiles}
                 onChange={(files) => handleInputChange('proofFiles', files)}
               />
             </div>
@@ -342,3 +339,4 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
 };
 
 export default WriteReviewForm;
+
