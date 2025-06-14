@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { checkWalletExists, linkWalletToProfile } from '@/utils/authUtils';
@@ -23,11 +22,15 @@ export const useWalletConnection = (): WalletConnectionHook => {
   const { user, isAuthenticated } = useAuth();
   const [isWalletConnected, setIsWalletConnected] = useState<boolean>(false);
   const [walletAddress, setWalletAddress] = useState<string>("");
-  const [currentNetwork, setCurrentNetwork] = useState<string>("polygon");
+  const [currentNetwork, setCurrentNetwork] = useState<string>("amoy");
   const [isMetaMaskAvailable, setIsMetaMaskAvailable] = useState<boolean>(false);
   const [isWalletConnecting, setIsWalletConnecting] = useState<boolean>(false);
   const [needsSignup, setNeedsSignup] = useState<boolean>(false);
   const [existingUser, setExistingUser] = useState<boolean>(false);
+
+  // Set Amoy as default network
+  const AMOY_CHAIN_ID = '0x13882'; // 80002 (Amoy, Polygon testnet)
+  const AMOY_NETWORK_NAME = 'Polygon Amoy (Testnet)';
 
   // Check if MetaMask is installed
   useEffect(() => {
@@ -36,25 +39,22 @@ export const useWalletConnection = (): WalletConnectionHook => {
 
   const checkIfWalletIsConnected = async () => {
     try {
-      if (!window.ethereum) {
-        return;
-      }
+      if (!window.ethereum) return;
 
-      // Check if already connected
       const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-      
+
       if (accounts.length > 0) {
         const address = accounts[0];
         setWalletAddress(address);
-        
-        // Check if on correct network before showing connected state
+
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-        
-        // Polygon Mainnet: 0x89
-        if (chainId === '0x89') {
+
+        // Accept Amoy testnet as valid
+        if (chainId === AMOY_CHAIN_ID) {
           setIsWalletConnected(true);
+          setCurrentNetwork("amoy");
           localStorage.setItem('connected_wallet_address', address);
-          
+
           // Check if this wallet exists in our database
           const { exists, userId } = await checkWalletExists(address);
           
@@ -81,9 +81,10 @@ export const useWalletConnection = (): WalletConnectionHook => {
         } else {
           // Auto-disconnect if on wrong network
           setIsWalletConnected(false);
+          setCurrentNetwork("wrong");
           toast({
             title: "Wrong Network",
-            description: "Please switch to Polygon network in your MetaMask wallet to connect.",
+            description: `Please switch to ${AMOY_NETWORK_NAME} in your MetaMask wallet to connect.`,
             variant: "destructive",
           });
         }
@@ -108,27 +109,25 @@ export const useWalletConnection = (): WalletConnectionHook => {
       }
 
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      
+
       if (accounts.length > 0) {
         const address = accounts[0];
         setWalletAddress(address);
         localStorage.setItem('connected_wallet_address', address);
-        
-        // Check network
+
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-        
-        // Polygon Mainnet: 0x89
-        if (chainId !== '0x89') {
+
+        if (chainId !== AMOY_CHAIN_ID) {
           setIsWalletConnected(false);
+          setCurrentNetwork("wrong");
           toast({
             title: "Wrong Network",
-            description: "Please switch to Polygon network in your MetaMask wallet to connect.",
+            description: `Please switch to ${AMOY_NETWORK_NAME} in your MetaMask wallet to connect.`,
             variant: "destructive",
           });
         } else {
           setIsWalletConnected(true);
-          
-          // Check if this wallet exists in our database
+          setCurrentNetwork("amoy");
           const { exists, userId } = await checkWalletExists(address);
           
           if (exists && !isAuthenticated) {
@@ -223,22 +222,22 @@ export const useWalletConnection = (): WalletConnectionHook => {
 
   // Network change handler
   const handleNetworkChange = (network: string) => {
-    if (network !== "polygon") {
+    if (network !== "amoy") {
       toast({
         title: "Network Not Supported",
-        description: `${network.charAt(0).toUpperCase() + network.slice(1)} network is not supported yet. Please switch to Polygon.`,
+        description: `Currently only ${AMOY_NETWORK_NAME} is supported in the testnet dApp.`,
         variant: "destructive",
       });
       return;
     }
-    setCurrentNetwork(network);
+    setCurrentNetwork("amoy");
     toast({
       title: "Network Changed",
-      description: `Switched to ${network.charAt(0).toUpperCase() + network.slice(1)} network.`,
+      description: `Switched to ${AMOY_NETWORK_NAME}.`,
     });
   };
 
-  // Listen for account changes
+  // Listen for account changes and chain changes
   useEffect(() => {
     const handleAccountsChanged = (accounts: string[]) => {
       if (accounts.length === 0) {
@@ -255,14 +254,13 @@ export const useWalletConnection = (): WalletConnectionHook => {
         const newAddress = accounts[0];
         setWalletAddress(newAddress);
         localStorage.setItem('connected_wallet_address', newAddress);
-        
-        // Check if new account is on correct network and exists in our database
+
         window.ethereum?.request({ method: 'eth_chainId' }).then(async (chainId) => {
-          if (chainId === '0x89') {
+          if (chainId === AMOY_CHAIN_ID) {
             setIsWalletConnected(true);
-            
+            setCurrentNetwork("amoy");
             const { exists } = await checkWalletExists(newAddress);
-            
+
             if (exists && !isAuthenticated) {
               setExistingUser(true);
               setNeedsSignup(false);
@@ -285,46 +283,43 @@ export const useWalletConnection = (): WalletConnectionHook => {
             }
           } else {
             setIsWalletConnected(false);
+            setCurrentNetwork("wrong");
           }
         });
       }
     };
 
     const handleChainChanged = (chainId: string) => {
-      if (chainId !== '0x89') {
+      if (chainId !== AMOY_CHAIN_ID) {
         setIsWalletConnected(false);
+        setCurrentNetwork("wrong");
         toast({
           title: "Wrong Network",
-          description: "Wallet disconnected. Please switch to Polygon network and reconnect.",
+          description: `Wallet disconnected. Please switch to ${AMOY_NETWORK_NAME} and reconnect.`,
           variant: "destructive",
         });
       } else {
         if (walletAddress && !isWalletConnected) {
           setIsWalletConnected(true);
-          setCurrentNetwork("polygon");
+          setCurrentNetwork("amoy");
           toast({
             title: "Network Changed",
-            description: "Connected to Polygon network.",
+            description: `Connected to ${AMOY_NETWORK_NAME}.`,
           });
         }
       }
     };
 
-    // Check if user has previously disconnected the wallet
     const hasDisconnected = localStorage.getItem('wallet_disconnected') === 'true';
-    
-    // Only auto-connect if user hasn't explicitly disconnected
     if (!hasDisconnected) {
       checkIfWalletIsConnected();
     }
 
-    // Set up event listeners
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', handleAccountsChanged);
       window.ethereum.on('chainChanged', handleChainChanged);
     }
 
-    // Clean up event listeners
     return () => {
       if (window.ethereum) {
         window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
