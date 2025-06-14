@@ -5,13 +5,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Edit, Grid3X3, Building, Award, Home, Zap } from "lucide-react";
 
 // Component imports
-import WriteReviewForm from "@/components/review/WriteReviewForm";
-import CategoriesView from "@/components/review/CategoriesView";
-import BusinessesView from "@/components/review/BusinessesView";
-import StakeRewardsView from "@/components/review/StakeRewardsView";
-import PortalContent from "@/components/review/PortalContent";
-import DeploymentTester from "@/components/blockchain/DeploymentTester";
-import AnalyticsDashboard from "@/components/analytics/AnalyticsDashboard";
+import HomeTab from "@/components/review/portal/HomeTab";
+import WriteReviewTab from "@/components/review/portal/WriteReviewTab";
+import CategoriesTab from "@/components/review/portal/CategoriesTab";
+import BusinessesTab from "@/components/review/portal/BusinessesTab";
+import StakeTab from "@/components/review/portal/StakeTab";
+import DeploymentTab from "@/components/review/portal/DeploymentTab";
+import AnalyticsTab from "@/components/review/portal/AnalyticsTab";
 
 // Custom hooks
 import { useWalletConnection } from '@/hooks/useWalletConnection';
@@ -180,7 +180,7 @@ const ReviewPortal = () => {
 
           {/* Home Content */}
           <TabsContent value="home">
-            <PortalContent 
+            <HomeTab 
               categories={categories}
               topCompanies={topCompanies}
               recentReviews={recentReviews}
@@ -191,28 +191,26 @@ const ReviewPortal = () => {
 
           {/* Write Review Tab */}
           <TabsContent value="write-review">
-            <WriteReviewForm 
+            <WriteReviewTab 
               isWalletConnected={isWalletConnected} 
               connectWallet={connectWallet} 
               categories={categories}
-              // TODO: accept/merge extended companies list here
-              // For now still works with small mock, will be enhanced in next iteration with a proper file upload/import.
             />
           </TabsContent>
 
           {/* Categories Tab */}
           <TabsContent value="categories">
-            <CategoriesView categories={categories} />
+            <CategoriesTab categories={categories} />
           </TabsContent>
 
           {/* For Businesses Tab */}
           <TabsContent value="businesses">
-            <BusinessesView />
+            <BusinessesTab />
           </TabsContent>
 
           {/* Stake Rewards Tab */}
           <TabsContent value="stake">
-            <StakeRewardsView 
+            <StakeTab 
               isWalletConnected={isWalletConnected} 
               connectWallet={connectWallet} 
             />
@@ -225,12 +223,12 @@ const ReviewPortal = () => {
               <strong>What is Deploy & Test?</strong> <br />
               Use this area to deploy mock smart contracts and test blockchain features. Perfect for verifying functionality on Polygon Amoy testnet before going live!
             </div>
-            <DeploymentTester />
+            <DeploymentTab />
           </TabsContent>
 
           {/* Analytics Dashboard Tab */}
           <TabsContent value="analytics">
-            <AnalyticsDashboard />
+            <AnalyticsTab />
           </TabsContent>
 
         </Tabs>
