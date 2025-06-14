@@ -21,11 +21,19 @@ module.exports = {
       url: process.env.AMOY_RPC_URL || "https://rpc-amoy.polygon.technology/",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 80002,
+      gas: "auto",
+      gasPrice: "auto",
+      gasMultiplier: 1.2,
+      timeout: 60000,
     },
     polygon: {
       url: process.env.POLYGON_RPC_URL || "https://polygon-rpc.com/",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 137,
+      gas: "auto",
+      gasPrice: "auto",
+      gasMultiplier: 1.2,
+      timeout: 60000,
     },
   },
   etherscan: {
@@ -39,5 +47,8 @@ module.exports = {
     tests: "./test",
     cache: "./cache",
     artifacts: "./artifacts",
+  },
+  mocha: {
+    timeout: 60000,
   },
 };
