@@ -5,7 +5,9 @@ import HomeTab from "@/components/review/portal/HomeTab";
 import WriteReviewTab from "@/components/review/portal/WriteReviewTab";
 import CategoriesTab from "@/components/review/portal/CategoriesTab";
 import BusinessesTab from "@/components/review/portal/BusinessesTab";
-import StakeTab from "@/components/review/portal/StakeTab";
+import NFTMarketplaceTab from "@/components/review/portal/NFTMarketplaceTab";
+import LiquidityTab from "@/components/review/portal/LiquidityTab";
+import StakingTab from "@/components/review/portal/StakingTab";
 import DeploymentTab from "@/components/review/portal/DeploymentTab";
 import AnalyticsTab from "@/components/review/portal/AnalyticsTab";
 import { portalTabs, categories, topCompanies, recentReviews } from "./portalTabsData";
@@ -36,7 +38,7 @@ export const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connect
         </div>
       </div>
       {/* Mobile Tabs */}
-      <TabsList className="w-full mb-6 grid grid-cols-7 md:hidden">
+      <TabsList className="w-full mb-6 grid grid-cols-9 md:hidden">
         {portalTabs.map(({ id, label, icon }) => (
           <TabsTrigger key={id} value={id} className="flex items-center gap-1.5">
             {typeof icon === "string"
@@ -65,8 +67,14 @@ export const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connect
       <TabsContent value="businesses">
         <BusinessesTab />
       </TabsContent>
-      <TabsContent value="stake">
-        <StakeTab isWalletConnected={isWalletConnected} connectWallet={connectWallet} />
+      <TabsContent value="nft-marketplace">
+        <NFTMarketplaceTab isWalletConnected={isWalletConnected} connectWallet={connectWallet} />
+      </TabsContent>
+      <TabsContent value="liquidity">
+        <LiquidityTab isWalletConnected={isWalletConnected} connectWallet={connectWallet} />
+      </TabsContent>
+      <TabsContent value="staking">
+        <StakingTab isWalletConnected={isWalletConnected} connectWallet={connectWallet} />
       </TabsContent>
       <TabsContent value="deployment">
         <div className="mb-4 text-foreground/70 text-sm border border-border rounded bg-muted/40 p-3">
@@ -81,4 +89,5 @@ export const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connect
     </Tabs>
   );
 };
+
 export default PortalTabs;
