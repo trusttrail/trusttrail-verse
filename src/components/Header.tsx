@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Menu, X, ShoppingCart, CheckCircle, ChevronDown } from "lucide-react";
@@ -84,7 +83,7 @@ const Header = () => {
                       to="/testnet-faucet" 
                       className="block px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
                     >
-                      🚰 Faucet
+                      🧪 Testnet Dashboard
                     </Link>
                   </div>
                 </NavigationMenuContent>
@@ -152,7 +151,7 @@ const Header = () => {
                 className="block pl-4 py-2 text-foreground/80 hover:text-foreground transition-colors text-left"
                 onClick={toggleMenu}
               >
-                🚰 Faucet
+                🧪 Testnet Dashboard
               </Link>
             </div>
             
