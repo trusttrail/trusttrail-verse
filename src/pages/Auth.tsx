@@ -31,6 +31,7 @@ const Auth = () => {
     const refreshToken = searchParams.get('refresh_token');
     const error = searchParams.get('error');
     const errorDescription = searchParams.get('error_description');
+    const resetParam = searchParams.get('reset'); // Our custom parameter for password reset
     
     // Also check hash parameters as Supabase sometimes uses those
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -46,6 +47,7 @@ const Auth = () => {
       refreshToken: !!(refreshToken || hashRefreshToken),
       error: error || hashError,
       errorDescription: errorDescription || hashErrorDescription,
+      resetParam,
       fullURL: window.location.href
     });
 
@@ -60,8 +62,8 @@ const Auth = () => {
       return;
     }
     
-    // Handle password recovery flow - check for type=recovery
-    if (type === 'recovery' || hashType === 'recovery') {
+    // Handle password recovery flow - check for type=recovery OR reset=true
+    if (type === 'recovery' || hashType === 'recovery' || resetParam === 'true') {
       console.log('Password reset flow detected');
       setShowPasswordReset(true);
       
@@ -72,7 +74,7 @@ const Auth = () => {
       };
       
       if (tokens.access_token && tokens.refresh_token) {
-        console.log('Setting session with tokens');
+        console.log('Setting session with tokens for password reset');
         supabase.auth.setSession({
           access_token: tokens.access_token,
           refresh_token: tokens.refresh_token
@@ -91,6 +93,9 @@ const Auth = () => {
             console.log('Session set successfully for password reset');
           }
         });
+      } else if (resetParam === 'true') {
+        // Password reset flow but no tokens yet - show reset form anyway
+        console.log('Password reset flow without tokens - showing reset form');
       } else {
         console.log('No tokens found for password reset');
         toast({
@@ -120,8 +125,8 @@ const Auth = () => {
       console.log('Auth page - Current session check:', { session: !!session, error });
       
       if (session?.user && session.user.email_confirmed_at) {
-        console.log('User already authenticated and verified, redirecting to review portal');
-        navigate('/review-portal');
+        console.log('User already authenticated and verified, redirecting to home');
+        navigate('/');
       }
     };
     checkAuth();
@@ -143,7 +148,8 @@ const Auth = () => {
             });
           }
           
-          navigate('/review-portal');
+          // Navigate to home page for normal auth flows
+          navigate('/');
         } else {
           console.log('User signed in but email not verified yet');
           setShowVerification(true);
@@ -174,7 +180,7 @@ const Auth = () => {
         type: 'signup',
         email: email.toLowerCase().trim(),
         options: {
-          emailRedirectTo: `${window.location.origin}/review-portal`
+          emailRedirectTo: `${window.location.origin}/`
         }
       });
 

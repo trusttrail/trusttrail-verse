@@ -34,7 +34,7 @@ const ForgotPasswordForm = ({ email, setEmail, onBack }: ForgotPasswordFormProps
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `https://trusttrail-verse.lovable.app/auth?type=recovery`,
+        redirectTo: `https://preview--trusttrail-verse.lovable.app/auth?reset=true`,
       });
 
       if (error) {

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
@@ -56,7 +55,7 @@ const AuthForm = ({
         email: cleanEmail,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/review-portal`,
+          emailRedirectTo: `https://preview--trusttrail-verse.lovable.app/`,
           data: {
             email_confirm: true,
             wallet_address: isWalletConnected ? walletAddress : null
