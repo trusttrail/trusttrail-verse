@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,9 +26,9 @@ const Auth = () => {
 
   // Check if this is a password reset flow
   useEffect(() => {
+    const type = searchParams.get('type');
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
-    const type = searchParams.get('type');
     const error = searchParams.get('error');
     const errorDescription = searchParams.get('error_description');
     
@@ -38,7 +37,8 @@ const Auth = () => {
       accessToken: !!accessToken, 
       refreshToken: !!refreshToken,
       error,
-      errorDescription
+      errorDescription,
+      fullURL: window.location.href
     });
 
     // Handle error cases
@@ -52,28 +52,60 @@ const Auth = () => {
       return;
     }
     
-    // Handle password recovery flow
-    if (type === 'recovery' && accessToken && refreshToken) {
+    // Handle password recovery flow - check for type=recovery first
+    if (type === 'recovery') {
       console.log('Password reset flow detected');
       setShowPasswordReset(true);
       
-      // Set the session with the tokens from URL
-      supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken
-      }).then(({ data, error }) => {
-        console.log('Session set result:', { data: !!data, error });
-        if (error) {
-          console.error('Error setting session:', error);
-          toast({
-            title: "Invalid reset link",
-            description: "This password reset link is invalid or expired. Please request a new one.",
-            variant: "destructive",
+      // If we have tokens, set the session
+      if (accessToken && refreshToken) {
+        console.log('Setting session with tokens from URL');
+        supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken
+        }).then(({ data, error }) => {
+          console.log('Session set result:', { data: !!data, error });
+          if (error) {
+            console.error('Error setting session:', error);
+            toast({
+              title: "Invalid reset link",
+              description: "This password reset link is invalid or expired. Please request a new one.",
+              variant: "destructive",
+            });
+            setShowPasswordReset(false);
+            setShowForgotPassword(true);
+          } else {
+            console.log('Session set successfully for password reset');
+          }
+        });
+      } else {
+        // Sometimes the tokens come as hash parameters instead of query parameters
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const hashAccessToken = hashParams.get('access_token');
+        const hashRefreshToken = hashParams.get('refresh_token');
+        
+        if (hashAccessToken && hashRefreshToken) {
+          console.log('Setting session with hash tokens');
+          supabase.auth.setSession({
+            access_token: hashAccessToken,
+            refresh_token: hashRefreshToken
+          }).then(({ data, error }) => {
+            console.log('Session set from hash result:', { data: !!data, error });
+            if (error) {
+              console.error('Error setting session from hash:', error);
+              toast({
+                title: "Invalid reset link",
+                description: "This password reset link is invalid or expired. Please request a new one.",
+                variant: "destructive",
+              });
+              setShowPasswordReset(false);
+              setShowForgotPassword(true);
+            }
           });
-          setShowPasswordReset(false);
-          setShowForgotPassword(true);
+        } else {
+          console.log('No tokens found, showing password reset form anyway');
         }
-      });
+      }
     }
   }, [searchParams, toast]);
 
@@ -176,6 +208,8 @@ const Auth = () => {
     setShowForgotPassword(false);
     setShowVerification(false);
     setIsEmailSent(false);
+    // Clear URL parameters when going back
+    window.history.replaceState({}, document.title, window.location.pathname);
   };
 
   return (

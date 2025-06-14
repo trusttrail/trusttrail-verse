@@ -20,6 +20,26 @@ const PasswordResetForm = ({ onBack }: PasswordResetFormProps) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Check if user has a valid session for password reset
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      console.log('PasswordResetForm - Session check:', { session: !!session, error });
+      
+      if (!session) {
+        console.log('No valid session for password reset, redirecting to forgot password');
+        toast({
+          title: "Invalid reset session",
+          description: "Please request a new password reset link.",
+          variant: "destructive",
+        });
+        onBack();
+      }
+    };
+    
+    checkSession();
+  }, [onBack, toast]);
+
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -44,6 +64,7 @@ const PasswordResetForm = ({ onBack }: PasswordResetFormProps) => {
     setIsLoading(true);
     
     try {
+      console.log('Attempting to update password');
       const { error } = await supabase.auth.updateUser({
         password: password
       });
@@ -53,12 +74,14 @@ const PasswordResetForm = ({ onBack }: PasswordResetFormProps) => {
         throw error;
       }
 
+      console.log('Password updated successfully');
       toast({
         title: "Password updated successfully",
         description: "Your password has been reset. You can now sign in with your new password.",
       });
       
-      // Clear the URL parameters and redirect to sign in
+      // Sign out to clear the reset session and redirect to normal auth
+      await supabase.auth.signOut();
       navigate('/auth', { replace: true });
     } catch (error: any) {
       console.error('Password reset failed:', error);
