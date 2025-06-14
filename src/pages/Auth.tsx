@@ -5,9 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from '@/components/Header';
-import { LogIn, UserPlus, Mail, Lock, Wallet, ArrowLeft } from 'lucide-react';
+import { LogIn, UserPlus, Mail, Lock, Wallet, ArrowLeft, KeyRound } from 'lucide-react';
 import VerificationTimer from '@/components/VerificationTimer';
 import { useWalletConnection } from '@/hooks/useWalletConnection';
 import { linkWalletToProfile } from '@/utils/authUtils';
@@ -15,14 +15,27 @@ import { linkWalletToProfile } from '@/utils/authUtils';
 const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { walletAddress, isWalletConnected, needsSignup, existingUser } = useWalletConnection();
   const [isSignUp, setIsSignUp] = useState(needsSignup);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
+
+  // Check if this is a password reset flow
+  useEffect(() => {
+    const type = searchParams.get('type');
+    const accessToken = searchParams.get('access_token');
+    
+    if (type === 'recovery' && accessToken) {
+      setShowPasswordReset(true);
+    }
+  }, [searchParams]);
 
   // Update signup mode based on wallet connection state
   useEffect(() => {
@@ -77,6 +90,58 @@ const Auth = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate, toast, isWalletConnected, walletAddress]);
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please make sure both password fields match.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password.length < 8) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 8 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: password
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Password updated successfully",
+        description: "Your password has been reset. You can now sign in with your new password.",
+      });
+      
+      // Clear the URL parameters and redirect to sign in
+      navigate('/auth', { replace: true });
+      setShowPasswordReset(false);
+    } catch (error: any) {
+      console.error('Password reset failed:', error);
+      toast({
+        title: "Password reset failed",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -271,7 +336,7 @@ const Auth = () => {
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth?reset=true`,
+        redirectTo: `${window.location.origin}/auth?type=recovery`,
       });
 
       if (error) {
@@ -295,6 +360,92 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
+
+  if (showPasswordReset) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 pt-24 pb-12">
+          <div className="max-w-md mx-auto">
+            <Card>
+              <CardHeader className="text-center">
+                <CardTitle className="flex items-center justify-center gap-2">
+                  <KeyRound size={20} />
+                  Reset Your Password
+                </CardTitle>
+                <CardDescription>
+                  Enter your new password below
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handlePasswordReset} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password" className="flex items-center gap-2">
+                      <Lock size={16} />
+                      New Password
+                    </Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter your new password"
+                      required
+                      minLength={8}
+                      disabled={isLoading}
+                      autoComplete="new-password"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password" className="flex items-center gap-2">
+                      <Lock size={16} />
+                      Confirm New Password
+                    </Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm your new password"
+                      required
+                      minLength={8}
+                      disabled={isLoading}
+                      autoComplete="new-password"
+                    />
+                  </div>
+
+                  <p className="text-xs text-gray-500">
+                    Password must be at least 8 characters long
+                  </p>
+
+                  <Button
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-trustpurple-500 to-trustblue-500"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Updating Password...' : 'Update Password'}
+                  </Button>
+                </form>
+
+                <div className="mt-4 text-center">
+                  <Button
+                    variant="link"
+                    onClick={() => navigate('/auth')}
+                    className="text-sm flex items-center gap-1"
+                    disabled={isLoading}
+                  >
+                    <ArrowLeft size={14} />
+                    Back to sign in
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (showForgotPassword) {
     return (
