@@ -67,13 +67,24 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    // Check if wallet is already connected
-    if (window.ethereum && window.ethereum.selectedAddress) {
-      setAddress(window.ethereum.selectedAddress);
-      setIsConnected(true);
-      setCurrentNetwork(web3Service.getCurrentNetwork());
-      refreshBalance();
-    }
+    // Check if wallet is already connected using proper Web3 API
+    const checkConnection = async () => {
+      if (window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts.length > 0) {
+            setAddress(accounts[0]);
+            setIsConnected(true);
+            setCurrentNetwork(web3Service.getCurrentNetwork());
+            refreshBalance();
+          }
+        } catch (error) {
+          console.error('Failed to check existing connection:', error);
+        }
+      }
+    };
+    
+    checkConnection();
   }, []);
 
   const value: Web3ContextType = {
