@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
@@ -33,7 +34,7 @@ const ForgotPasswordForm = ({ email, setEmail, onBack }: ForgotPasswordFormProps
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth?type=recovery`,
+        redirectTo: `https://trusttrail-verse.lovable.app/auth`,
       });
 
       if (error) {

@@ -27,12 +27,32 @@ const Auth = () => {
 
   // Check if this is a password reset flow
   useEffect(() => {
-    const type = searchParams.get('type');
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
+    const type = searchParams.get('type');
+    const error = searchParams.get('error');
+    const errorDescription = searchParams.get('error_description');
     
-    console.log('Auth page URL params:', { type, accessToken: !!accessToken, refreshToken: !!refreshToken });
+    console.log('Auth page URL params:', { 
+      type, 
+      accessToken: !!accessToken, 
+      refreshToken: !!refreshToken,
+      error,
+      errorDescription
+    });
+
+    // Handle error cases
+    if (error) {
+      console.error('Auth error from URL:', error, errorDescription);
+      toast({
+        title: "Authentication Error",
+        description: errorDescription || error,
+        variant: "destructive",
+      });
+      return;
+    }
     
+    // Handle password recovery flow
     if (type === 'recovery' && accessToken && refreshToken) {
       console.log('Password reset flow detected');
       setShowPasswordReset(true);
@@ -42,7 +62,7 @@ const Auth = () => {
         access_token: accessToken,
         refresh_token: refreshToken
       }).then(({ data, error }) => {
-        console.log('Session set result:', { data, error });
+        console.log('Session set result:', { data: !!data, error });
         if (error) {
           console.error('Error setting session:', error);
           toast({
@@ -70,7 +90,7 @@ const Auth = () => {
     // Check if user is already logged in
     const checkAuth = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
-      console.log('Auth page - Current session check:', { session, error });
+      console.log('Auth page - Current session check:', { session: !!session, error });
       
       if (session?.user && session.user.email_confirmed_at) {
         console.log('User already authenticated and verified, redirecting to review portal');
@@ -81,7 +101,7 @@ const Auth = () => {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth page - Auth event:", event, session);
+      console.log("Auth page - Auth event:", event, !!session);
       
       if (event === 'SIGNED_IN' && session?.user) {
         if (session.user.email_confirmed_at) {
