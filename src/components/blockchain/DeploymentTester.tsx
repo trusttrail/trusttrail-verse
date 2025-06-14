@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, AlertCircle, Clock, Zap } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CheckCircle, AlertCircle, Clock, Zap, BookOpen } from "lucide-react";
 import { useWeb3 } from '@/hooks/useWeb3';
 import { useToast } from '@/hooks/use-toast';
+import DeploymentInstructions from './DeploymentInstructions';
 
 export const DeploymentTester: React.FC = () => {
   const { web3Service, isConnected, address } = useWeb3();
@@ -171,83 +173,102 @@ export const DeploymentTester: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5" />
-            Deployment Testing Suite
-          </CardTitle>
-          <CardDescription>
-            Test your deployed smart contracts to ensure everything is working correctly
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium">Test Company Name</label>
-              <Input
-                value={testReview.companyName}
-                onChange={(e) => setTestReview({...testReview, companyName: e.target.value})}
-                placeholder="Enter company name for test"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Test Category</label>
-              <Input
-                value={testReview.category}
-                onChange={(e) => setTestReview({...testReview, category: e.target.value})}
-                placeholder="e.g., Technology, Healthcare"
-              />
-            </div>
-          </div>
-          
-          <div>
-            <label className="text-sm font-medium">Test Review Content</label>
-            <Textarea
-              value={testReview.content}
-              onChange={(e) => setTestReview({...testReview, content: e.target.value})}
-              placeholder="Enter test review content"
-              rows={3}
-            />
-          </div>
-
-          <Button
-            onClick={runDeploymentTests}
-            disabled={!isConnected || isSubmitting}
-            className="w-full"
-            size="lg"
-          >
-            {isSubmitting ? "Running Tests..." : "Run Deployment Tests"}
-          </Button>
-        </CardContent>
-      </Card>
-
-      {testResults.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Test Results</CardTitle>
-            <CardDescription>
-              Results from your deployment testing
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {testResults.map((result, index) => (
-                <div key={index} className="flex items-start justify-between p-3 border rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      {getStatusIcon(result.status)}
-                      <span className="font-medium">{result.test}</span>
-                      {getStatusBadge(result.status)}
-                    </div>
-                    <p className="text-sm text-muted-foreground">{result.details}</p>
-                  </div>
+      <Tabs defaultValue="instructions" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="instructions" className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4" />
+            Instructions
+          </TabsTrigger>
+          <TabsTrigger value="testing" className="flex items-center gap-2">
+            <Zap className="h-4 w-4" />
+            Testing Suite
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="instructions">
+          <DeploymentInstructions />
+        </TabsContent>
+        
+        <TabsContent value="testing">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5" />
+                Deployment Testing Suite
+              </CardTitle>
+              <CardDescription>
+                Test your deployed smart contracts to ensure everything is working correctly
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Test Company Name</label>
+                  <Input
+                    value={testReview.companyName}
+                    onChange={(e) => setTestReview({...testReview, companyName: e.target.value})}
+                    placeholder="Enter company name for test"
+                  />
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                <div>
+                  <label className="text-sm font-medium">Test Category</label>
+                  <Input
+                    value={testReview.category}
+                    onChange={(e) => setTestReview({...testReview, category: e.target.value})}
+                    placeholder="e.g., Technology, Healthcare"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">Test Review Content</label>
+                <Textarea
+                  value={testReview.content}
+                  onChange={(e) => setTestReview({...testReview, content: e.target.value})}
+                  placeholder="Enter test review content"
+                  rows={3}
+                />
+              </div>
+
+              <Button
+                onClick={runDeploymentTests}
+                disabled={!isConnected || isSubmitting}
+                className="w-full"
+                size="lg"
+              >
+                {isSubmitting ? "Running Tests..." : "Run Deployment Tests"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {testResults.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Test Results</CardTitle>
+                <CardDescription>
+                  Results from your deployment testing
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {testResults.map((result, index) => (
+                    <div key={index} className="flex items-start justify-between p-3 border rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          {getStatusIcon(result.status)}
+                          <span className="font-medium">{result.test}</span>
+                          {getStatusBadge(result.status)}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{result.details}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

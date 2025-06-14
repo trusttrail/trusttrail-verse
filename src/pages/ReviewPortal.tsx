@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Edit, Grid3X3, Building, Award, Home } from "lucide-react";
+import { Edit, Grid3X3, Building, Award, Home, Zap } from "lucide-react";
 
 // Component imports
 import WriteReviewForm from "@/components/review/WriteReviewForm";
@@ -11,6 +11,7 @@ import CategoriesView from "@/components/review/CategoriesView";
 import BusinessesView from "@/components/review/BusinessesView";
 import StakeRewardsView from "@/components/review/StakeRewardsView";
 import PortalContent from "@/components/review/PortalContent";
+import DeploymentTester from "@/components/blockchain/DeploymentTester";
 
 // Custom hooks
 import { useWalletConnection } from '@/hooks/useWalletConnection';
@@ -129,12 +130,16 @@ const ReviewPortal = () => {
                   <Award size={16} />
                   <span className="hidden sm:inline">Stake Rewards</span>
                 </TabsTrigger>
+                <TabsTrigger value="deployment" className="flex items-center gap-1.5">
+                  <Zap size={16} />
+                  <span className="hidden sm:inline">Deploy & Test</span>
+                </TabsTrigger>
               </TabsList>
             </div>
           </div>
           
           {/* Mobile Tabs */}
-          <TabsList className="w-full mb-6 md:hidden">
+          <TabsList className="w-full mb-6 grid grid-cols-6 md:hidden">
             <TabsTrigger value="home" className="flex items-center gap-1.5">
               <Home size={16} />
               <span>Home</span>
@@ -154,6 +159,10 @@ const ReviewPortal = () => {
             <TabsTrigger value="stake" className="flex items-center gap-1.5">
               <Award size={16} />
               <span>Stake</span>
+            </TabsTrigger>
+            <TabsTrigger value="deployment" className="flex items-center gap-1.5">
+              <Zap size={16} />
+              <span>Deploy</span>
             </TabsTrigger>
           </TabsList>
 
@@ -192,6 +201,11 @@ const ReviewPortal = () => {
               isWalletConnected={isWalletConnected} 
               connectWallet={connectWallet} 
             />
+          </TabsContent>
+
+          {/* Deployment & Testing Tab */}
+          <TabsContent value="deployment">
+            <DeploymentTester />
           </TabsContent>
         </Tabs>
       </div>
