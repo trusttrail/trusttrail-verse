@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
@@ -33,8 +32,12 @@ const ForgotPasswordForm = ({ email, setEmail, onBack }: ForgotPasswordFormProps
     setIsLoading(true);
     
     try {
+      // Use the current origin to build the redirect URL
+      const redirectUrl = `${window.location.origin}/auth?type=recovery`;
+      console.log('Sending password reset with redirect URL:', redirectUrl);
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `https://preview--trusttrail-verse.lovable.app/auth?reset=true`,
+        redirectTo: redirectUrl,
       });
 
       if (error) {

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,16 +25,15 @@ const Auth = () => {
   const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Check if this is a password reset flow
+  // Check URL parameters for password reset or email verification
   useEffect(() => {
     const type = searchParams.get('type');
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
     const error = searchParams.get('error');
     const errorDescription = searchParams.get('error_description');
-    const resetParam = searchParams.get('reset'); // Our custom parameter for password reset
     
-    // Also check hash parameters as Supabase sometimes uses those
+    // Also check hash parameters as Supabase uses those for auth callbacks
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const hashType = hashParams.get('type');
     const hashAccessToken = hashParams.get('access_token');
@@ -41,17 +41,16 @@ const Auth = () => {
     const hashError = hashParams.get('error');
     const hashErrorDescription = hashParams.get('error_description');
     
-    console.log('Auth page URL params:', { 
-      type: type || hashType, 
-      accessToken: !!(accessToken || hashAccessToken), 
-      refreshToken: !!(refreshToken || hashRefreshToken),
+    console.log('Auth page URL analysis:', { 
+      queryType: type,
+      hashType: hashType,
+      hasQueryTokens: !!(accessToken && refreshToken),
+      hasHashTokens: !!(hashAccessToken && hashRefreshToken),
       error: error || hashError,
-      errorDescription: errorDescription || hashErrorDescription,
-      resetParam,
       fullURL: window.location.href
     });
 
-    // Handle error cases
+    // Handle error cases first
     if (error || hashError) {
       console.error('Auth error from URL:', error || hashError, errorDescription || hashErrorDescription);
       toast({
@@ -61,27 +60,26 @@ const Auth = () => {
       });
       return;
     }
-    
-    // Handle password recovery flow - check for type=recovery OR reset=true
-    if (type === 'recovery' || hashType === 'recovery' || resetParam === 'true') {
-      console.log('Password reset flow detected');
+
+    // Handle password recovery flow (type=recovery in either query or hash)
+    const isPasswordReset = type === 'recovery' || hashType === 'recovery';
+    const tokens = {
+      access_token: accessToken || hashAccessToken,
+      refresh_token: refreshToken || hashRefreshToken
+    };
+
+    if (isPasswordReset) {
+      console.log('Password reset flow detected', { hasTokens: !!(tokens.access_token && tokens.refresh_token) });
       setShowPasswordReset(true);
       
-      // Use tokens from either query params or hash params
-      const tokens = {
-        access_token: accessToken || hashAccessToken,
-        refresh_token: refreshToken || hashRefreshToken
-      };
-      
       if (tokens.access_token && tokens.refresh_token) {
-        console.log('Setting session with tokens for password reset');
+        console.log('Setting session for password reset');
         supabase.auth.setSession({
           access_token: tokens.access_token,
           refresh_token: tokens.refresh_token
         }).then(({ data, error }) => {
-          console.log('Session set result:', { data: !!data, error });
           if (error) {
-            console.error('Error setting session:', error);
+            console.error('Error setting session for password reset:', error);
             toast({
               title: "Invalid reset link",
               description: "This password reset link is invalid or expired. Please request a new one.",
@@ -90,14 +88,11 @@ const Auth = () => {
             setShowPasswordReset(false);
             setShowForgotPassword(true);
           } else {
-            console.log('Session set successfully for password reset');
+            console.log('Password reset session set successfully');
           }
         });
-      } else if (resetParam === 'true') {
-        // Password reset flow but no tokens yet - show reset form anyway
-        console.log('Password reset flow without tokens - showing reset form');
       } else {
-        console.log('No tokens found for password reset');
+        console.log('Password reset without tokens - showing error');
         toast({
           title: "Invalid reset link",
           description: "This password reset link is missing required information. Please request a new one.",
@@ -124,7 +119,7 @@ const Auth = () => {
       const { data: { session }, error } = await supabase.auth.getSession();
       console.log('Auth page - Current session check:', { session: !!session, error });
       
-      if (session?.user && session.user.email_confirmed_at) {
+      if (session?.user && session.user.email_confirmed_at && !showPasswordReset) {
         console.log('User already authenticated and verified, redirecting to home');
         navigate('/');
       }
@@ -136,8 +131,8 @@ const Auth = () => {
       console.log("Auth page - Auth event:", event, !!session);
       
       if (event === 'SIGNED_IN' && session?.user) {
-        if (session.user.email_confirmed_at) {
-          console.log('User signed in and verified');
+        if (session.user.email_confirmed_at && !showPasswordReset) {
+          console.log('User signed in and verified via normal auth flow');
           
           // Link wallet if connected
           if (isWalletConnected && walletAddress) {
@@ -148,9 +143,9 @@ const Auth = () => {
             });
           }
           
-          // Navigate to home page for normal auth flows
+          // Navigate to home page for normal auth flows (not password reset)
           navigate('/');
-        } else {
+        } else if (!session.user.email_confirmed_at) {
           console.log('User signed in but email not verified yet');
           setShowVerification(true);
           toast({
@@ -162,7 +157,7 @@ const Auth = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, toast, isWalletConnected, walletAddress]);
+  }, [navigate, toast, isWalletConnected, walletAddress, showPasswordReset]);
 
   const handleResendVerification = async () => {
     if (!email) {

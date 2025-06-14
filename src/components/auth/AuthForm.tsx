@@ -55,7 +55,8 @@ const AuthForm = ({
         email: cleanEmail,
         password,
         options: {
-          emailRedirectTo: `https://preview--trusttrail-verse.lovable.app/`,
+          // Email verification should redirect to home page
+          emailRedirectTo: `${window.location.origin}/`,
           data: {
             email_confirm: true,
             wallet_address: isWalletConnected ? walletAddress : null
