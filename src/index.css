@@ -1,5 +1,4 @@
 
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -30,28 +29,28 @@
     --radius: 0.75rem;
   }
 
-  /* Light theme */
+  /* Light theme - More subtle and cohesive */
   .light {
-    --background: 0 0% 98%;
-    --foreground: 240 10% 3.9%;
+    --background: 250 50% 98%;
+    --foreground: 240 15% 15%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 240 15% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    --popover-foreground: 240 15% 15%;
     --primary: 250 84% 54%;
     --primary-foreground: 0 0% 100%;
     --secondary: 220 85% 57%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 5% 95%;
-    --muted-foreground: 240 5% 45%;
+    --muted: 250 20% 96%;
+    --muted-foreground: 240 8% 55%;
     --accent: 220 85% 57%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5% 85%;
-    --border-light: 240 5% 75%;
-    --input: 240 5% 85%;
-    --ring: 240 30% 40%;
+    --border: 250 15% 88%;
+    --border-light: 250 15% 82%;
+    --input: 250 15% 88%;
+    --ring: 240 30% 60%;
   }
 
   * {
@@ -80,11 +79,15 @@
   }
   
   .light .glass-card {
-    @apply bg-white/90 backdrop-blur-xl border-black/5 shadow-lg rounded-2xl border;
+    @apply bg-white/80 backdrop-blur-xl border-black/8 shadow-lg rounded-2xl border;
   }
   
   .crypto-gradient {
     background: linear-gradient(135deg, rgba(123, 88, 246, 0.1), rgba(44, 159, 255, 0.1));
+  }
+
+  .light .crypto-gradient {
+    background: linear-gradient(135deg, rgba(123, 88, 246, 0.05), rgba(44, 159, 255, 0.05));
   }
 
   .glow {
@@ -92,7 +95,7 @@
   }
   
   .light .glow {
-    @apply shadow-[0_0_20px_5px_rgba(123,88,246,0.2)];
+    @apply shadow-[0_0_20px_5px_rgba(123,88,246,0.15)];
   }
   
   .gold-glow {
@@ -100,7 +103,7 @@
   }
   
   .light .gold-glow {
-    @apply shadow-[0_0_20px_5px_rgba(240,176,3,0.3)];
+    @apply shadow-[0_0_20px_5px_rgba(240,176,3,0.2)];
   }
 
   .section-padding {
@@ -115,6 +118,16 @@
       rgba(240, 176, 3, 0.15) 216deg, 
       rgba(123, 88, 246, 0.15) 288deg, 
       rgba(44, 159, 255, 0.15) 360deg);
+  }
+
+  .light .animated-bg {
+    background: conic-gradient(from 0deg at 50% 50%, 
+      rgba(123, 88, 246, 0.08) 0deg, 
+      rgba(44, 159, 255, 0.08) 72deg, 
+      rgba(123, 88, 246, 0.08) 144deg, 
+      rgba(240, 176, 3, 0.08) 216deg, 
+      rgba(123, 88, 246, 0.08) 288deg, 
+      rgba(44, 159, 255, 0.08) 360deg);
   }
 
   @keyframes pulse-slow {
@@ -153,4 +166,3 @@
     }
   }
 }
-

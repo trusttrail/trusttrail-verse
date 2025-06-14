@@ -9,7 +9,6 @@ import FakeReviewDetection from '@/components/FakeReviewDetection';
 import FAQ from '@/components/FAQ';
 import Newsletter from '@/components/Newsletter';
 import Footer from '@/components/Footer';
-import MainNavigationTabs from '@/components/MainNavigationTabs';
 import ParticleContainer from '@/components/ParticleContainer';
 import { useTheme } from '@/hooks/useTheme';
 import { useWalletConnection } from '@/hooks/useWalletConnection';
@@ -23,7 +22,6 @@ const Index = () => {
   return (
     <div className={`min-h-screen bg-background text-foreground transition-colors duration-300 ${theme}`}>
       <Header />
-      <MainNavigationTabs />
       <ParticleContainer theme={theme} />
       <Hero />
       <Features />
