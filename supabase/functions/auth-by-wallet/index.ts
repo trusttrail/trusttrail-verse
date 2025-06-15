@@ -74,8 +74,11 @@ serve(async (req) => {
       )
     }
 
-    // Generate access token for the user
-    const { data: tokenData, error: tokenError } = await supabaseAdmin.auth.admin.generateAccessToken(profile.id)
+    // Use the correct method name: createSignedJWT instead of generateAccessToken
+    const { data: tokenData, error: tokenError } = await supabaseAdmin.auth.admin.createSignedJWT({
+      sub: profile.id,
+      aud: 'authenticated'
+    })
 
     if (tokenError || !tokenData) {
       console.error('Token generation error:', tokenError)
@@ -91,8 +94,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        access_token: tokenData.access_token,
-        refresh_token: tokenData.refresh_token,
+        access_token: tokenData,
+        refresh_token: null, // JWT tokens don't have refresh tokens
         user: user
       }),
       { 

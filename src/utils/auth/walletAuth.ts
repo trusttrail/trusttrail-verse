@@ -22,10 +22,10 @@ export const authenticateByWallet = async (walletAddress: string) => {
 
     console.log('✅ Received auth tokens, setting session...');
 
-    // Set the session using the tokens
+    // For JWT tokens, we need to set the session differently
     const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
       access_token: data.access_token,
-      refresh_token: data.refresh_token
+      refresh_token: data.refresh_token || ''
     });
 
     if (sessionError) {

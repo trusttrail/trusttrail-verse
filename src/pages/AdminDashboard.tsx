@@ -52,7 +52,7 @@ const AdminDashboard = () => {
                     ✅ Your wallet ({walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}) is recognized as an existing user.
                   </p>
                   <p className="text-xs text-blue-500">
-                    Automatic authentication should have started. If not working, please try refreshing the page.
+                    Automatic authentication is in progress. If it doesn't work, please refresh the page or try the manual sign-in option below.
                   </p>
                 </div>
               )}
