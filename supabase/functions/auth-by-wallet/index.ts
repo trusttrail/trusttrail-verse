@@ -81,17 +81,19 @@ serve(async (req) => {
 
     console.log('✅ User found:', user.id)
 
-    // Generate access token using the correct method - createSignedJWT
-    const { data: tokenData, error: tokenError } = await supabaseAdmin.auth.admin.createSignedJWT({
-      sub: profile.id,
-      aud: 'authenticated',
-      role: 'authenticated'
+    // Generate a session for the existing user using generateLink
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'magiclink',
+      email: user.email!,
+      options: {
+        redirectTo: `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}.supabase.co`
+      }
     })
 
-    if (tokenError || !tokenData) {
-      console.error('Token generation error:', tokenError)
+    if (linkError || !linkData) {
+      console.error('Link generation error:', linkError)
       return new Response(
-        JSON.stringify({ error: 'Failed to generate access token' }),
+        JSON.stringify({ error: 'Failed to generate auth link' }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -99,14 +101,29 @@ serve(async (req) => {
       )
     }
 
-    console.log('✅ Access token generated successfully')
+    console.log('✅ Auth link generated successfully')
 
-    // For JWT tokens, we need to return the token directly
+    // Extract tokens from the generated link
+    const url = new URL(linkData.properties.action_link)
+    const accessToken = url.searchParams.get('access_token')
+    const refreshToken = url.searchParams.get('refresh_token')
+
+    if (!accessToken) {
+      console.error('No access token in generated link')
+      return new Response(
+        JSON.stringify({ error: 'Failed to extract access token' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true,
-        access_token: tokenData,
-        refresh_token: '', // JWT tokens don't have refresh tokens
+        access_token: accessToken,
+        refresh_token: refreshToken || '',
         user: user
       }),
       { 
