@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -20,7 +21,12 @@ export const useWalletEvents = (
   const handleWalletChange = async (newAddress: string) => {
     console.log('Wallet changed to:', newAddress, 'Authenticated:', isAuthenticated);
     
+    // Always reset flags when wallet changes
+    setNeedsSignup(false);
+    setExistingUser(false);
+    
     if (!isAuthenticated) {
+      // Check if the new wallet exists in database
       const { exists } = await checkWalletExists(newAddress);
       console.log('Wallet exists check for changed address:', { exists, newAddress });
 
@@ -67,6 +73,7 @@ export const useWalletEvents = (
         });
       } else if (accounts[0] !== walletAddress) {
         const newAddress = accounts[0];
+        console.log('Setting new wallet address:', newAddress);
         setWalletAddress(newAddress);
         localStorage.setItem('connected_wallet_address', newAddress);
 
@@ -75,10 +82,14 @@ export const useWalletEvents = (
           setIsWalletConnected(true);
           setCurrentNetwork("amoy");
           
+          // Handle wallet change with proper state checking
           await handleWalletChange(newAddress);
         } else {
           setIsWalletConnected(false);
           setCurrentNetwork("wrong");
+          // Reset flags when wrong network
+          setNeedsSignup(false);
+          setExistingUser(false);
         }
       }
     };
@@ -89,6 +100,9 @@ export const useWalletEvents = (
       if (chainId !== AMOY_CHAIN_ID) {
         setIsWalletConnected(false);
         setCurrentNetwork("wrong");
+        // Reset flags when wrong network
+        setNeedsSignup(false);
+        setExistingUser(false);
         toast({
           title: "Wrong Network",
           description: `Wallet disconnected. Please switch to ${AMOY_NETWORK_NAME} and reconnect.`,
