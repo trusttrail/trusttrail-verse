@@ -12,18 +12,19 @@ const ReviewPortal = () => {
   const { theme } = useTheme();
   const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("home");
-  const { isWalletConnected, connectWallet, needsSignup } = useWalletConnection();
+  const { isWalletConnected, connectWallet, needsSignup, existingUser } = useWalletConnection();
   
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Header />
       <div className="flex-grow container mx-auto px-4 pt-24 pb-16">
-        {/* Show SignUp prompt for users who are not authenticated */}
-        {!isAuthenticated && (
+        {/* Show SignUp prompt only for non-authenticated users with specific wallet states */}
+        {!isAuthenticated && isWalletConnected && (needsSignup || existingUser) && (
           <SignUpPrompt 
             isWalletConnected={isWalletConnected}
             connectWallet={connectWallet}
-            needsSignup={needsSignup || isWalletConnected}
+            needsSignup={needsSignup}
+            existingUser={existingUser}
           />
         )}
         
