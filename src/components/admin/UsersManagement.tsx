@@ -29,16 +29,24 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ isAdmin }) => {
   const { data: users, isLoading: usersLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async (): Promise<AdminUser[]> => {
+      console.log('Fetching admin users data...');
+      
       // Get all profiles first
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
+      
+      console.log('Profiles fetched:', profiles);
       
       // Get auth users data
       const { data: authData } = await supabase.auth.admin.listUsers();
+      console.log('Auth data fetched:', authData);
       
       // Ensure profiles is an array and properly typed
       const profilesArray: ProfileData[] = profiles || [];
@@ -56,6 +64,7 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ isAdmin }) => {
         } as AdminUser;
       });
       
+      console.log('Combined users:', combinedUsers);
       return combinedUsers;
     },
     enabled: !!isAdmin
@@ -92,17 +101,28 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ isAdmin }) => {
     toggleAdminMutation.mutate({ userId, isAdmin });
   };
 
+  if (usersLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Users Management</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-trustpurple-500"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Users Management</CardTitle>
       </CardHeader>
       <CardContent>
-        {usersLoading ? (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-trustpurple-500"></div>
-          </div>
-        ) : users?.length === 0 ? (
+        {!users || users.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">No users found.</p>
         ) : (
           <div className="overflow-x-auto">
@@ -119,7 +139,7 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ isAdmin }) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users?.map((user) => (
+                {users.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">
                       {user.email || 'No email'}
