@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useWalletConnection } from '@/hooks/useWalletConnection';
-import { linkWalletToProfile, getAutoSignInData, clearAutoSignInData } from '@/utils/authUtils';
+import { linkWalletToProfile } from '@/utils/authUtils';
 import PasswordResetForm from './PasswordResetForm';
 import ForgotPasswordForm from './ForgotPasswordForm';
 import EmailVerificationView from './EmailVerificationView';
@@ -33,20 +33,26 @@ const AuthContainer = () => {
     }
   }, [needsSignup, existingUser]);
 
-  // Handle pending authentication for existing users
+  // Check for recognized wallet and pre-fill information
   useEffect(() => {
-    const handlePendingAuth = async () => {
-      const autoSignInData = getAutoSignInData();
-      if (autoSignInData && existingUser) {
-        console.log('Found pending auth data for existing user, auto-filling form');
-        // For existing users with pending auth, we can guide them through a streamlined process
-        // The wallet is already recognized, so we can show a simplified sign-in flow
-        clearAutoSignInData();
-      }
-    };
-
-    handlePendingAuth();
-  }, [existingUser]);
+    const recognizedUserId = localStorage.getItem('recognized_wallet_user_id');
+    const recognizedWalletAddress = localStorage.getItem('recognized_wallet_address');
+    
+    if (recognizedUserId && recognizedWalletAddress) {
+      console.log('Found recognized wallet, setting up for existing user sign-in');
+      setIsSignUp(false);
+      
+      // Show helpful message for existing user
+      toast({
+        title: "Welcome Back!",
+        description: "Your wallet is recognized. Please sign in with your account credentials.",
+      });
+      
+      // Clear the stored data
+      localStorage.removeItem('recognized_wallet_user_id');
+      localStorage.removeItem('recognized_wallet_address');
+    }
+  }, [toast]);
 
   useEffect(() => {
     // Check if user is already logged in

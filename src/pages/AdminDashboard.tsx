@@ -35,32 +35,6 @@ const AdminDashboard = () => {
     );
   }
 
-  // Check if user is not authenticated but has wallet connected and it's an existing user
-  if (!user && isWalletConnected && existingUser) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="container mx-auto px-4 pt-24">
-          <Card className="max-w-md mx-auto">
-            <CardContent className="pt-6 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-trustpurple-500 mx-auto mb-4"></div>
-              <h1 className="text-2xl font-bold mb-4">Authenticating...</h1>
-              <p className="text-muted-foreground mb-4">
-                Your admin wallet ({walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}) is recognized. 
-              </p>
-              <p className="text-sm text-muted-foreground mb-4">
-                Completing automatic sign-in...
-              </p>
-              <Button onClick={() => navigate('/auth')} variant="outline" className="w-full">
-                Complete Sign In Manually
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
   // Check if user is not authenticated
   if (!user) {
     return (
@@ -71,6 +45,11 @@ const AdminDashboard = () => {
             <CardContent className="pt-6 text-center">
               <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
               <p className="text-muted-foreground mb-4">You need to be signed in to access the admin dashboard.</p>
+              {isWalletConnected && existingUser && (
+                <p className="text-sm text-blue-600 mb-4">
+                  Your wallet ({walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}) is recognized as an existing user.
+                </p>
+              )}
               <Button onClick={() => navigate('/auth')} className="w-full">
                 Sign In
               </Button>
