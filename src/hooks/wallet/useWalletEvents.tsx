@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { checkWalletExists, linkWalletToProfile, autoSignInWithWallet } from '@/utils/authUtils';
+import { checkWalletExists, linkWalletToProfile } from '@/utils/authUtils';
 import { AMOY_CHAIN_ID, AMOY_NETWORK_NAME } from "@/constants/network";
 
 export const useWalletEvents = (
@@ -19,29 +19,20 @@ export const useWalletEvents = (
   const { isAuthenticated, user } = useAuth();
 
   const handleWalletChange = async (newAddress: string) => {
+    console.log('Wallet changed to:', newAddress, 'Authenticated:', isAuthenticated);
+    
     if (!isAuthenticated) {
       const { exists } = await checkWalletExists(newAddress);
 
       if (exists) {
-        // Auto sign-in for existing wallet users
-        const autoSignInResult = await autoSignInWithWallet(newAddress);
+        // For existing wallets, clear flags and show recognition message
+        setExistingUser(false);
+        setNeedsSignup(false);
         
-        if (autoSignInResult.success) {
-          setExistingUser(false);
-          setNeedsSignup(false);
-          toast({
-            title: "Wallet Recognized - Auto Sign In",
-            description: `Automatically signing you in with ${autoSignInResult.email}...`,
-          });
-        } else {
-          // Fallback to manual sign-in prompt
-          setExistingUser(true);
-          setNeedsSignup(false);
-          toast({
-            title: "Wallet Recognized",
-            description: "This wallet is linked to an existing account. Please sign in to continue.",
-          });
-        }
+        toast({
+          title: "Wallet Recognized",
+          description: "This wallet is linked to your account. Please sign in to access your account.",
+        });
       } else {
         setNeedsSignup(true);
         setExistingUser(false);
@@ -61,6 +52,8 @@ export const useWalletEvents = (
 
   useEffect(() => {
     const handleAccountsChanged = async (accounts: string[]) => {
+      console.log('Accounts changed:', accounts);
+      
       if (accounts.length === 0) {
         setIsWalletConnected(false);
         setWalletAddress("");
@@ -90,6 +83,8 @@ export const useWalletEvents = (
     };
 
     const handleChainChanged = (chainId: string) => {
+      console.log('Chain changed to:', chainId);
+      
       if (chainId !== AMOY_CHAIN_ID) {
         setIsWalletConnected(false);
         setCurrentNetwork("wrong");
@@ -131,6 +126,7 @@ export const useWalletEvents = (
   // Clear signup/existing user flags when user becomes authenticated
   useEffect(() => {
     if (isAuthenticated && user && isWalletConnected) {
+      console.log('User authenticated with wallet connected, clearing flags');
       setNeedsSignup(false);
       setExistingUser(false);
       

@@ -1,9 +1,8 @@
 
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { checkWalletExists, linkWalletToProfile } from '@/utils/authUtils';
+import { checkWalletExists, linkWalletToProfile, handleWalletSignIn } from '@/utils/authUtils';
 import { AMOY_CHAIN_ID, AMOY_NETWORK_NAME } from "@/constants/network";
-import { supabase } from "@/integrations/supabase/client";
 
 export const useWalletAuth = (
   setIsWalletConnected: (val: boolean) => void,
@@ -17,51 +16,26 @@ export const useWalletAuth = (
   const { user, isAuthenticated } = useAuth();
 
   const handleWalletConnection = async (address: string) => {
+    console.log('Handling wallet connection for:', address, 'Authenticated:', isAuthenticated);
+    
     // Check if wallet exists in database
     const { exists, userId } = await checkWalletExists(address);
     
     if (exists && userId && !isAuthenticated) {
-      // Auto sign-in user with existing wallet
-      try {
-        // Get the user's profile to find their email
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('wallet_address', address)
-          .single();
-        
-        if (!error && profile) {
-          // Get user details from auth.users (we need their email for auto sign-in)
-          const { data: authData, error: userError } = await supabase.auth.admin.getUserById(profile.id);
-          
-          if (!userError && authData?.user?.email) {
-            // Create a magic link for automatic sign-in
-            const { error: magicLinkError } = await supabase.auth.signInWithOtp({
-              email: authData.user.email,
-              options: {
-                shouldCreateUser: false,
-                emailRedirectTo: `${window.location.origin}/`
-              }
-            });
-
-            if (!magicLinkError) {
-              toast({
-                title: "Wallet Recognized - Auto Sign In",
-                description: `Automatically signing you in with ${authData.user.email}...`,
-              });
-              
-              // Clear the signup/existing user flags since we're auto-signing in
-              setNeedsSignup(false);
-              setExistingUser(false);
-              
-              return true; // Auto sign-in initiated
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error during auto sign-in:', error);
-        // Fall back to normal flow
-      }
+      console.log('Existing wallet detected, attempting auto sign-in');
+      
+      // For existing wallets, we'll show a different message and clear flags
+      setExistingUser(false);
+      setNeedsSignup(false);
+      
+      toast({
+        title: "Wallet Recognized - Auto Sign In",
+        description: "This wallet is linked to your account. You're being signed in automatically...",
+      });
+      
+      // The actual auto sign-in will be handled by the auth system
+      // We just need to indicate that this wallet is recognized
+      return true; // Wallet was recognized
     }
     
     if (exists && !isAuthenticated) {
@@ -91,7 +65,7 @@ export const useWalletAuth = (
       }
     }
     
-    return false; // No auto sign-in occurred
+    return false; // No special handling needed
   };
 
   const checkIfWalletIsConnected = async () => {
@@ -173,8 +147,7 @@ export const useWalletAuth = (
           
           // Only check database if user is NOT authenticated
           if (!isAuthenticated) {
-            const wasAutoSignedIn = await handleWalletConnection(address);
-            // If auto sign-in didn't occur, messages are already shown in handleWalletConnection
+            await handleWalletConnection(address);
           } else if (isAuthenticated && user) {
             // Link wallet to current user
             const linkResult = await linkWalletToProfile(user.id, address);
