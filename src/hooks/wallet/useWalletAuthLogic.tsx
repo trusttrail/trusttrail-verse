@@ -98,26 +98,20 @@ export const useWalletAuthLogic = (
         setExistingUser(true);
         setNeedsSignup(false);
         
+        // Check if we're on admin page - don't redirect if so
+        const currentPath = window.location.pathname;
+        if (currentPath === '/admin') {
+          toast({
+            title: "Wallet Recognized",
+            description: "Please sign in to access the admin dashboard.",
+          });
+          return false;
+        }
+        
         toast({
           title: "Welcome Back!",
-          description: "Your wallet is recognized. Signing you in automatically...",
+          description: "Your wallet is recognized. Please sign in to continue.",
         });
-        
-        // Attempt auto sign-in for existing wallet
-        console.log('Attempting auto sign-in...');
-        const autoSignInResult = await handleWalletAutoSignIn(address);
-        console.log('Auto sign-in result:', autoSignInResult);
-        
-        if (autoSignInResult.success) {
-          console.log('✅ Auto sign-in successful');
-          return true;
-        } else {
-          console.log('❌ Auto sign-in failed, user needs to sign in manually');
-          toast({
-            title: "Sign In Required",
-            description: "Please complete sign-in to continue.",
-          });
-        }
         
         return false;
       } else {

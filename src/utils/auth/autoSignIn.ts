@@ -17,7 +17,7 @@ export const autoSignInWithWallet = async (walletAddress: string) => {
 
     console.log('Wallet found for user:', userId);
     
-    // Get the user's email from the profiles table to attempt sign-in
+    // Get the user's profile from the profiles table
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
@@ -30,16 +30,28 @@ export const autoSignInWithWallet = async (walletAddress: string) => {
       return { success: false, error: 'Profile not found' };
     }
     
-    // For now, we'll use the approach of storing the wallet info and letting the user sign in manually
-    // A proper implementation would require the user to have signed in at least once with email/password
-    // before we can auto-sign them in with just the wallet
+    // Check if user already has an active session
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    
+    if (currentSession?.user?.id === userId) {
+      console.log('User already has active session');
+      return { 
+        success: true, 
+        userId,
+        alreadySignedIn: true,
+        message: 'Already signed in'
+      };
+    }
+    
+    // For wallet-based users, we need them to complete the sign-in manually
+    // since we don't have their password for automatic sign-in
     localStorage.setItem('auto_signin_user_id', userId);
     localStorage.setItem('auto_signin_wallet', walletAddress);
     
     return { 
       success: true, 
       userId,
-      shouldAutoSignIn: true,
+      needsManualSignIn: true,
       message: 'Wallet recognized - please complete sign-in'
     };
     
@@ -62,21 +74,29 @@ export const clearAutoSignInData = () => {
   localStorage.removeItem('auto_signin_wallet');
 };
 
-// Sign in user with existing wallet - redirect to auth with pre-filled info
+// Handle wallet auto sign-in without redirect loops
 export const handleWalletAutoSignIn = async (walletAddress: string) => {
   try {
     const result = await autoSignInWithWallet(walletAddress);
     
-    if (result.success && result.shouldAutoSignIn) {
-      // Store the wallet info for the auth page to use
-      localStorage.setItem('recognized_wallet', walletAddress);
-      
-      // Redirect to auth page where the user can complete sign-in
-      setTimeout(() => {
-        window.location.href = '/auth?wallet_recognized=true';
-      }, 1500);
-      
-      return { success: true };
+    if (result.success) {
+      if (result.alreadySignedIn) {
+        // User is already signed in, no need to redirect
+        return { success: true, message: 'Already authenticated' };
+      } else if (result.needsManualSignIn) {
+        // Store the wallet info for the auth page to use
+        localStorage.setItem('recognized_wallet', walletAddress);
+        
+        // Only redirect if we're not already on an auth-related page
+        const currentPath = window.location.pathname;
+        if (!currentPath.includes('/auth') && !currentPath.includes('/admin')) {
+          setTimeout(() => {
+            window.location.href = '/auth?wallet_recognized=true';
+          }, 1500);
+        }
+        
+        return { success: true, needsAuth: true };
+      }
     }
     
     return result;

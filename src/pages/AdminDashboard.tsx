@@ -8,11 +8,16 @@ import { useAdminProfile } from '@/hooks/useAdminProfile';
 import UsersManagement from '@/components/admin/UsersManagement';
 import ReviewsManagement from '@/components/admin/ReviewsManagement';
 import { useAuth } from '@/hooks/useAuth';
+import { useWalletConnection } from '@/hooks/useWalletConnection';
+import { Button } from "@/components/ui/button";
+import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState<string>('users');
   const { data: profile, isLoading: profileLoading } = useAdminProfile();
   const { user, loading: authLoading } = useAuth();
+  const { isWalletConnected, walletAddress } = useWalletConnection();
+  const navigate = useNavigate();
 
   console.log('AdminDashboard - Auth state:', { user: !!user, authLoading, profile, profileLoading });
 
@@ -30,6 +35,28 @@ const AdminDashboard = () => {
     );
   }
 
+  // Check if user is not authenticated but has wallet connected
+  if (!user && isWalletConnected) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 pt-24">
+          <Card className="max-w-md mx-auto">
+            <CardContent className="pt-6 text-center">
+              <h1 className="text-2xl font-bold mb-4">Sign In Required</h1>
+              <p className="text-muted-foreground mb-4">
+                Your wallet ({walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}) is connected but you need to sign in to access the admin dashboard.
+              </p>
+              <Button onClick={() => navigate('/auth')} className="w-full">
+                Sign In to Continue
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   // Check if user is not authenticated
   if (!user) {
     return (
@@ -39,7 +66,10 @@ const AdminDashboard = () => {
           <Card className="max-w-md mx-auto">
             <CardContent className="pt-6 text-center">
               <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
-              <p className="text-muted-foreground">You need to be signed in to access the admin dashboard.</p>
+              <p className="text-muted-foreground mb-4">You need to be signed in to access the admin dashboard.</p>
+              <Button onClick={() => navigate('/auth')} className="w-full">
+                Sign In
+              </Button>
             </CardContent>
           </Card>
         </div>
