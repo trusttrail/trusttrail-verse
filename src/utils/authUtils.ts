@@ -10,3 +10,4 @@ export {
   clearAutoSignInData, 
   handleWalletAutoSignIn 
 } from './auth/autoSignIn';
+export { authenticateByWallet } from './auth/walletAuth';

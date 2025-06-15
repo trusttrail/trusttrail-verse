@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useRecentActivity } from '@/hooks/useRecentActivity';
 import { checkWalletExists, linkWalletToProfile } from '@/utils/authUtils';
+import { authenticateByWallet } from '@/utils/auth/walletAuth';
 
 export const useWalletAuthLogic = (
   setNeedsSignup: (val: boolean) => void,
@@ -32,6 +33,8 @@ export const useWalletAuthLogic = (
       if (cached.exists) {
         setExistingUser(true);
         setNeedsSignup(false);
+        // Try automatic authentication for cached existing users
+        await attemptAutoAuthentication(address);
       } else {
         setNeedsSignup(true);
         setExistingUser(false);
@@ -98,19 +101,8 @@ export const useWalletAuthLogic = (
         setExistingUser(true);
         setNeedsSignup(false);
         
-        // Store the user info for the auth page to use
-        localStorage.setItem('recognized_wallet_user_id', userId);
-        localStorage.setItem('recognized_wallet_address', address);
-        
-        toast({
-          title: "Wallet Recognized",
-          description: "This wallet is linked to an existing account. Redirecting to sign in...",
-        });
-        
-        // Redirect to auth page after a short delay
-        setTimeout(() => {
-          window.location.href = '/auth';
-        }, 1500);
+        // Attempt automatic authentication
+        await attemptAutoAuthentication(address);
         
         console.log('✅ Existing user processing complete');
         return true;
@@ -148,6 +140,56 @@ export const useWalletAuthLogic = (
     }
     
     return false;
+  };
+
+  const attemptAutoAuthentication = async (address: string) => {
+    try {
+      console.log('🔐 Attempting automatic authentication for wallet:', address);
+      
+      toast({
+        title: "Authenticating...",
+        description: "Signing you in automatically with your wallet.",
+      });
+
+      const authResult = await authenticateByWallet(address);
+      
+      if (authResult.success) {
+        console.log('✅ Automatic authentication successful!');
+        toast({
+          title: "Welcome Back!",
+          description: "Successfully signed in with your wallet.",
+        });
+        
+        // Force page reload to ensure clean state
+        setTimeout(() => {
+          window.location.href = '/admin';
+        }, 1000);
+      } else {
+        console.error('❌ Automatic authentication failed:', authResult.error);
+        toast({
+          title: "Auto Sign-In Failed",
+          description: "Please complete sign-in manually to continue.",
+          variant: "destructive",
+        });
+        
+        // Redirect to auth page as fallback
+        setTimeout(() => {
+          window.location.href = '/auth';
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('❌ Auto authentication error:', error);
+      toast({
+        title: "Authentication Error",
+        description: "Please try signing in manually.",
+        variant: "destructive",
+      });
+      
+      // Redirect to auth page as fallback
+      setTimeout(() => {
+        window.location.href = '/auth';
+      }, 2000);
+    }
   };
 
   // Reset the last processed wallet when user authenticates
