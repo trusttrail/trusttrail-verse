@@ -16,7 +16,6 @@ export const useWalletAuthLogic = (
   const lastProcessedWallet = useRef<string>('');
   const processingRef = useRef<boolean>(false);
   const lastResultRef = useRef<{ address: string; exists: boolean; timestamp: number } | null>(null);
-  const authenticationAttemptRef = useRef<{ address: string; timestamp: number } | null>(null);
 
   const handleWalletConnection = async (address: string) => {
     console.log('=== WALLET AUTH DEBUG START ===');
@@ -34,12 +33,8 @@ export const useWalletAuthLogic = (
       if (cached.exists) {
         setExistingUser(true);
         setNeedsSignup(false);
-        // Only attempt auto authentication if we haven't tried recently
-        if (!authenticationAttemptRef.current || 
-            authenticationAttemptRef.current.address !== address ||
-            (now - authenticationAttemptRef.current.timestamp) > 60000) {
-          await attemptAutoAuthentication(address);
-        }
+        // Immediately attempt authentication for cached existing users
+        await attemptAutoAuthentication(address);
       } else {
         setNeedsSignup(true);
         setExistingUser(false);
@@ -106,12 +101,9 @@ export const useWalletAuthLogic = (
         setExistingUser(true);
         setNeedsSignup(false);
         
-        // Attempt automatic authentication only once per session
-        if (!authenticationAttemptRef.current || 
-            authenticationAttemptRef.current.address !== address ||
-            (now - authenticationAttemptRef.current.timestamp) > 60000) {
-          await attemptAutoAuthentication(address);
-        }
+        // Automatically authenticate existing users
+        console.log('🔐 Automatically authenticating existing user...');
+        await attemptAutoAuthentication(address);
         
         console.log('✅ Existing user processing complete');
         return true;
@@ -152,18 +144,9 @@ export const useWalletAuthLogic = (
   };
 
   const attemptAutoAuthentication = async (address: string) => {
-    const now = Date.now();
-    
-    // Record the authentication attempt
-    authenticationAttemptRef.current = {
-      address,
-      timestamp: now
-    };
-    
     try {
       console.log('🔐 Attempting automatic authentication for wallet:', address);
       
-      // Don't show toast for auto authentication to avoid spam
       const authResult = await authenticateByWallet(address);
       
       if (authResult.success) {
@@ -178,13 +161,22 @@ export const useWalletAuthLogic = (
           window.location.reload();
         }, 1000);
       } else {
-        console.error('❌ Automatic authentication failed:', authResult.error);
-        // Don't show error toast for failed auto authentication
-        // Just let the user see the existing user status
+        console.warn('⚠️ Automatic authentication failed:', authResult.error);
+        // For existing users, if auto-auth fails, we should still show them as existing
+        // but they might need to use manual sign-in as fallback
+        toast({
+          title: "Auto Sign-In Issue",  
+          description: "Your wallet is recognized but auto sign-in failed. Please try refreshing or use manual sign-in.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('❌ Auto authentication error:', error);
-      // Silent failure for auto authentication
+      toast({
+        title: "Authentication Error",
+        description: "Failed to sign in automatically. Please try refreshing the page.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -194,7 +186,6 @@ export const useWalletAuthLogic = (
       lastProcessedWallet.current = '';
       processingRef.current = false;
       lastResultRef.current = null;
-      authenticationAttemptRef.current = null;
     }
   }, [isAuthenticated]);
 
