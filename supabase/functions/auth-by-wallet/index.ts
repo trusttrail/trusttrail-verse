@@ -16,6 +16,8 @@ serve(async (req) => {
   try {
     const { walletAddress } = await req.json()
     
+    console.log('🔐 Auth by wallet request for:', walletAddress)
+    
     if (!walletAddress) {
       return new Response(
         JSON.stringify({ error: 'Wallet address is required' }),
@@ -51,6 +53,7 @@ serve(async (req) => {
     }
 
     if (!profile) {
+      console.log('❌ Wallet not found in profiles')
       return new Response(
         JSON.stringify({ error: 'Wallet not found' }),
         { 
@@ -59,6 +62,8 @@ serve(async (req) => {
         }
       )
     }
+
+    console.log('✅ Profile found for user:', profile.id)
 
     // Get user from auth.users table
     const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(profile.id)
@@ -74,11 +79,10 @@ serve(async (req) => {
       )
     }
 
-    // Use the correct method name: createSignedJWT instead of generateAccessToken
-    const { data: tokenData, error: tokenError } = await supabaseAdmin.auth.admin.createSignedJWT({
-      sub: profile.id,
-      aud: 'authenticated'
-    })
+    console.log('✅ User found:', user.id)
+
+    // Generate access token using the correct method
+    const { data: tokenData, error: tokenError } = await supabaseAdmin.auth.admin.generateAccessToken(profile.id)
 
     if (tokenError || !tokenData) {
       console.error('Token generation error:', tokenError)
@@ -91,11 +95,13 @@ serve(async (req) => {
       )
     }
 
+    console.log('✅ Access token generated successfully')
+
     return new Response(
       JSON.stringify({ 
         success: true,
-        access_token: tokenData,
-        refresh_token: null, // JWT tokens don't have refresh tokens
+        access_token: tokenData.access_token,
+        refresh_token: tokenData.refresh_token,
         user: user
       }),
       { 
