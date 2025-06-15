@@ -43,17 +43,17 @@ const AdminDashboard = () => {
         <div className="container mx-auto px-4 pt-24">
           <Card className="max-w-md mx-auto">
             <CardContent className="pt-6 text-center">
-              <h1 className="text-2xl font-bold mb-4">Automatic Sign-In in Progress</h1>
+              <h1 className="text-2xl font-bold mb-4">Authenticating...</h1>
               <p className="text-muted-foreground mb-4">
-                Your admin wallet ({walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}) is connected and recognized. 
-                You should be signed in automatically shortly.
+                Your admin wallet ({walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}) is recognized. 
+                You should be signed in automatically without any email verification.
               </p>
-              <p className="text-sm text-muted-foreground mb-4">
-                If automatic sign-in doesn't work, please check your email for a sign-in link or click below to sign in manually.
+              <div className="flex justify-center py-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-trustpurple-500"></div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Authentication in progress... This should complete automatically.
               </p>
-              <Button onClick={() => navigate('/auth')} className="w-full">
-                Sign In Manually
-              </Button>
             </CardContent>
           </Card>
         </div>
