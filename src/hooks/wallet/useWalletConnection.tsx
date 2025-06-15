@@ -1,7 +1,6 @@
 
 import { useToast } from '@/hooks/use-toast';
 import { AMOY_CHAIN_ID, AMOY_NETWORK_NAME } from "@/constants/network";
-import { checkWalletExists } from '@/utils/authUtils';
 
 export const useWalletConnection = (
   setIsWalletConnected: (val: boolean) => void,

@@ -11,7 +11,7 @@ export const useWalletAuth = (
   setExistingUser: (val: boolean) => void
 ) => {
   const { 
-    checkIfWalletIsConnected, 
+    checkIfWalletIsConnected: baseCheckWallet, 
     connectWallet: baseConnectWallet, 
     connectWithWalletConnect 
   } = useWalletConnection(
@@ -26,30 +26,30 @@ export const useWalletAuth = (
     setExistingUser
   );
 
-  const checkIfWalletIsConnectedWithAuth = async () => {
-    console.log('Checking wallet connection with auth...');
-    const address = await checkIfWalletIsConnected();
+  const checkIfWalletIsConnected = async () => {
+    console.log('🔍 useWalletAuth: Checking wallet connection with auth...');
+    const address = await baseCheckWallet();
     if (address) {
-      console.log('Wallet found, checking auth status for:', address);
+      console.log('🔍 useWalletAuth: Wallet found, checking auth status for:', address);
       await handleWalletConnection(address);
     } else {
-      console.log('No wallet connected');
+      console.log('🔍 useWalletAuth: No wallet connected');
     }
   };
 
   const connectWallet = async () => {
-    console.log('Connecting wallet...');
+    console.log('🔌 useWalletAuth: Starting wallet connection...');
     const address = await baseConnectWallet();
     if (address) {
-      console.log('Wallet connected, checking auth status for:', address);
+      console.log('🔌 useWalletAuth: Wallet connected, checking auth status for:', address);
       await handleWalletConnection(address);
     } else {
-      console.log('Wallet connection failed or cancelled');
+      console.log('🔌 useWalletAuth: Wallet connection failed or cancelled');
     }
   };
 
   return {
-    checkIfWalletIsConnected: checkIfWalletIsConnectedWithAuth,
+    checkIfWalletIsConnected,
     connectWallet,
     connectWithWalletConnect,
   };

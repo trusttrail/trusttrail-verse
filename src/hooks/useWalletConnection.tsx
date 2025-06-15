@@ -1,6 +1,6 @@
 
 import { useWalletState } from './wallet/useWalletState';
-import { useWalletConnection as useWalletConnectionLogic } from './wallet/useWalletConnection';
+import { useWalletAuth } from './wallet/useWalletAuth';
 import { useWalletEvents } from './wallet/useWalletEvents';
 import { useWalletNetwork } from "./wallet/useWalletNetwork";
 
@@ -41,11 +41,13 @@ export const useWalletConnection = (): WalletConnectionHook => {
     checkIfWalletIsConnected,
     connectWallet,
     connectWithWalletConnect,
-  } = useWalletConnectionLogic(
+  } = useWalletAuth(
     setIsWalletConnected,
     setWalletAddress,
     setCurrentNetwork,
-    setIsWalletConnecting
+    setIsWalletConnecting,
+    setNeedsSignup,
+    setExistingUser
   );
 
   // Set up wallet events
