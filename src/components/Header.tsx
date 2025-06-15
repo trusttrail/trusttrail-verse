@@ -36,11 +36,6 @@ const Header = () => {
     setIsMobileMenuOpen(false);
   };
 
-  const handleAuth = () => {
-    navigate('/auth');
-    setIsMobileMenuOpen(false);
-  };
-
   const handleTestnet = () => {
     window.open('https://faucets.chain.link/polygon-amoy', '_blank');
     setIsMobileMenuOpen(false);
@@ -77,16 +72,9 @@ const Header = () => {
             <Button variant="ghost" size="sm" onClick={() => scrollToSection('faq')}>
               FAQ
             </Button>
-            <div className="flex items-center space-x-1">
-              <Button variant="ghost" size="sm" onClick={handleReviewPortal}>
-                Review Portal
-              </Button>
-              {!isAuthenticated && (
-                <Button variant="outline" size="sm" onClick={handleAuth}>
-                  Sign Up
-                </Button>
-              )}
-            </div>
+            <Button variant="ghost" size="sm" onClick={handleReviewPortal}>
+              Review Portal
+            </Button>
             <Button variant="ghost" size="sm" onClick={handleTestnet}>
               Testnet
             </Button>
@@ -152,16 +140,9 @@ const Header = () => {
               <Button variant="ghost" className="justify-start" onClick={() => scrollToSection('faq')}>
                 FAQ
               </Button>
-              <div className="flex items-center space-x-2 px-3">
-                <Button variant="ghost" className="justify-start flex-1" onClick={handleReviewPortal}>
-                  Review Portal
-                </Button>
-                {!isAuthenticated && (
-                  <Button variant="outline" size="sm" onClick={handleAuth}>
-                    Sign Up
-                  </Button>
-                )}
-              </div>
+              <Button variant="ghost" className="justify-start" onClick={handleReviewPortal}>
+                Review Portal
+              </Button>
               <Button variant="ghost" className="justify-start" onClick={handleTestnet}>
                 Testnet
               </Button>
