@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserPlus, Wallet, LogIn } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 interface SignUpPromptProps {
   isWalletConnected: boolean;
@@ -13,11 +13,15 @@ interface SignUpPromptProps {
 }
 
 const SignUpPrompt = ({ isWalletConnected, connectWallet, needsSignup, existingUser }: SignUpPromptProps) => {
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const handleAuthAction = () => {
     navigate('/auth');
   };
+
+  // Do not show the prompt if the user is already authenticated!
+  if (isAuthenticated) return null;
 
   // Show if wallet is connected and either needs signup OR is existing user (both require auth action)
   if (!isWalletConnected || (!needsSignup && !existingUser)) return null;
