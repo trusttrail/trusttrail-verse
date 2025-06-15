@@ -93,15 +93,41 @@ export const useWalletAuthLogic = (
       };
       
       if (exists && userId) {
-        console.log('✅ EXISTING WALLET DETECTED');
+        console.log('✅ EXISTING WALLET DETECTED - ATTEMPTING AUTO SIGN-IN');
         console.log('Setting existingUser = true, needsSignup = false');
         setExistingUser(true);
         setNeedsSignup(false);
         
+        // Attempt automatic sign-in for existing users
         toast({
           title: "Welcome Back!",
-          description: "Your wallet is recognized. Please sign in to continue.",
+          description: "Your wallet is recognized. Signing you in automatically...",
         });
+        
+        try {
+          const autoSignInResult = await handleWalletAutoSignIn(address);
+          console.log('Auto sign-in result:', autoSignInResult);
+          
+          if (autoSignInResult.success && autoSignInResult.autoSignInInitiated) {
+            // Auto sign-in was initiated, show success message
+            toast({
+              title: "Signing In",
+              description: "Please check your email for the sign-in link, or wait a moment...",
+            });
+          } else if (autoSignInResult.needsAuth) {
+            // Fallback to manual sign-in
+            toast({
+              title: "Sign In Required",
+              description: "Please complete the sign-in process to continue.",
+            });
+          }
+        } catch (autoSignInError) {
+          console.error('Auto sign-in failed:', autoSignInError);
+          toast({
+            title: "Welcome Back!",
+            description: "Your wallet is recognized. Please sign in to continue.",
+          });
+        }
         
         return false;
       } else {

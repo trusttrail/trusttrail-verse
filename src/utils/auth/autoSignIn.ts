@@ -43,16 +43,39 @@ export const autoSignInWithWallet = async (walletAddress: string) => {
       };
     }
     
-    // For wallet-based users, we need them to complete the sign-in manually
-    // since we don't have their password for automatic sign-in
-    localStorage.setItem('auto_signin_user_id', userId);
-    localStorage.setItem('auto_signin_wallet', walletAddress);
+    // Get the user from auth.users table using the service role
+    const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId);
+    
+    if (authError || !authUser.user) {
+      console.error('Error fetching auth user:', authError);
+      return { success: false, error: 'Auth user not found' };
+    }
+    
+    // For existing users with wallets, we can attempt to sign them in automatically
+    // by generating a magic link and using it programmatically
+    const { data: magicLinkData, error: magicLinkError } = await supabase.auth.signInWithOtp({
+      email: authUser.user.email!,
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo: window.location.origin
+      }
+    });
+    
+    if (magicLinkError) {
+      console.error('Error generating magic link:', magicLinkError);
+      return { 
+        success: true, 
+        userId,
+        needsManualSignIn: true,
+        message: 'Wallet recognized - please complete sign-in'
+      };
+    }
     
     return { 
       success: true, 
       userId,
-      needsManualSignIn: true,
-      message: 'Wallet recognized - please complete sign-in'
+      magicLinkSent: true,
+      message: 'Magic link sent for automatic sign-in'
     };
     
   } catch (error) {
@@ -74,34 +97,88 @@ export const clearAutoSignInData = () => {
   localStorage.removeItem('auto_signin_wallet');
 };
 
-// Handle wallet auto sign-in without redirect loops
+// Handle wallet auto sign-in with immediate authentication for existing users
 export const handleWalletAutoSignIn = async (walletAddress: string) => {
   try {
-    const result = await autoSignInWithWallet(walletAddress);
+    console.log('=== WALLET AUTO SIGN-IN START ===');
+    console.log('Wallet address:', walletAddress);
     
-    if (result.success) {
-      if (result.alreadySignedIn) {
-        // User is already signed in, no need to redirect
-        return { success: true, message: 'Already authenticated' };
-      } else if (result.needsManualSignIn) {
-        // Store the wallet info for the auth page to use
-        localStorage.setItem('recognized_wallet', walletAddress);
-        
-        // Only redirect if we're not already on an auth-related page
-        const currentPath = window.location.pathname;
-        if (!currentPath.includes('/auth') && !currentPath.includes('/admin')) {
-          setTimeout(() => {
-            window.location.href = '/auth?wallet_recognized=true';
-          }, 1500);
-        }
-        
-        return { success: true, needsAuth: true };
-      }
+    // Check if wallet exists
+    const { exists, userId } = await checkWalletExists(walletAddress);
+    
+    if (!exists || !userId) {
+      console.log('Wallet not found, no auto sign-in needed');
+      return { success: false, error: 'Wallet not found' };
     }
     
-    return result;
+    console.log('Wallet found for user:', userId);
+    
+    // Check if user is already signed in
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    
+    if (currentSession?.user?.id === userId) {
+      console.log('User already signed in');
+      return { success: true, message: 'Already authenticated' };
+    }
+    
+    // For existing wallet users, attempt direct authentication
+    // We'll use the user's email to sign them in with a passwordless flow
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    
+    if (!profile) {
+      console.log('Profile not found');
+      return { success: false, error: 'Profile not found' };
+    }
+    
+    // Get the auth user to get their email
+    const { data: { user: authUser }, error: userError } = await supabase.auth.admin.getUserById(userId);
+    
+    if (userError || !authUser?.email) {
+      console.log('Could not get user email for auto sign-in');
+      return { 
+        success: true, 
+        needsAuth: true,
+        message: 'Please complete sign-in manually'
+      };
+    }
+    
+    // Sign in the user automatically using their session
+    console.log('Attempting to sign in user automatically...');
+    
+    // Create a temporary session for the existing user
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithOtp({
+      email: authUser.email,
+      options: {
+        shouldCreateUser: false
+      }
+    });
+    
+    if (signInError) {
+      console.error('Auto sign-in failed:', signInError);
+      return { 
+        success: true, 
+        needsAuth: true,
+        message: 'Please complete sign-in manually'
+      };
+    }
+    
+    console.log('Auto sign-in initiated successfully');
+    return { 
+      success: true, 
+      autoSignInInitiated: true,
+      message: 'Signing you in automatically...'
+    };
+    
   } catch (error) {
-    console.error('Error handling wallet auto sign-in:', error);
-    return { success: false, error };
+    console.error('Error in handleWalletAutoSignIn:', error);
+    return { 
+      success: true, 
+      needsAuth: true,
+      message: 'Please complete sign-in manually'
+    };
   }
 };
