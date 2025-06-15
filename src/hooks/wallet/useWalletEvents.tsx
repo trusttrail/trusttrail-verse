@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { checkWalletExists, linkWalletToProfile } from '@/utils/authUtils';
+import { checkWalletExists, linkWalletToProfile, autoSignInWithWallet } from '@/utils/authUtils';
 import { AMOY_CHAIN_ID, AMOY_NETWORK_NAME } from "@/constants/network";
 
 export const useWalletEvents = (
@@ -23,12 +23,25 @@ export const useWalletEvents = (
       const { exists } = await checkWalletExists(newAddress);
 
       if (exists) {
-        setExistingUser(true);
-        setNeedsSignup(false);
-        toast({
-          title: "Wallet Recognized",
-          description: "This wallet is linked to an existing account. Please sign in to continue.",
-        });
+        // Auto sign-in for existing wallet users
+        const autoSignInResult = await autoSignInWithWallet(newAddress);
+        
+        if (autoSignInResult.success) {
+          setExistingUser(false);
+          setNeedsSignup(false);
+          toast({
+            title: "Wallet Recognized - Auto Sign In",
+            description: `Automatically signing you in with ${autoSignInResult.email}...`,
+          });
+        } else {
+          // Fallback to manual sign-in prompt
+          setExistingUser(true);
+          setNeedsSignup(false);
+          toast({
+            title: "Wallet Recognized",
+            description: "This wallet is linked to an existing account. Please sign in to continue.",
+          });
+        }
       } else {
         setNeedsSignup(true);
         setExistingUser(false);

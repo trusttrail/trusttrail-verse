@@ -31,22 +31,31 @@ export const useWalletAuth = (
           .single();
         
         if (!error && profile) {
-          // Get user details from auth.users (we need their email)
-          const { data: { user: authUser }, error: userError } = await supabase.auth.admin.getUserById(profile.id);
+          // Get user details from auth.users (we need their email for auto sign-in)
+          const { data: authData, error: userError } = await supabase.auth.admin.getUserById(profile.id);
           
-          if (!userError && authUser?.email) {
-            toast({
-              title: "Wallet Recognized - Auto Sign In",
-              description: `This wallet is linked to ${authUser.email}. You've been automatically signed in.`,
+          if (!userError && authData?.user?.email) {
+            // Create a magic link for automatic sign-in
+            const { error: magicLinkError } = await supabase.auth.signInWithOtp({
+              email: authData.user.email,
+              options: {
+                shouldCreateUser: false,
+                emailRedirectTo: `${window.location.origin}/`
+              }
             });
-            
-            // Set the session for this user (this will trigger the auth state change)
-            // Note: In a production app, you'd want a more secure method for auto sign-in
-            // For now, we'll just show the sign-in message and let user sign in normally
-            setExistingUser(true);
-            setNeedsSignup(false);
-            
-            return true; // Wallet is recognized
+
+            if (!magicLinkError) {
+              toast({
+                title: "Wallet Recognized - Auto Sign In",
+                description: `Automatically signing you in with ${authData.user.email}...`,
+              });
+              
+              // Clear the signup/existing user flags since we're auto-signing in
+              setNeedsSignup(false);
+              setExistingUser(false);
+              
+              return true; // Auto sign-in initiated
+            }
           }
         }
       } catch (error) {
@@ -165,10 +174,7 @@ export const useWalletAuth = (
           // Only check database if user is NOT authenticated
           if (!isAuthenticated) {
             const wasAutoSignedIn = await handleWalletConnection(address);
-            // If auto sign-in didn't occur, show appropriate message
-            if (!wasAutoSignedIn) {
-              // Messages are already shown in handleWalletConnection
-            }
+            // If auto sign-in didn't occur, messages are already shown in handleWalletConnection
           } else if (isAuthenticated && user) {
             // Link wallet to current user
             const linkResult = await linkWalletToProfile(user.id, address);

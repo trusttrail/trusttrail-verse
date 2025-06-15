@@ -116,7 +116,7 @@ export const linkWalletToProfile = async (userId: string, walletAddress: string)
   }
 };
 
-// Auto sign-in user with wallet (for existing users)
+// Auto sign-in user with wallet using magic link (secure method)
 export const autoSignInWithWallet = async (walletAddress: string) => {
   try {
     // First check if wallet exists
@@ -126,13 +126,30 @@ export const autoSignInWithWallet = async (walletAddress: string) => {
       return { success: false, error: 'Wallet not found' };
     }
 
-    // For security, we won't actually auto-sign them in automatically
-    // Instead, we'll just indicate that this wallet is recognized
-    // and guide them to the normal sign-in flow
+    // Get user's email for magic link sign-in
+    const { data: authData, error: userError } = await supabase.auth.admin.getUserById(userId);
+    
+    if (userError || !authData?.user?.email) {
+      return { success: false, error: 'User email not found' };
+    }
+
+    // Send magic link for automatic sign-in
+    const { error: magicLinkError } = await supabase.auth.signInWithOtp({
+      email: authData.user.email,
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo: `${window.location.origin}/`
+      }
+    });
+
+    if (magicLinkError) {
+      return { success: false, error: magicLinkError.message };
+    }
+
     return { 
       success: true, 
-      recognized: true, 
-      message: 'Wallet recognized - please sign in with your email and password' 
+      message: 'Auto sign-in initiated via secure magic link',
+      email: authData.user.email
     };
     
   } catch (error) {
