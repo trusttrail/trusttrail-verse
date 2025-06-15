@@ -27,39 +27,42 @@ const DemoActivityInjector: React.FC = () => {
     // Only show demo notifications when user is not authenticated
     if (isAuthenticated) return;
     
-    // Demo: Fire a new review every 20s and reward every 35s (reduced frequency for better UX)
+    // Demo: Fire a new review every 45s and reward every 60s (increased intervals to prevent spam)
     const demoWallets = [
       "0xA12b...F38C", "0x93ad...FbD1", "0xE54b...4a0d"
     ];
     const demoNames = [
-      "Uniswap", "OpenSea", "QuickSwap", "Axie Infinity"
+      "Uniswap", "OpenSea", "QuickSwap", "Axie Infinity", "PancakeSwap", "SushiSwap"
     ];
     let reviewInt: NodeJS.Timeout, rewardInt: NodeJS.Timeout;
 
-    reviewInt = setInterval(() => {
-      const name = demoNames[Math.floor(Math.random() * demoNames.length)];
-      const rating = 3 + Math.floor(Math.random() * 3);
-      const wallet = demoWallets[Math.floor(Math.random() * demoWallets.length)];
-      pushNotification({
-        type: "review",
-        message: `⭐ ${rating}/5 review for ${name}`,
-        wallet
-      });
-    }, 20000);
+    // Start with a delay to prevent immediate spam
+    setTimeout(() => {
+      reviewInt = setInterval(() => {
+        const name = demoNames[Math.floor(Math.random() * demoNames.length)];
+        const rating = 3 + Math.floor(Math.random() * 3);
+        const wallet = demoWallets[Math.floor(Math.random() * demoWallets.length)];
+        pushNotification({
+          type: "review",
+          message: `⭐ ${rating}/5 review for ${name}`,
+          wallet
+        });
+      }, 45000); // 45 seconds
 
-    rewardInt = setInterval(() => {
-      const amount = (Math.random() * 5 + 1).toFixed(2);
-      const wallet = demoWallets[Math.floor(Math.random() * demoWallets.length)];
-      pushNotification({
-        type: "reward",
-        message: `You earned ${amount} $TRAIL tokens 💰`,
-        wallet
-      });
-    }, 35000);
+      rewardInt = setInterval(() => {
+        const amount = (Math.random() * 5 + 1).toFixed(2);
+        const wallet = demoWallets[Math.floor(Math.random() * demoWallets.length)];
+        pushNotification({
+          type: "reward",
+          message: `You earned ${amount} $TRAIL tokens 💰`,
+          wallet
+        });
+      }, 60000); // 60 seconds
+    }, 10000); // Start after 10 seconds
 
     return () => {
-      clearInterval(reviewInt);
-      clearInterval(rewardInt);
+      if (reviewInt) clearInterval(reviewInt);
+      if (rewardInt) clearInterval(rewardInt);
     };
   }, [pushNotification, isAuthenticated]);
 

@@ -24,14 +24,16 @@ export const RecentActivityProvider: React.FC<{ children: React.ReactNode }> = (
     // Create a unique key for the notification to prevent duplicates
     const notificationKey = `${notification.type}-${notification.message}-${notification.wallet}`;
     
-    // Check if we've already shown this notification recently (within 5 seconds)
+    // Check if we've already shown this notification recently (within 30 seconds)
     if (recentMessages.has(notificationKey)) {
+      console.log('Duplicate notification blocked:', notificationKey);
       return;
     }
     
     const id = Math.random().toString(36).substring(7);
     const newNotification = { ...notification, id };
     
+    console.log('Adding notification:', notificationKey);
     setNotifications(prev => [...prev, newNotification]);
     setRecentMessages(prev => new Set(prev).add(notificationKey));
     
@@ -40,14 +42,14 @@ export const RecentActivityProvider: React.FC<{ children: React.ReactNode }> = (
       setNotifications(prev => prev.filter(n => n.id !== id));
     }, 4000);
     
-    // Remove from recent messages after 5 seconds to allow future notifications
+    // Remove from recent messages after 30 seconds to allow future notifications
     setTimeout(() => {
       setRecentMessages(prev => {
         const newSet = new Set(prev);
         newSet.delete(notificationKey);
         return newSet;
       });
-    }, 5000);
+    }, 30000);
   }, [recentMessages]);
 
   const clearNotifications = useCallback(() => {
