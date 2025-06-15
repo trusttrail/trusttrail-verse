@@ -14,7 +14,6 @@ export const useWalletAuthLogic = (
   const { clearNotifications } = useRecentActivity();
   const lastProcessedWallet = useRef<string>('');
   const processingRef = useRef<boolean>(false);
-  // Temporarily disable caching to debug the issue
   const lastResultRef = useRef<{ address: string; exists: boolean; timestamp: number } | null>(null);
 
   const handleWalletConnection = async (address: string) => {
@@ -23,12 +22,26 @@ export const useWalletAuthLogic = (
     console.log('Last processed wallet:', lastProcessedWallet.current);
     console.log('Currently processing:', processingRef.current);
     
-    // TEMPORARILY DISABLE CACHING TO DEBUG THE ISSUE
-    console.log('🚨 CACHING DISABLED FOR DEBUGGING - FORCING FRESH WALLET CHECK');
+    // Check if we have a recent result for this address (within 30 seconds)
+    const now = Date.now();
+    if (lastResultRef.current && 
+        lastResultRef.current.address === address && 
+        (now - lastResultRef.current.timestamp) < 30000) {
+      console.log('⚠️ Using cached result for wallet:', address);
+      const cached = lastResultRef.current;
+      if (cached.exists) {
+        setExistingUser(true);
+        setNeedsSignup(false);
+      } else {
+        setNeedsSignup(true);
+        setExistingUser(false);
+      }
+      return false;
+    }
     
-    // Prevent concurrent processing only
-    if (processingRef.current) {
-      console.log('⚠️ Skipping concurrent wallet auth for:', address);
+    // Prevent duplicate processing for the same wallet or concurrent processing
+    if (lastProcessedWallet.current === address || processingRef.current) {
+      console.log('⚠️ Skipping duplicate/concurrent wallet auth for:', address);
       return false;
     }
     
@@ -61,7 +74,7 @@ export const useWalletAuthLogic = (
         return true;
       }
       
-      // ALWAYS check if wallet exists for non-authenticated users
+      // Check if wallet exists for non-authenticated users
       console.log('Checking wallet existence for non-authenticated user...');
       console.log('Calling checkWalletExists with address:', address);
       
@@ -71,6 +84,13 @@ export const useWalletAuthLogic = (
       console.log('User ID:', walletCheckResult.userId);
       
       const { exists, userId } = walletCheckResult;
+      
+      // Cache the result
+      lastResultRef.current = {
+        address,
+        exists,
+        timestamp: now
+      };
       
       if (exists && userId) {
         console.log('✅ EXISTING WALLET DETECTED');
@@ -106,10 +126,16 @@ export const useWalletAuthLogic = (
         console.log('Setting needsSignup = true, existingUser = false');
         setNeedsSignup(true);
         setExistingUser(false);
-        toast({
-          title: "New Wallet Detected", 
-          description: "This wallet needs to be linked to an account. Please create an account to continue.",
-        });
+        
+        // Only show toast notification once per session for new wallets
+        const sessionKey = `new_wallet_notified_${address}`;
+        if (!sessionStorage.getItem(sessionKey)) {
+          sessionStorage.setItem(sessionKey, 'true');
+          toast({
+            title: "New Wallet Detected", 
+            description: "This wallet needs to be linked to an account. Please create an account to continue.",
+          });
+        }
       }
     } catch (error) {
       console.error('❌ ERROR in wallet check:', error);
