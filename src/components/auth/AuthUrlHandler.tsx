@@ -14,6 +14,24 @@ const AuthUrlHandler = ({ setShowPasswordReset, setShowForgotPassword }: AuthUrl
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
+  // Check for wallet recognition on page load
+  useEffect(() => {
+    const walletRecognized = searchParams.get('wallet_recognized') === 'true';
+    const recognizedWallet = localStorage.getItem('recognized_wallet');
+    
+    if (walletRecognized && recognizedWallet) {
+      console.log('Wallet recognition detected:', recognizedWallet);
+      
+      toast({
+        title: "Wallet Recognized!",
+        description: `Your wallet ${recognizedWallet.substring(0, 6)}...${recognizedWallet.substring(recognizedWallet.length - 4)} is linked to an existing account. Please sign in to continue.`,
+      });
+      
+      // Clear the recognition data
+      localStorage.removeItem('recognized_wallet');
+    }
+  }, [searchParams, toast]);
+
   // Check for auto sign-in on page load
   useEffect(() => {
     const autoSignInData = getAutoSignInData();

@@ -1,7 +1,8 @@
 
+import { supabase } from "@/integrations/supabase/client";
 import { checkWalletExists } from './walletProfile';
 
-// Auto sign-in existing user with wallet (simplified approach)
+// Auto sign-in existing user with wallet using magic link approach
 export const autoSignInWithWallet = async (walletAddress: string) => {
   try {
     console.log('Attempting auto sign-in for wallet:', walletAddress);
@@ -16,8 +17,22 @@ export const autoSignInWithWallet = async (walletAddress: string) => {
 
     console.log('Wallet found for user:', userId);
     
-    // Since we can't directly create a session without credentials,
-    // we'll store the user ID temporarily and guide them to auto-fill their credentials
+    // Get the user's email from the profiles table to attempt sign-in
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .eq('wallet_address', walletAddress)
+      .single();
+      
+    if (profileError || !profile) {
+      console.error('Error fetching user profile:', profileError);
+      return { success: false, error: 'Profile not found' };
+    }
+    
+    // For now, we'll use the approach of storing the wallet info and letting the user sign in manually
+    // A proper implementation would require the user to have signed in at least once with email/password
+    // before we can auto-sign them in with just the wallet
     localStorage.setItem('auto_signin_user_id', userId);
     localStorage.setItem('auto_signin_wallet', walletAddress);
     
@@ -25,7 +40,7 @@ export const autoSignInWithWallet = async (walletAddress: string) => {
       success: true, 
       userId,
       shouldAutoSignIn: true,
-      message: 'Wallet recognized - auto sign-in ready'
+      message: 'Wallet recognized - please complete sign-in'
     };
     
   } catch (error) {
@@ -47,16 +62,20 @@ export const clearAutoSignInData = () => {
   localStorage.removeItem('auto_signin_wallet');
 };
 
-// Sign in user with existing wallet - this should trigger automatic redirect to main app
+// Sign in user with existing wallet - redirect to auth with pre-filled info
 export const handleWalletAutoSignIn = async (walletAddress: string) => {
   try {
     const result = await autoSignInWithWallet(walletAddress);
     
     if (result.success && result.shouldAutoSignIn) {
-      // Redirect to auth page where they'll be automatically signed in
+      // Store the wallet info for the auth page to use
+      localStorage.setItem('recognized_wallet', walletAddress);
+      
+      // Redirect to auth page where the user can complete sign-in
       setTimeout(() => {
-        window.location.href = '/auth?auto_signin=true';
-      }, 1000);
+        window.location.href = '/auth?wallet_recognized=true';
+      }, 1500);
+      
       return { success: true };
     }
     

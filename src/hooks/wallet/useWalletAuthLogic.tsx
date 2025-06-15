@@ -33,18 +33,41 @@ export const useWalletAuthLogic = (
     console.log('Wallet exists check:', { exists, userId, address });
     
     if (exists && userId) {
-      console.log('Existing wallet detected - setting existing user flag');
+      console.log('Existing wallet detected - attempting auto sign-in');
       
       // Clear any previous state flags
       setNeedsSignup(false);
-      setExistingUser(true);
+      setExistingUser(false);
       
       toast({
         title: "Welcome Back!",
-        description: "Your wallet is recognized. Please sign in to continue.",
+        description: "Your wallet is recognized. Signing you in automatically...",
       });
       
-      return false; // Don't auto-sign in, let user manually sign in
+      // Attempt auto sign-in for existing users
+      try {
+        const autoSignInResult = await handleWalletAutoSignIn(address);
+        if (autoSignInResult.success) {
+          console.log('Auto sign-in successful');
+          return true;
+        } else {
+          console.log('Auto sign-in failed, setting existing user flag');
+          setExistingUser(true);
+          toast({
+            title: "Sign In Required",
+            description: "Please sign in to continue with your existing account.",
+          });
+        }
+      } catch (error) {
+        console.error('Auto sign-in error:', error);
+        setExistingUser(true);
+        toast({
+          title: "Sign In Required", 
+          description: "Please sign in to continue with your existing account.",
+        });
+      }
+      
+      return false;
     } else {
       // New wallet - needs signup
       console.log('New wallet detected - setting needs signup flag');

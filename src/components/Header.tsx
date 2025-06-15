@@ -77,9 +77,16 @@ const Header = () => {
             <Button variant="ghost" size="sm" onClick={() => scrollToSection('faq')}>
               FAQ
             </Button>
-            <Button variant="ghost" size="sm" onClick={handleReviewPortal}>
-              Review Portal
-            </Button>
+            <div className="flex items-center space-x-1">
+              <Button variant="ghost" size="sm" onClick={handleReviewPortal}>
+                Review Portal
+              </Button>
+              {!isAuthenticated && (
+                <Button variant="outline" size="sm" onClick={handleAuth}>
+                  Sign Up
+                </Button>
+              )}
+            </div>
             <Button variant="ghost" size="sm" onClick={handleTestnet}>
               Testnet
             </Button>
@@ -101,7 +108,7 @@ const Header = () => {
               isWalletConnecting={isWalletConnecting}
             />
             
-            {isAuthenticated ? (
+            {isAuthenticated && (
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-muted-foreground hidden lg:block">
                   Welcome, {user?.email?.split('@')[0]}
@@ -110,10 +117,6 @@ const Header = () => {
                   Sign Out
                 </Button>
               </div>
-            ) : (
-              <Button size="sm" onClick={handleAuth}>
-                Sign In
-              </Button>
             )}
             
             <Button variant="ghost" size="sm" onClick={toggleTheme}>
@@ -149,9 +152,16 @@ const Header = () => {
               <Button variant="ghost" className="justify-start" onClick={() => scrollToSection('faq')}>
                 FAQ
               </Button>
-              <Button variant="ghost" className="justify-start" onClick={handleReviewPortal}>
-                Review Portal
-              </Button>
+              <div className="flex items-center space-x-2 px-3">
+                <Button variant="ghost" className="justify-start flex-1" onClick={handleReviewPortal}>
+                  Review Portal
+                </Button>
+                {!isAuthenticated && (
+                  <Button variant="outline" size="sm" onClick={handleAuth}>
+                    Sign Up
+                  </Button>
+                )}
+              </div>
               <Button variant="ghost" className="justify-start" onClick={handleTestnet}>
                 Testnet
               </Button>
@@ -177,7 +187,7 @@ const Header = () => {
                 />
               </div>
               
-              {isAuthenticated ? (
+              {isAuthenticated && (
                 <>
                   <div className="px-3 py-2 text-sm text-muted-foreground">
                     Welcome, {user?.email?.split('@')[0]}
@@ -186,10 +196,6 @@ const Header = () => {
                     Sign Out
                   </Button>
                 </>
-              ) : (
-                <Button className="justify-start" onClick={handleAuth}>
-                  Sign In
-                </Button>
               )}
             </div>
           </div>
