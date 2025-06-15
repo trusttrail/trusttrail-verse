@@ -81,15 +81,19 @@ serve(async (req) => {
 
     console.log('✅ User found:', user.id)
 
-    // Create a session directly for the user using admin API
-    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
-      userId: user.id
+    // Generate a magic link that contains tokens for the user
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'magiclink',
+      email: user.email!,
+      options: {
+        redirectTo: `${Deno.env.get('SUPABASE_URL')}/auth/v1/verify`
+      }
     })
 
-    if (sessionError || !sessionData) {
-      console.error('Session creation error:', sessionError)
+    if (linkError || !linkData) {
+      console.error('Link generation error:', linkError)
       return new Response(
-        JSON.stringify({ error: 'Failed to create session' }),
+        JSON.stringify({ error: 'Failed to generate auth link' }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -97,14 +101,32 @@ serve(async (req) => {
       )
     }
 
-    console.log('✅ Session created successfully')
+    console.log('✅ Magic link generated successfully')
+
+    // Extract tokens from the magic link URL
+    const magicLinkUrl = new URL(linkData.properties.action_link)
+    const accessToken = magicLinkUrl.searchParams.get('access_token')
+    const refreshToken = magicLinkUrl.searchParams.get('refresh_token')
+
+    if (!accessToken) {
+      console.error('No access token found in magic link')
+      return new Response(
+        JSON.stringify({ error: 'Failed to extract access token from link' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    console.log('✅ Tokens extracted successfully')
 
     return new Response(
       JSON.stringify({ 
         success: true,
-        access_token: sessionData.access_token,
-        refresh_token: sessionData.refresh_token,
-        user: sessionData.user
+        access_token: accessToken,
+        refresh_token: refreshToken || '',
+        user: user
       }),
       { 
         status: 200, 
