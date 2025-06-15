@@ -18,12 +18,12 @@ const ReviewPortal = () => {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Header />
       <div className="flex-grow container mx-auto px-4 pt-24 pb-16">
-        {/* Show SignUp prompt for new users who need to create an account */}
+        {/* Show SignUp prompt for users who are not authenticated */}
         {!isAuthenticated && (
           <SignUpPrompt 
             isWalletConnected={isWalletConnected}
             connectWallet={connectWallet}
-            needsSignup={needsSignup}
+            needsSignup={needsSignup || isWalletConnected}
           />
         )}
         

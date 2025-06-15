@@ -25,7 +25,7 @@ const RecentActivityOverlay: React.FC = () => {
   const { notifications } = useRecentActivity();
 
   return (
-    <div className="fixed z-50 top-4 right-4 w-80 max-w-[calc(100vw-2rem)] space-y-3 pointer-events-none select-none">
+    <div className="fixed z-50 top-20 right-4 w-80 max-w-[calc(100vw-2rem)] space-y-3 pointer-events-none select-none">
       <AnimatePresence>
         {notifications.map((notif) => {
           const type = typeConfig[notif.type];
