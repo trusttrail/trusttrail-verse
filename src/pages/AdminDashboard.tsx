@@ -16,7 +16,7 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState<string>('users');
   const { data: profile, isLoading: profileLoading } = useAdminProfile();
   const { user, loading: authLoading } = useAuth();
-  const { isWalletConnected, walletAddress } = useWalletConnection();
+  const { isWalletConnected, walletAddress, existingUser } = useWalletConnection();
   const navigate = useNavigate();
 
   console.log('AdminDashboard - Auth state:', { user: !!user, authLoading, profile, profileLoading });
@@ -35,8 +35,8 @@ const AdminDashboard = () => {
     );
   }
 
-  // Check if user is not authenticated but has wallet connected
-  if (!user && isWalletConnected) {
+  // Check if user is not authenticated but has wallet connected and it's an existing user
+  if (!user && isWalletConnected && existingUser) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -45,7 +45,7 @@ const AdminDashboard = () => {
             <CardContent className="pt-6 text-center">
               <h1 className="text-2xl font-bold mb-4">Sign In Required</h1>
               <p className="text-muted-foreground mb-4">
-                Your wallet ({walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}) is connected but you need to sign in to access the admin dashboard.
+                Your wallet ({walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}) is connected and recognized. Please sign in to access the admin dashboard.
               </p>
               <Button onClick={() => navigate('/auth')} className="w-full">
                 Sign In to Continue

@@ -98,16 +98,6 @@ export const useWalletAuthLogic = (
         setExistingUser(true);
         setNeedsSignup(false);
         
-        // Check if we're on admin page - don't redirect if so
-        const currentPath = window.location.pathname;
-        if (currentPath === '/admin') {
-          toast({
-            title: "Wallet Recognized",
-            description: "Please sign in to access the admin dashboard.",
-          });
-          return false;
-        }
-        
         toast({
           title: "Welcome Back!",
           description: "Your wallet is recognized. Please sign in to continue.",
