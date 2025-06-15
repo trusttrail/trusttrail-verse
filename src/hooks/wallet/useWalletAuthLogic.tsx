@@ -3,7 +3,6 @@ import React, { useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useRecentActivity } from '@/hooks/useRecentActivity';
-import { supabase } from '@/integrations/supabase/client';
 import { checkWalletExists, linkWalletToProfile } from '@/utils/authUtils';
 
 export const useWalletAuthLogic = (
@@ -94,80 +93,22 @@ export const useWalletAuthLogic = (
       };
       
       if (exists && userId) {
-        console.log('✅ EXISTING WALLET DETECTED - AUTO SIGN-IN WITHOUT EMAIL');
+        console.log('✅ EXISTING WALLET DETECTED - SETTING UP AUTO SIGN-IN');
         console.log('Setting existingUser = true, needsSignup = false');
         setExistingUser(true);
         setNeedsSignup(false);
         
-        // Show initial toast
+        // Show success message
         toast({
           title: "Welcome Back!",
-          description: "Your wallet is recognized. Signing you in automatically...",
+          description: "Your wallet is recognized. You will be signed in automatically.",
         });
         
-        // Directly authenticate the user without magic link
-        try {
-          console.log('Starting direct authentication for existing user...');
-          
-          // Get the user's auth record to get their email
-          const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId);
-          
-          if (authError || !authUser.user?.email) {
-            console.error('Could not get user auth data:', authError);
-            throw new Error('Could not retrieve user authentication data');
-          }
-          
-          console.log('Found user email:', authUser.user.email);
-          
-          // Use signInWithPassword with a temporary bypass or signInWithOtp for passwordless
-          // Since we can't get the password, we'll use the OTP method but configure it to work silently
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithOtp({
-            email: authUser.user.email,
-            options: {
-              shouldCreateUser: false,
-              emailRedirectTo: window.location.origin,
-              data: { wallet_address: address }
-            }
-          });
-          
-          if (signInError) {
-            console.error('Direct sign-in failed:', signInError);
-            throw signInError;
-          }
-          
-          console.log('✅ Authentication initiated successfully');
-          
-          toast({
-            title: "Signed In Successfully",
-            description: "You are now signed in with your wallet!",
-          });
-          
-          // Set a timeout to check if authentication was successful
-          setTimeout(async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-              console.log('✅ Authentication confirmed with session');
-              toast({
-                title: "Authentication Complete",
-                description: "You are now fully authenticated!",
-              });
-            } else {
-              console.log('⚠️ Session not found after timeout');
-              toast({
-                title: "Authentication in Progress",
-                description: "Please check your email to complete sign-in if needed.",
-              });
-            }
-          }, 3000);
-          
-        } catch (autoSignInError) {
-          console.error('Direct authentication failed:', autoSignInError);
-          toast({
-            title: "Authentication Error",
-            description: "Direct sign-in failed. You may need to sign in manually.",
-            variant: "destructive"
-          });
-        }
+        // Store the user ID temporarily for the auto sign-in process
+        localStorage.setItem('pending_wallet_auth_user_id', userId);
+        localStorage.setItem('pending_wallet_auth_address', address);
+        
+        console.log('✅ Wallet recognized, user should be redirected to auto sign-in');
         
         return false;
       } else {

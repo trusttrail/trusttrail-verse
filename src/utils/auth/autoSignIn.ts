@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { checkWalletExists } from './walletProfile';
 
-// Handle wallet auto sign-in with direct authentication for existing users
+// Handle wallet auto sign-in with simplified approach for existing users
 export const handleWalletAutoSignIn = async (walletAddress: string) => {
   try {
     console.log('=== WALLET AUTO SIGN-IN START ===');
@@ -26,26 +26,27 @@ export const handleWalletAutoSignIn = async (walletAddress: string) => {
       return { success: true, message: 'Already authenticated' };
     }
     
-    console.log('✅ Existing user found - proceeding with direct authentication');
+    console.log('✅ Existing user found - setting up authentication');
     return { 
       success: true, 
-      directAuth: true,
-      message: 'Existing user authenticated directly'
+      userId,
+      walletAddress,
+      message: 'User ready for authentication'
     };
     
   } catch (error) {
     console.error('Error in handleWalletAutoSignIn:', error);
     return { 
       success: false, 
-      error: 'Authentication failed'
+      error: 'Authentication setup failed'
     };
   }
 };
 
-// Simplified auto sign-in for existing users - no magic links needed
+// Simplified auto sign-in that just verifies the wallet exists
 export const autoSignInWithWallet = async (walletAddress: string) => {
   try {
-    console.log('Attempting direct sign-in for wallet:', walletAddress);
+    console.log('Attempting to verify wallet for auto sign-in:', walletAddress);
     
     // Check if wallet exists and get user ID
     const { exists, userId } = await checkWalletExists(walletAddress);
@@ -70,12 +71,11 @@ export const autoSignInWithWallet = async (walletAddress: string) => {
       };
     }
     
-    console.log('✅ Direct authentication successful for existing user');
+    console.log('✅ Wallet verification successful - ready for authentication');
     return { 
       success: true, 
       userId,
-      directAuth: true,
-      message: 'User authenticated directly without email verification'
+      message: 'Wallet verified, ready for authentication'
     };
     
   } catch (error) {
@@ -86,13 +86,13 @@ export const autoSignInWithWallet = async (walletAddress: string) => {
 
 // Get stored auto sign-in data
 export const getAutoSignInData = () => {
-  const userId = localStorage.getItem('auto_signin_user_id');
-  const walletAddress = localStorage.getItem('auto_signin_wallet');
+  const userId = localStorage.getItem('pending_wallet_auth_user_id');
+  const walletAddress = localStorage.getItem('pending_wallet_auth_address');
   return userId && walletAddress ? { userId, walletAddress } : null;
 };
 
 // Clear auto sign-in data
 export const clearAutoSignInData = () => {
-  localStorage.removeItem('auto_signin_user_id');
-  localStorage.removeItem('auto_signin_wallet');
+  localStorage.removeItem('pending_wallet_auth_user_id');
+  localStorage.removeItem('pending_wallet_auth_address');
 };
