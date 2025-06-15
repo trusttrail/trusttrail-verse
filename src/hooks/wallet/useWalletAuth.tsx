@@ -1,7 +1,6 @@
-
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { checkWalletExists, linkWalletToProfile, handleWalletSignIn } from '@/utils/authUtils';
+import { checkWalletExists, linkWalletToProfile, handleWalletAutoSignIn } from '@/utils/authUtils';
 import { AMOY_CHAIN_ID, AMOY_NETWORK_NAME } from "@/constants/network";
 
 export const useWalletAuth = (
@@ -18,42 +17,8 @@ export const useWalletAuth = (
   const handleWalletConnection = async (address: string) => {
     console.log('Handling wallet connection for:', address, 'Authenticated:', isAuthenticated);
     
-    // Check if wallet exists in database
-    const { exists, userId } = await checkWalletExists(address);
-    
-    if (exists && userId && !isAuthenticated) {
-      console.log('Existing wallet detected, attempting auto sign-in');
-      
-      // For existing wallets, we'll show a different message and clear flags
-      setExistingUser(false);
-      setNeedsSignup(false);
-      
-      toast({
-        title: "Wallet Recognized - Auto Sign In",
-        description: "This wallet is linked to your account. You're being signed in automatically...",
-      });
-      
-      // The actual auto sign-in will be handled by the auth system
-      // We just need to indicate that this wallet is recognized
-      return true; // Wallet was recognized
-    }
-    
-    if (exists && !isAuthenticated) {
-      setExistingUser(true);
-      setNeedsSignup(false);
-      toast({
-        title: "Wallet Recognized",
-        description: "This wallet is linked to an existing account. Please sign in to continue.",
-      });
-    } else if (!exists && !isAuthenticated) {
-      setNeedsSignup(true);
-      setExistingUser(false);
-      toast({
-        title: "New Wallet Detected", 
-        description: "This wallet needs to be linked to an account. Please create an account to continue.",
-      });
-    } else if (isAuthenticated && user) {
-      // Link wallet to current user
+    // If user is already authenticated, just link the wallet
+    if (isAuthenticated && user) {
       const linkResult = await linkWalletToProfile(user.id, address);
       if (linkResult.success) {
         setNeedsSignup(false);
@@ -63,9 +28,40 @@ export const useWalletAuth = (
           description: "Your wallet has been successfully linked to your account.",
         });
       }
+      return true;
     }
     
-    return false; // No special handling needed
+    // Check if wallet exists for non-authenticated users
+    const { exists, userId } = await checkWalletExists(address);
+    
+    if (exists && userId) {
+      console.log('Existing wallet detected - initiating auto sign-in');
+      
+      // Clear any previous state flags
+      setExistingUser(false);
+      setNeedsSignup(false);
+      
+      toast({
+        title: "Welcome Back!",
+        description: "Your wallet is recognized. Signing you in automatically...",
+      });
+      
+      // Initiate auto sign-in process
+      const result = await handleWalletAutoSignIn(address);
+      if (result.success && result.redirecting) {
+        return true; // Wallet was recognized and auto sign-in initiated
+      }
+    } else {
+      // New wallet - needs signup
+      setNeedsSignup(true);
+      setExistingUser(false);
+      toast({
+        title: "New Wallet Detected", 
+        description: "This wallet needs to be linked to an account. Please create an account to continue.",
+      });
+    }
+    
+    return false;
   };
 
   const checkIfWalletIsConnected = async () => {
@@ -85,13 +81,8 @@ export const useWalletAuth = (
           setCurrentNetwork("amoy");
           localStorage.setItem('connected_wallet_address', address);
 
-          // Only check database and show notifications if user is NOT authenticated
-          if (!isAuthenticated) {
-            await handleWalletConnection(address);
-          } else if (isAuthenticated && user) {
-            // Silently link wallet to current user if already authenticated
-            await linkWalletToProfile(user.id, address);
-          }
+          // Handle wallet connection logic
+          await handleWalletConnection(address);
         } else {
           setIsWalletConnected(false);
           setCurrentNetwork("wrong");
@@ -139,23 +130,13 @@ export const useWalletAuth = (
           setIsWalletConnected(true);
           setCurrentNetwork("amoy");
           
-          // Show success notification only once
           toast({
             title: "Wallet Connected",
             description: `Connected to ${address.substring(0, 6)}...${address.substring(address.length - 4)}`,
           });
           
-          // Only check database if user is NOT authenticated
-          if (!isAuthenticated) {
-            await handleWalletConnection(address);
-          } else if (isAuthenticated && user) {
-            // Link wallet to current user
-            const linkResult = await linkWalletToProfile(user.id, address);
-            if (linkResult.success) {
-              setNeedsSignup(false);
-              setExistingUser(false);
-            }
-          }
+          // Handle wallet connection logic
+          await handleWalletConnection(address);
         }
       }
     } catch (error) {

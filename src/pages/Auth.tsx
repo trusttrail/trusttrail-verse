@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from '@/components/Header';
 import { useWalletConnection } from '@/hooks/useWalletConnection';
-import { linkWalletToProfile } from '@/utils/authUtils';
+import { linkWalletToProfile, getAutoSignInData, clearAutoSignInData } from '@/utils/authUtils';
 import PasswordResetForm from '@/components/auth/PasswordResetForm';
 import ForgotPasswordForm from '@/components/auth/ForgotPasswordForm';
 import EmailVerificationView from '@/components/auth/EmailVerificationView';
@@ -24,6 +23,27 @@ const Auth = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check for auto sign-in on page load
+  useEffect(() => {
+    const autoSignInData = getAutoSignInData();
+    const isAutoSignIn = searchParams.get('auto_signin') === 'true';
+    
+    if (autoSignInData && isAutoSignIn) {
+      console.log('Auto sign-in detected for wallet:', autoSignInData.walletAddress);
+      
+      toast({
+        title: "Auto Sign-In",
+        description: "Your wallet has been recognized. You can now sign in with any email/password associated with this wallet.",
+      });
+      
+      // Clear the auto sign-in data after showing the message
+      clearAutoSignInData();
+      
+      // Set form to sign-in mode for existing users
+      setIsSignUp(false);
+    }
+  }, [searchParams, toast]);
 
   // Check URL parameters for password reset or email verification
   useEffect(() => {

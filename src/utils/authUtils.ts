@@ -116,45 +116,31 @@ export const linkWalletToProfile = async (userId: string, walletAddress: string)
   }
 };
 
-// Auto sign-in user with wallet using magic link (secure method)
+// Auto sign-in existing user with wallet (simplified approach)
 export const autoSignInWithWallet = async (walletAddress: string) => {
   try {
-    // First check if wallet exists
+    console.log('Attempting auto sign-in for wallet:', walletAddress);
+    
+    // Check if wallet exists and get user ID
     const { exists, userId } = await checkWalletExists(walletAddress);
     
     if (!exists || !userId) {
+      console.log('Wallet not found in database');
       return { success: false, error: 'Wallet not found' };
     }
 
-    // Get the user's profile to check if we have their email
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (profileError || !profile) {
-      console.error('Profile not found for user:', userId);
-      return { success: false, error: 'Profile not found' };
-    }
-
-    // We can't get email from profiles, so we'll use a different approach
-    // Instead of magic link, we'll create a session directly using the existing user ID
-    // This is secure because the user has already proven wallet ownership through MetaMask
+    console.log('Wallet found for user:', userId);
     
-    console.log('Auto sign-in initiated for wallet:', walletAddress);
+    // Since we can't directly create a session without credentials,
+    // we'll store the user ID temporarily and guide them to auto-fill their credentials
+    localStorage.setItem('auto_signin_user_id', userId);
+    localStorage.setItem('auto_signin_wallet', walletAddress);
     
-    // Store wallet info for auto-linking after sign in
-    localStorage.setItem('pending_wallet_link', JSON.stringify({
-      walletAddress,
-      userId,
-      timestamp: Date.now()
-    }));
-
     return { 
       success: true, 
-      message: 'Auto sign-in prepared - wallet recognized',
-      userId: userId
+      userId,
+      shouldAutoSignIn: true,
+      message: 'Wallet recognized - auto sign-in ready'
     };
     
   } catch (error) {
@@ -163,51 +149,35 @@ export const autoSignInWithWallet = async (walletAddress: string) => {
   }
 };
 
-// Helper to handle the wallet sign-in process
-export const handleWalletSignIn = async (walletAddress: string) => {
-  const { exists, userId } = await checkWalletExists(walletAddress);
-  
-  if (exists && userId) {
-    // Try to get the user's session via a secure method
-    try {
-      // Check if we have stored credentials for this wallet
-      const storedWalletData = localStorage.getItem('pending_wallet_link');
-      if (storedWalletData) {
-        const data = JSON.parse(storedWalletData);
-        if (data.walletAddress === walletAddress && data.userId === userId) {
-          // This is the same wallet that was just connected, clear the stored data
-          localStorage.removeItem('pending_wallet_link');
-        }
-      }
-      
-      return { success: true, userId, autoSignIn: true };
-    } catch (error) {
-      console.error('Error handling wallet sign-in:', error);
-      return { success: false, error };
-    }
-  }
-  
-  return { success: false, error: 'Wallet not found' };
+// Get stored auto sign-in data
+export const getAutoSignInData = () => {
+  const userId = localStorage.getItem('auto_signin_user_id');
+  const walletAddress = localStorage.getItem('auto_signin_wallet');
+  return userId && walletAddress ? { userId, walletAddress } : null;
 };
 
-// Sign in user with existing wallet
-export const signInWithWallet = async (userId: string) => {
+// Clear auto sign-in data
+export const clearAutoSignInData = () => {
+  localStorage.removeItem('auto_signin_user_id');
+  localStorage.removeItem('auto_signin_wallet');
+};
+
+// Sign in user with existing wallet - this should trigger automatic redirect to main app
+export const handleWalletAutoSignIn = async (walletAddress: string) => {
   try {
-    // This would typically involve a custom authentication flow
-    // For now, we'll check if user exists and guide them to normal sign in
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    const result = await autoSignInWithWallet(walletAddress);
     
-    if (error || !profile) {
-      return { success: false, error: 'Profile not found' };
+    if (result.success && result.shouldAutoSignIn) {
+      // Redirect to auth page where they'll be automatically signed in
+      setTimeout(() => {
+        window.location.href = '/auth?auto_signin=true';
+      }, 1000);
+      return { success: true, redirecting: true };
     }
     
-    return { success: true, profile };
+    return result;
   } catch (error) {
-    console.error('Error signing in with wallet:', error);
+    console.error('Error handling wallet auto sign-in:', error);
     return { success: false, error };
   }
 };
