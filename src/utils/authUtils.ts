@@ -116,6 +116,31 @@ export const linkWalletToProfile = async (userId: string, walletAddress: string)
   }
 };
 
+// Auto sign-in user with wallet (for existing users)
+export const autoSignInWithWallet = async (walletAddress: string) => {
+  try {
+    // First check if wallet exists
+    const { exists, userId } = await checkWalletExists(walletAddress);
+    
+    if (!exists || !userId) {
+      return { success: false, error: 'Wallet not found' };
+    }
+
+    // For security, we won't actually auto-sign them in automatically
+    // Instead, we'll just indicate that this wallet is recognized
+    // and guide them to the normal sign-in flow
+    return { 
+      success: true, 
+      recognized: true, 
+      message: 'Wallet recognized - please sign in with your email and password' 
+    };
+    
+  } catch (error) {
+    console.error('Error in auto sign-in with wallet:', error);
+    return { success: false, error };
+  }
+};
+
 // Sign in user with existing wallet
 export const signInWithWallet = async (userId: string) => {
   try {

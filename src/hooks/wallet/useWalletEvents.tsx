@@ -18,6 +18,34 @@ export const useWalletEvents = (
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
 
+  const handleWalletChange = async (newAddress: string) => {
+    if (!isAuthenticated) {
+      const { exists } = await checkWalletExists(newAddress);
+
+      if (exists) {
+        setExistingUser(true);
+        setNeedsSignup(false);
+        toast({
+          title: "Wallet Recognized",
+          description: "This wallet is linked to an existing account. Please sign in to continue.",
+        });
+      } else {
+        setNeedsSignup(true);
+        setExistingUser(false);
+        toast({
+          title: "New Wallet Detected",
+          description: "This wallet needs to be linked to an account. Please create an account to continue.",
+        });
+      }
+    } else {
+      // User is already authenticated, just show the change
+      toast({
+        title: "Account Changed",
+        description: `Connected to ${newAddress.substring(0, 6)}...${newAddress.substring(newAddress.length - 4)}`,
+      });
+    }
+  };
+
   useEffect(() => {
     const handleAccountsChanged = async (accounts: string[]) => {
       if (accounts.length === 0) {
@@ -39,28 +67,8 @@ export const useWalletEvents = (
         if (chainId === AMOY_CHAIN_ID) {
           setIsWalletConnected(true);
           setCurrentNetwork("amoy");
-          const { exists } = await checkWalletExists(newAddress);
-
-          if (exists && !isAuthenticated) {
-            setExistingUser(true);
-            setNeedsSignup(false);
-            toast({
-              title: "Account Changed - Recognized Wallet",
-              description: "Please sign in to continue with this account.",
-            });
-          } else if (!exists && !isAuthenticated) {
-            setNeedsSignup(true);
-            setExistingUser(false);
-            toast({
-              title: "Account Changed - New Wallet",
-              description: "Please create an account for this wallet.",
-            });
-          } else {
-            toast({
-              title: "Account Changed",
-              description: `Connected to ${newAddress.substring(0, 6)}...${newAddress.substring(newAddress.length - 4)}`,
-            });
-          }
+          
+          await handleWalletChange(newAddress);
         } else {
           setIsWalletConnected(false);
           setCurrentNetwork("wrong");
