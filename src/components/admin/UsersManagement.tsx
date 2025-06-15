@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { Shield, ShieldOff } from 'lucide-react';
-import { AdminUser } from '@/types/admin';
 
 interface UsersManagementProps {
   isAdmin: boolean;
@@ -19,6 +18,13 @@ interface ProfileData {
   wallet_address: string | null;
   is_admin: boolean;
   created_at: string;
+}
+
+interface AdminUser extends ProfileData {
+  email?: string;
+  email_confirmed_at?: string;
+  last_sign_in_at?: string;
+  auth_created_at?: string;
 }
 
 const UsersManagement: React.FC<UsersManagementProps> = ({ isAdmin }) => {
@@ -44,13 +50,18 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ isAdmin }) => {
       
       console.log('Profiles fetched:', profiles);
       
+      // Ensure profiles is an array and handle null case
+      if (!profiles || !Array.isArray(profiles)) {
+        console.log('No profiles found or invalid data structure');
+        return [];
+      }
+      
       // Get auth users data
       const { data: authData } = await supabase.auth.admin.listUsers();
       console.log('Auth data fetched:', authData);
       
-      // Ensure profiles is an array and properly typed
-      const profilesArray: ProfileData[] = profiles || [];
-      const combinedUsers: AdminUser[] = profilesArray.map((profile: ProfileData) => {
+      // Map profiles to AdminUser type
+      const combinedUsers: AdminUser[] = profiles.map((profile: ProfileData) => {
         const authUser = authData?.users?.find(user => user.id === profile.id);
         return {
           id: profile.id,
@@ -61,7 +72,7 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ isAdmin }) => {
           email_confirmed_at: authUser?.email_confirmed_at,
           last_sign_in_at: authUser?.last_sign_in_at,
           auth_created_at: authUser?.created_at
-        } as AdminUser;
+        };
       });
       
       console.log('Combined users:', combinedUsers);
@@ -97,8 +108,8 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ isAdmin }) => {
     }
   });
 
-  const handleToggleAdmin = (userId: string, isAdmin: boolean) => {
-    toggleAdminMutation.mutate({ userId, isAdmin });
+  const handleToggleAdmin = (userId: string, isCurrentlyAdmin: boolean) => {
+    toggleAdminMutation.mutate({ userId, isAdmin: isCurrentlyAdmin });
   };
 
   if (usersLoading) {
