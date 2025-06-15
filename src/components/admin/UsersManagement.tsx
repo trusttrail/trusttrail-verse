@@ -13,69 +13,88 @@ interface UsersManagementProps {
   isAdmin: boolean;
 }
 
-interface ProfileData {
+interface AuthUser {
   id: string;
-  wallet_address: string | null;
-  is_admin: boolean;
-  created_at: string;
-}
-
-interface AdminUser extends ProfileData {
   email?: string;
   email_confirmed_at?: string;
   last_sign_in_at?: string;
-  auth_created_at?: string;
+  created_at: string;
+}
+
+interface AdminUserRecord {
+  id: string;
+  user_id: string;
+  is_active: boolean;
+  granted_at: string;
+  notes?: string;
+}
+
+interface CombinedUser {
+  id: string;
+  email?: string;
+  email_confirmed_at?: string;
+  last_sign_in_at?: string;
+  created_at: string;
+  is_admin: boolean;
+  admin_granted_at?: string;
+  admin_notes?: string;
 }
 
 const UsersManagement: React.FC<UsersManagementProps> = ({ isAdmin }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch all users with their profiles
+  // Fetch all users and admin status
   const { data: users, isLoading: usersLoading } = useQuery({
-    queryKey: ['admin-users'],
-    queryFn: async (): Promise<AdminUser[]> => {
-      console.log('Fetching admin users data...');
+    queryKey: ['admin-all-users'],
+    queryFn: async (): Promise<CombinedUser[]> => {
+      console.log('Fetching all users and admin data...');
       
-      // Get all profiles first
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Get all auth users
+      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
       
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-        throw profilesError;
+      if (authError) {
+        console.error('Error fetching auth users:', authError);
+        throw authError;
       }
       
-      console.log('Profiles fetched:', profiles);
-      
-      // Ensure profiles is an array and handle null case
-      if (!profiles || !Array.isArray(profiles)) {
-        console.log('No profiles found or invalid data structure');
+      if (!authData?.users || !Array.isArray(authData.users)) {
+        console.log('No auth users found');
         return [];
       }
       
-      // Get auth users data
-      const { data: authData } = await supabase.auth.admin.listUsers();
-      console.log('Auth data fetched:', authData);
+      console.log('Auth users fetched:', authData.users.length);
       
-      // Map profiles to AdminUser type
-      const combinedUsers: AdminUser[] = profiles.map((profile: ProfileData) => {
-        const authUser = authData?.users?.find(user => user.id === profile.id);
+      // Get all admin users
+      const { data: adminUsers, error: adminError } = await supabase
+        .from('admin_users')
+        .select('*')
+        .eq('is_active', true);
+      
+      if (adminError) {
+        console.error('Error fetching admin users:', adminError);
+        // Continue without admin data
+      }
+      
+      console.log('Admin users fetched:', adminUsers?.length || 0);
+      
+      // Combine the data
+      const combinedUsers: CombinedUser[] = authData.users.map((authUser: any) => {
+        const adminRecord = adminUsers?.find((admin: AdminUserRecord) => admin.user_id === authUser.id);
+        
         return {
-          id: profile.id,
-          wallet_address: profile.wallet_address,
-          is_admin: profile.is_admin,
-          created_at: profile.created_at,
-          email: authUser?.email,
-          email_confirmed_at: authUser?.email_confirmed_at,
-          last_sign_in_at: authUser?.last_sign_in_at,
-          auth_created_at: authUser?.created_at
+          id: authUser.id,
+          email: authUser.email,
+          email_confirmed_at: authUser.email_confirmed_at,
+          last_sign_in_at: authUser.last_sign_in_at,
+          created_at: authUser.created_at,
+          is_admin: !!adminRecord,
+          admin_granted_at: adminRecord?.granted_at,
+          admin_notes: adminRecord?.notes
         };
       });
       
-      console.log('Combined users:', combinedUsers);
+      console.log('Combined users:', combinedUsers.length);
       return combinedUsers;
     },
     enabled: !!isAdmin
@@ -83,16 +102,30 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ isAdmin }) => {
 
   // Toggle admin status mutation
   const toggleAdminMutation = useMutation({
-    mutationFn: async ({ userId, isAdmin }: { userId: string, isAdmin: boolean }) => {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_admin: !isAdmin })
-        .eq('id', userId);
-      
-      if (error) throw error;
+    mutationFn: async ({ userId, isCurrentlyAdmin }: { userId: string, isCurrentlyAdmin: boolean }) => {
+      if (isCurrentlyAdmin) {
+        // Remove admin status
+        const { error } = await supabase
+          .from('admin_users')
+          .delete()
+          .eq('user_id', userId);
+        
+        if (error) throw error;
+      } else {
+        // Add admin status
+        const { error } = await supabase
+          .from('admin_users')
+          .insert({
+            user_id: userId,
+            is_active: true,
+            notes: 'Admin status granted via admin dashboard'
+          });
+        
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-all-users'] });
       toast({
         title: "User Updated",
         description: "User admin status has been updated successfully.",
@@ -109,7 +142,7 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ isAdmin }) => {
   });
 
   const handleToggleAdmin = (userId: string, isCurrentlyAdmin: boolean) => {
-    toggleAdminMutation.mutate({ userId, isAdmin: isCurrentlyAdmin });
+    toggleAdminMutation.mutate({ userId, isCurrentlyAdmin });
   };
 
   if (usersLoading) {
@@ -141,7 +174,6 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ isAdmin }) => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Email</TableHead>
-                  <TableHead>Wallet Address</TableHead>
                   <TableHead>Admin Status</TableHead>
                   <TableHead>Email Verified</TableHead>
                   <TableHead>Last Sign In</TableHead>
@@ -154,15 +186,6 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ isAdmin }) => {
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">
                       {user.email || 'No email'}
-                    </TableCell>
-                    <TableCell>
-                      {user.wallet_address ? (
-                        <code className="text-xs bg-muted px-2 py-1 rounded">
-                          {user.wallet_address.substring(0, 8)}...{user.wallet_address.substring(user.wallet_address.length - 6)}
-                        </code>
-                      ) : (
-                        <span className="text-muted-foreground">No wallet</span>
-                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant={user.is_admin ? "default" : "secondary"}>
@@ -181,10 +204,7 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ isAdmin }) => {
                       }
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {user.auth_created_at 
-                        ? new Date(user.auth_created_at).toLocaleDateString()
-                        : new Date(user.created_at).toLocaleDateString()
-                      }
+                      {new Date(user.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
                       <Button

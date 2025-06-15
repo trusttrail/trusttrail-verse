@@ -4,19 +4,31 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const useAdminProfile = () => {
   return useQuery({
-    queryKey: ['profile'],
+    queryKey: ['admin-profile'],
     queryFn: async () => {
       const { data: session } = await supabase.auth.getSession();
       if (!session.session?.user) return null;
       
-      const { data, error } = await supabase
-        .from('profiles')
+      // Check if user is admin using the new admin_users table
+      const { data: adminData, error: adminError } = await supabase
+        .from('admin_users')
         .select('*')
-        .eq('id', session.session.user.id)
-        .single();
+        .eq('user_id', session.session.user.id)
+        .eq('is_active', true)
+        .maybeSingle();
       
-      if (error) throw error;
-      return data;
+      if (adminError) {
+        console.error('Error checking admin status:', adminError);
+        return null;
+      }
+      
+      // Return profile-like object for compatibility
+      return {
+        id: session.session.user.id,
+        is_admin: !!adminData,
+        email: session.session.user.email,
+        created_at: session.session.user.created_at
+      };
     }
   });
 };
