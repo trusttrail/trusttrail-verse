@@ -26,14 +26,35 @@ const DemoActivityInjector: React.FC = () => {
   const { isWalletConnected } = useWalletConnection();
   const hasStartedRef = React.useRef(false);
   const intervalsRef = React.useRef<{ review?: NodeJS.Timeout; reward?: NodeJS.Timeout }>({});
+  const isStoppedRef = React.useRef(false);
 
   React.useEffect(() => {
     // Stop demo notifications when user is authenticated OR wallet is connected
     if (isAuthenticated || isWalletConnected) {
       console.log('Stopping demo notifications - user authenticated or wallet connected');
-      if (intervalsRef.current.review) clearInterval(intervalsRef.current.review);
-      if (intervalsRef.current.reward) clearInterval(intervalsRef.current.reward);
+      
+      // Mark as stopped
+      isStoppedRef.current = true;
+      
+      // Clear all intervals
+      if (intervalsRef.current.review) {
+        clearInterval(intervalsRef.current.review);
+        intervalsRef.current.review = undefined;
+      }
+      if (intervalsRef.current.reward) {
+        clearInterval(intervalsRef.current.reward);
+        intervalsRef.current.reward = undefined;
+      }
+      
+      // Clear existing notifications
+      clearNotifications();
+      
       hasStartedRef.current = false;
+      return;
+    }
+
+    // Don't start if already stopped due to wallet/auth activity
+    if (isStoppedRef.current) {
       return;
     }
 
@@ -55,9 +76,18 @@ const DemoActivityInjector: React.FC = () => {
 
     // Start with a delay to prevent immediate spam
     const initTimeout = setTimeout(() => {
+      // Double check we haven't been stopped
+      if (isStoppedRef.current) return;
+      
       console.log('Starting demo intervals...');
       
       intervalsRef.current.review = setInterval(() => {
+        // Check if we should stop before pushing notification
+        if (isStoppedRef.current || isAuthenticated || isWalletConnected) {
+          if (intervalsRef.current.review) clearInterval(intervalsRef.current.review);
+          return;
+        }
+        
         const name = demoNames[Math.floor(Math.random() * demoNames.length)];
         const rating = 3 + Math.floor(Math.random() * 3);
         const wallet = demoWallets[Math.floor(Math.random() * demoWallets.length)];
@@ -70,6 +100,12 @@ const DemoActivityInjector: React.FC = () => {
       }, 45000); // 45 seconds
 
       intervalsRef.current.reward = setInterval(() => {
+        // Check if we should stop before pushing notification
+        if (isStoppedRef.current || isAuthenticated || isWalletConnected) {
+          if (intervalsRef.current.reward) clearInterval(intervalsRef.current.reward);
+          return;
+        }
+        
         const amount = (Math.random() * 5 + 1).toFixed(2);
         const wallet = demoWallets[Math.floor(Math.random() * demoWallets.length)];
         console.log('Pushing demo reward notification...');
@@ -84,11 +120,17 @@ const DemoActivityInjector: React.FC = () => {
     return () => {
       console.log('Cleaning up demo activity injector...');
       clearTimeout(initTimeout);
-      if (intervalsRef.current.review) clearInterval(intervalsRef.current.review);
-      if (intervalsRef.current.reward) clearInterval(intervalsRef.current.reward);
+      if (intervalsRef.current.review) {
+        clearInterval(intervalsRef.current.review);
+        intervalsRef.current.review = undefined;
+      }
+      if (intervalsRef.current.reward) {
+        clearInterval(intervalsRef.current.reward);
+        intervalsRef.current.reward = undefined;
+      }
       hasStartedRef.current = false;
     };
-  }, [pushNotification, isAuthenticated, isWalletConnected]);
+  }, [pushNotification, isAuthenticated, isWalletConnected, clearNotifications]);
 
   return null;
 };

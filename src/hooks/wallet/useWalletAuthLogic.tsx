@@ -2,6 +2,7 @@
 import React, { useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useRecentActivity } from '@/hooks/useRecentActivity';
 import { checkWalletExists, linkWalletToProfile, handleWalletAutoSignIn } from '@/utils/authUtils';
 
 export const useWalletAuthLogic = (
@@ -10,46 +11,55 @@ export const useWalletAuthLogic = (
 ) => {
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
+  const { clearNotifications } = useRecentActivity();
   const lastProcessedWallet = useRef<string>('');
+  const processingRef = useRef<boolean>(false);
 
   const handleWalletConnection = async (address: string) => {
     console.log('=== WALLET AUTH DEBUG START ===');
     console.log('Input address:', address);
     console.log('Last processed wallet:', lastProcessedWallet.current);
+    console.log('Currently processing:', processingRef.current);
     
-    // Prevent duplicate processing for the same wallet
-    if (lastProcessedWallet.current === address) {
-      console.log('⚠️ Skipping duplicate wallet auth for:', address);
+    // Prevent duplicate processing for the same wallet or concurrent processing
+    if (lastProcessedWallet.current === address || processingRef.current) {
+      console.log('⚠️ Skipping duplicate/concurrent wallet auth for:', address);
       return false;
     }
     
+    // Set processing flag to prevent concurrent execution
+    processingRef.current = true;
     lastProcessedWallet.current = address;
+    
     console.log('Processing wallet auth for:', address);
     console.log('Is authenticated:', isAuthenticated);
     console.log('Current user:', user?.id);
+    
+    // Clear all notifications immediately when wallet connects
+    clearNotifications();
     
     // Reset flags first to ensure clean state
     setNeedsSignup(false);
     setExistingUser(false);
     
-    // If user is already authenticated, just link the wallet
-    if (isAuthenticated && user) {
-      console.log('User already authenticated, linking wallet to profile');
-      const linkResult = await linkWalletToProfile(user.id, address);
-      if (linkResult.success) {
-        toast({
-          title: "Wallet Linked",
-          description: "Your wallet has been successfully linked to your account.",
-        });
-      }
-      return true;
-    }
-    
-    // ALWAYS check if wallet exists for non-authenticated users
-    console.log('Checking wallet existence for non-authenticated user...');
-    console.log('Calling checkWalletExists with address:', address);
-    
     try {
+      // If user is already authenticated, just link the wallet
+      if (isAuthenticated && user) {
+        console.log('User already authenticated, linking wallet to profile');
+        const linkResult = await linkWalletToProfile(user.id, address);
+        if (linkResult.success) {
+          toast({
+            title: "Wallet Linked",
+            description: "Your wallet has been successfully linked to your account.",
+          });
+        }
+        return true;
+      }
+      
+      // ALWAYS check if wallet exists for non-authenticated users
+      console.log('Checking wallet existence for non-authenticated user...');
+      console.log('Calling checkWalletExists with address:', address);
+      
       const walletCheckResult = await checkWalletExists(address);
       console.log('Raw wallet check result:', walletCheckResult);
       console.log('Exists:', walletCheckResult.exists);
@@ -106,9 +116,12 @@ export const useWalletAuthLogic = (
         description: "Unable to verify wallet status. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      // Always clear processing flag
+      processingRef.current = false;
+      console.log('=== WALLET AUTH DEBUG END ===');
     }
     
-    console.log('=== WALLET AUTH DEBUG END ===');
     return false;
   };
 
@@ -116,6 +129,7 @@ export const useWalletAuthLogic = (
   React.useEffect(() => {
     if (isAuthenticated) {
       lastProcessedWallet.current = '';
+      processingRef.current = false;
     }
   }, [isAuthenticated]);
 
