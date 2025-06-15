@@ -33,8 +33,9 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ isAdmin }) => {
       // Get auth users data
       const { data: authData } = await supabase.auth.admin.listUsers();
       
-      // Combine the data with proper typing
-      const combinedUsers: AdminUser[] = (profiles || []).map(profile => {
+      // Ensure profiles is an array and combine the data with proper typing
+      const profilesArray = profiles || [];
+      const combinedUsers: AdminUser[] = profilesArray.map(profile => {
         const authUser = authData?.users?.find(user => user.id === profile.id);
         return {
           id: profile.id,
