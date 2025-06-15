@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import CompanySelector from "./CompanySelector";
 import FileUpload from "./FileUpload";
 import WalletConnect from "./WalletConnect";
 import { useAuth } from '@/hooks/useAuth';
+import { useWalletConnection } from '@/hooks/useWalletConnection';
 import { useToast } from '@/hooks/use-toast';
 
 interface WriteReviewFormProps {
@@ -23,6 +23,7 @@ interface WriteReviewFormProps {
 
 const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: WriteReviewFormProps) => {
   const { isAuthenticated } = useAuth();
+  const { needsSignup, existingUser } = useWalletConnection();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     company: '',
@@ -193,6 +194,25 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
     }
   };
 
+  // Determine authentication status display based on wallet connection state
+  const getAuthStatus = () => {
+    if (isAuthenticated) {
+      return { text: "Signed In", color: "text-emerald-600", icon: true };
+    }
+    
+    if (isWalletConnected) {
+      if (needsSignup) {
+        return { text: "Sign Up Required", color: "text-orange-600", icon: false };
+      }
+      if (existingUser) {
+        return { text: "Sign In Required", color: "text-blue-600", icon: false };
+      }
+    }
+    
+    return { text: "Sign In Required", color: "text-gray-600", icon: false };
+  };
+
+  const authStatus = getAuthStatus();
   const isFormValid = formData.company && formData.category && formData.title && 
                      formData.content && formData.rating > 0 && 
                      isAuthenticated && isWalletConnected && gitcoinVerified && spamCheckPassed;
@@ -219,13 +239,11 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
             <div className="flex items-center justify-between p-3 border rounded-lg">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Account Authentication</span>
-                {isAuthenticated && <CheckCircle className="text-emerald-500" size={16} />}
+                {authStatus.icon && <CheckCircle className="text-emerald-500" size={16} />}
               </div>
-              {!isAuthenticated && (
-                <Button size="sm" variant="outline">
-                  Sign In Required
-                </Button>
-              )}
+              <span className={`text-sm ${authStatus.color}`}>
+                {authStatus.text}
+              </span>
             </div>
 
             <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -237,6 +255,9 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
                 <Button size="sm" variant="outline" onClick={connectWallet}>
                   Connect Wallet
                 </Button>
+              )}
+              {isWalletConnected && (
+                <span className="text-sm text-emerald-600">Connected</span>
               )}
             </div>
 
@@ -275,7 +296,14 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Please complete authentication and wallet connection before writing your review.
+                {!isWalletConnected 
+                  ? "Please connect your wallet first, then complete authentication before writing your review."
+                  : !isAuthenticated && needsSignup
+                    ? "Please create an account to link your new wallet and start writing reviews."
+                    : !isAuthenticated && existingUser
+                      ? "Please sign in to your existing account to continue."
+                      : "Please complete authentication before writing your review."
+                }
               </AlertDescription>
             </Alert>
           )}

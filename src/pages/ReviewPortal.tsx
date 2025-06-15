@@ -18,7 +18,7 @@ const ReviewPortal = () => {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Header />
       <div className="flex-grow container mx-auto px-4 pt-24 pb-16">
-        {/* Show SignUp prompt only for non-authenticated users with specific wallet states */}
+        {/* Show SignUp prompt for non-authenticated users with connected wallets that need action */}
         {!isAuthenticated && isWalletConnected && (needsSignup || existingUser) && (
           <SignUpPrompt 
             isWalletConnected={isWalletConnected}

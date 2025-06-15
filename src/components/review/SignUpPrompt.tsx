@@ -19,7 +19,7 @@ const SignUpPrompt = ({ isWalletConnected, connectWallet, needsSignup, existingU
     navigate('/auth');
   };
 
-  // Only show if wallet is connected and user needs signup OR if wallet is connected and is existing user
+  // Show if wallet is connected and either needs signup OR is existing user (both require auth action)
   if (!isWalletConnected || (!needsSignup && !existingUser)) return null;
 
   return (
