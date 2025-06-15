@@ -12,15 +12,18 @@ export const useWalletConnection = (
 
   const checkIfWalletIsConnected = async () => {
     try {
-      if (!window.ethereum) return;
+      if (!window.ethereum) return null;
 
+      console.log('Checking if wallet is connected...');
       const accounts = await window.ethereum.request({ method: 'eth_accounts' });
 
       if (accounts.length > 0) {
         const address = accounts[0];
+        console.log('Found connected wallet:', address);
         setWalletAddress(address);
 
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        console.log('Current chain ID:', chainId);
 
         if (chainId === AMOY_CHAIN_ID) {
           setIsWalletConnected(true);
@@ -28,9 +31,12 @@ export const useWalletConnection = (
           localStorage.setItem('connected_wallet_address', address);
           return address;
         } else {
+          console.log('Wrong network detected');
           setIsWalletConnected(false);
           setCurrentNetwork("wrong");
         }
+      } else {
+        console.log('No wallet accounts found');
       }
     } catch (error) {
       console.error("Error checking if wallet is connected:", error);
@@ -41,6 +47,7 @@ export const useWalletConnection = (
   const connectWallet = async () => {
     try {
       setIsWalletConnecting(true);
+      console.log('Attempting to connect wallet...');
       
       if (!window.ethereum) {
         toast({
@@ -55,6 +62,7 @@ export const useWalletConnection = (
       localStorage.removeItem('wallet_disconnected');
 
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      console.log('Wallet connection accounts:', accounts);
 
       if (accounts.length > 0) {
         const address = accounts[0];
@@ -62,6 +70,7 @@ export const useWalletConnection = (
         localStorage.setItem('connected_wallet_address', address);
 
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        console.log('Connected wallet chain ID:', chainId);
 
         if (chainId !== AMOY_CHAIN_ID) {
           setIsWalletConnected(false);

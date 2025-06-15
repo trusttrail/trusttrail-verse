@@ -1,8 +1,7 @@
-
 import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { checkWalletExists, linkWalletToProfile, handleWalletAutoSignIn } from '@/utils/authUtils';
+import { checkWalletExists, linkWalletToProfile } from '@/utils/authUtils';
 import { AMOY_CHAIN_ID, AMOY_NETWORK_NAME } from "@/constants/network";
 
 export const useWalletEvents = (
@@ -23,20 +22,19 @@ export const useWalletEvents = (
     
     if (!isAuthenticated) {
       const { exists } = await checkWalletExists(newAddress);
+      console.log('Wallet exists check for changed address:', { exists, newAddress });
 
       if (exists) {
-        // Clear flags and initiate auto sign-in
-        setExistingUser(false);
+        // Existing wallet
+        setExistingUser(true);
         setNeedsSignup(false);
         
         toast({
           title: "Welcome Back!",
-          description: "Your wallet is recognized. Signing you in automatically...",
+          description: "Your wallet is recognized. Please sign in to continue.",
         });
-        
-        // Auto sign-in for existing wallet
-        await handleWalletAutoSignIn(newAddress);
       } else {
+        // New wallet
         setNeedsSignup(true);
         setExistingUser(false);
         toast({
@@ -108,6 +106,7 @@ export const useWalletEvents = (
       }
     };
 
+    // Check if wallet was disconnected before
     const hasDisconnected = localStorage.getItem('wallet_disconnected') === 'true';
     if (!hasDisconnected) {
       checkIfWalletIsConnected();

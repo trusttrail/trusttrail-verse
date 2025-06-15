@@ -15,6 +15,7 @@ export const useWalletAuthLogic = (
     
     // If user is already authenticated, just link the wallet
     if (isAuthenticated && user) {
+      console.log('User already authenticated, linking wallet to profile');
       const linkResult = await linkWalletToProfile(user.id, address);
       if (linkResult.success) {
         setNeedsSignup(false);
@@ -29,26 +30,24 @@ export const useWalletAuthLogic = (
     
     // Check if wallet exists for non-authenticated users
     const { exists, userId } = await checkWalletExists(address);
+    console.log('Wallet exists check:', { exists, userId, address });
     
     if (exists && userId) {
-      console.log('Existing wallet detected - initiating auto sign-in');
+      console.log('Existing wallet detected - setting existing user flag');
       
       // Clear any previous state flags
-      setExistingUser(false);
       setNeedsSignup(false);
+      setExistingUser(true);
       
       toast({
         title: "Welcome Back!",
-        description: "Your wallet is recognized. Signing you in automatically...",
+        description: "Your wallet is recognized. Please sign in to continue.",
       });
       
-      // Initiate auto sign-in process
-      const result = await handleWalletAutoSignIn(address);
-      if (result.success) {
-        return true; // Wallet was recognized and auto sign-in initiated
-      }
+      return false; // Don't auto-sign in, let user manually sign in
     } else {
       // New wallet - needs signup
+      console.log('New wallet detected - setting needs signup flag');
       setNeedsSignup(true);
       setExistingUser(false);
       toast({
