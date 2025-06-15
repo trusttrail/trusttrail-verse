@@ -48,7 +48,7 @@ export const useWalletAuth = (
       
       // Initiate auto sign-in process
       const result = await handleWalletAutoSignIn(address);
-      if (result.success && result.redirecting) {
+      if (result.success) {
         return true; // Wallet was recognized and auto sign-in initiated
       }
     } else {
