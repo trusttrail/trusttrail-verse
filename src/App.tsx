@@ -15,38 +15,49 @@ import Auth from "./pages/Auth";
 import RecentActivityOverlay from "@/components/RecentActivityOverlay";
 import { RecentActivityProvider, useRecentActivity } from "@/hooks/useRecentActivity";
 import { useAuth } from "@/hooks/useAuth";
+import { useWalletConnection } from "@/hooks/useWalletConnection";
 
 const queryClient = new QueryClient();
 
 // DEMO: use demo activity events unless in production/live setup
 const DemoActivityInjector: React.FC = () => {
-  const { pushNotification } = useRecentActivity();
+  const { pushNotification, clearNotifications } = useRecentActivity();
   const { isAuthenticated } = useAuth();
+  const { isWalletConnected } = useWalletConnection();
   const hasStartedRef = React.useRef(false);
+  const intervalsRef = React.useRef<{ review?: NodeJS.Timeout; reward?: NodeJS.Timeout }>({});
 
   React.useEffect(() => {
-    // Only show demo notifications when user is not authenticated
-    if (isAuthenticated || hasStartedRef.current) return;
+    // Stop demo notifications when user is authenticated OR wallet is connected
+    if (isAuthenticated || isWalletConnected) {
+      console.log('Stopping demo notifications - user authenticated or wallet connected');
+      if (intervalsRef.current.review) clearInterval(intervalsRef.current.review);
+      if (intervalsRef.current.reward) clearInterval(intervalsRef.current.reward);
+      hasStartedRef.current = false;
+      return;
+    }
+
+    // Only show demo notifications when user is not authenticated AND wallet not connected
+    if (hasStartedRef.current) return;
     
     // Mark as started to prevent multiple initializations
     hasStartedRef.current = true;
     
     console.log('Starting demo activity injector...');
     
-    // Demo: Fire a new review every 45s and reward every 60s (increased intervals to prevent spam)
+    // Demo: Fire a new review every 45s and reward every 60s
     const demoWallets = [
       "0xA12b...F38C", "0x93ad...FbD1", "0xE54b...4a0d"
     ];
     const demoNames = [
       "Uniswap", "OpenSea", "QuickSwap", "Axie Infinity", "PancakeSwap", "SushiSwap"
     ];
-    let reviewInt: NodeJS.Timeout, rewardInt: NodeJS.Timeout;
 
     // Start with a delay to prevent immediate spam
     const initTimeout = setTimeout(() => {
       console.log('Starting demo intervals...');
       
-      reviewInt = setInterval(() => {
+      intervalsRef.current.review = setInterval(() => {
         const name = demoNames[Math.floor(Math.random() * demoNames.length)];
         const rating = 3 + Math.floor(Math.random() * 3);
         const wallet = demoWallets[Math.floor(Math.random() * demoWallets.length)];
@@ -58,7 +69,7 @@ const DemoActivityInjector: React.FC = () => {
         });
       }, 45000); // 45 seconds
 
-      rewardInt = setInterval(() => {
+      intervalsRef.current.reward = setInterval(() => {
         const amount = (Math.random() * 5 + 1).toFixed(2);
         const wallet = demoWallets[Math.floor(Math.random() * demoWallets.length)];
         console.log('Pushing demo reward notification...');
@@ -73,11 +84,11 @@ const DemoActivityInjector: React.FC = () => {
     return () => {
       console.log('Cleaning up demo activity injector...');
       clearTimeout(initTimeout);
-      if (reviewInt) clearInterval(reviewInt);
-      if (rewardInt) clearInterval(rewardInt);
+      if (intervalsRef.current.review) clearInterval(intervalsRef.current.review);
+      if (intervalsRef.current.reward) clearInterval(intervalsRef.current.reward);
       hasStartedRef.current = false;
     };
-  }, [pushNotification, isAuthenticated]);
+  }, [pushNotification, isAuthenticated, isWalletConnected]);
 
   return null;
 };

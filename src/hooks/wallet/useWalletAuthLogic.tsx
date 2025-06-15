@@ -1,4 +1,5 @@
 
+import React, { useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { checkWalletExists, linkWalletToProfile, handleWalletAutoSignIn } from '@/utils/authUtils';
@@ -9,12 +10,21 @@ export const useWalletAuthLogic = (
 ) => {
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
+  const lastProcessedWallet = useRef<string>('');
 
   const handleWalletConnection = async (address: string) => {
     console.log('=== WALLET AUTH DEBUG START ===');
     console.log('Input address:', address);
-    console.log('Address type:', typeof address);
-    console.log('Address length:', address?.length);
+    console.log('Last processed wallet:', lastProcessedWallet.current);
+    
+    // Prevent duplicate processing for the same wallet
+    if (lastProcessedWallet.current === address) {
+      console.log('⚠️ Skipping duplicate wallet auth for:', address);
+      return false;
+    }
+    
+    lastProcessedWallet.current = address;
+    console.log('Processing wallet auth for:', address);
     console.log('Is authenticated:', isAuthenticated);
     console.log('Current user:', user?.id);
     
@@ -101,6 +111,13 @@ export const useWalletAuthLogic = (
     console.log('=== WALLET AUTH DEBUG END ===');
     return false;
   };
+
+  // Reset the last processed wallet when user authenticates
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      lastProcessedWallet.current = '';
+    }
+  }, [isAuthenticated]);
 
   return {
     handleWalletConnection,
