@@ -81,16 +81,15 @@ serve(async (req) => {
 
     console.log('✅ User found:', user.id)
 
-    // For existing users, use magiclink type which creates immediate session
-    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'magiclink',
-      email: user.email!
+    // Create a session directly for the user using admin API
+    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
+      userId: user.id
     })
 
-    if (linkError || !linkData) {
-      console.error('Magic link generation error:', linkError)
+    if (sessionError || !sessionData) {
+      console.error('Session creation error:', sessionError)
       return new Response(
-        JSON.stringify({ error: 'Failed to generate auth session' }),
+        JSON.stringify({ error: 'Failed to create session' }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -98,55 +97,14 @@ serve(async (req) => {
       )
     }
 
-    console.log('✅ Magic link generated successfully')
-    console.log('Link data properties:', linkData.properties)
-
-    // The magic link contains the tokens directly in the properties
-    const accessToken = linkData.properties?.access_token
-    const refreshToken = linkData.properties?.refresh_token
-
-    console.log('Access token found:', !!accessToken)
-    console.log('Refresh token found:', !!refreshToken)
-
-    if (!accessToken) {
-      // Try parsing from the action link as fallback
-      const url = new URL(linkData.properties.action_link)
-      const urlAccessToken = url.searchParams.get('access_token')
-      const urlRefreshToken = url.searchParams.get('refresh_token')
-
-      console.log('Fallback - URL access token found:', !!urlAccessToken)
-
-      if (urlAccessToken) {
-        return new Response(
-          JSON.stringify({ 
-            success: true,
-            access_token: urlAccessToken,
-            refresh_token: urlRefreshToken || '',
-            user: user
-          }),
-          { 
-            status: 200, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        )
-      }
-
-      console.error('No access token found in magic link')
-      return new Response(
-        JSON.stringify({ error: 'Failed to extract access token' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
-    }
+    console.log('✅ Session created successfully')
 
     return new Response(
       JSON.stringify({ 
         success: true,
-        access_token: accessToken,
-        refresh_token: refreshToken || '',
-        user: user
+        access_token: sessionData.access_token,
+        refresh_token: sessionData.refresh_token,
+        user: sessionData.user
       }),
       { 
         status: 200, 
