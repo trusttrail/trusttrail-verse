@@ -14,6 +14,7 @@ export const useWalletAuthLogic = (
   const { clearNotifications } = useRecentActivity();
   const lastProcessedWallet = useRef<string>('');
   const processingRef = useRef<boolean>(false);
+  // Temporarily disable caching to debug the issue
   const lastResultRef = useRef<{ address: string; exists: boolean; timestamp: number } | null>(null);
 
   const handleWalletConnection = async (address: string) => {
@@ -22,26 +23,12 @@ export const useWalletAuthLogic = (
     console.log('Last processed wallet:', lastProcessedWallet.current);
     console.log('Currently processing:', processingRef.current);
     
-    // Check if we have a recent result for this address (within 30 seconds)
-    const now = Date.now();
-    if (lastResultRef.current && 
-        lastResultRef.current.address === address && 
-        (now - lastResultRef.current.timestamp) < 30000) {
-      console.log('⚠️ Using cached result for wallet:', address);
-      const cached = lastResultRef.current;
-      if (cached.exists) {
-        setExistingUser(true);
-        setNeedsSignup(false);
-      } else {
-        setNeedsSignup(true);
-        setExistingUser(false);
-      }
-      return false;
-    }
+    // TEMPORARILY DISABLE CACHING TO DEBUG THE ISSUE
+    console.log('🚨 CACHING DISABLED FOR DEBUGGING - FORCING FRESH WALLET CHECK');
     
-    // Prevent duplicate processing for the same wallet or concurrent processing
-    if (lastProcessedWallet.current === address || processingRef.current) {
-      console.log('⚠️ Skipping duplicate/concurrent wallet auth for:', address);
+    // Prevent concurrent processing only
+    if (processingRef.current) {
+      console.log('⚠️ Skipping concurrent wallet auth for:', address);
       return false;
     }
     
@@ -84,13 +71,6 @@ export const useWalletAuthLogic = (
       console.log('User ID:', walletCheckResult.userId);
       
       const { exists, userId } = walletCheckResult;
-      
-      // Cache the result
-      lastResultRef.current = {
-        address,
-        exists,
-        timestamp: now
-      };
       
       if (exists && userId) {
         console.log('✅ EXISTING WALLET DETECTED');
