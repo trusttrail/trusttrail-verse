@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Check if wallet address exists in profiles table
@@ -19,7 +18,16 @@ export const checkWalletExists = async (walletAddress: string) => {
       method: 'eq (exact match on normalized)'
     });
     
-    // Use eq with normalized lowercase address for exact matching
+    // First, let's try a simple select to see all profiles with wallet addresses
+    const { data: allProfiles, error: debugError } = await supabase
+      .from('profiles')
+      .select('id, wallet_address')
+      .not('wallet_address', 'is', null);
+    
+    console.log('DEBUG: All profiles with wallet addresses:', allProfiles);
+    console.log('DEBUG: Error in fetching all profiles:', debugError);
+    
+    // Now try the specific query
     const { data, error } = await supabase
       .from('profiles')
       .select('id, wallet_address')
@@ -55,27 +63,15 @@ export const checkWalletExists = async (walletAddress: string) => {
     } else {
       console.log('❌ WALLET NOT FOUND IN DATABASE');
       
-      // Let's also try a direct count query to see if there are any records at all
-      console.log('Running additional diagnostic query...');
-      const { count, error: countError } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .not('wallet_address', 'is', null);
-      
-      console.log('Total profiles with wallet addresses:', count);
-      if (countError) {
-        console.error('Count query error:', countError);
-      }
-      
-      // Also try a like query to see if there are similar addresses
-      const { data: similarData, error: similarError } = await supabase
+      // Check if the address exists with different casing
+      const { data: caseInsensitiveData, error: caseError } = await supabase
         .from('profiles')
         .select('id, wallet_address')
-        .ilike('wallet_address', `%${normalizedAddress.slice(-10)}`);
-      
-      console.log('Similar wallet addresses found:', similarData);
-      if (similarError) {
-        console.error('Similar query error:', similarError);
+        .ilike('wallet_address', normalizedAddress);
+        
+      console.log('Case-insensitive search result:', caseInsensitiveData);
+      if (caseError) {
+        console.error('Case-insensitive query error:', caseError);
       }
     }
     
