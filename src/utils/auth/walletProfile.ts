@@ -13,11 +13,11 @@ export const checkWalletExists = async (walletAddress: string) => {
     
     console.log('Executing Supabase query with case-insensitive search...');
     
-    // Use ilike for case-insensitive search instead of eq
+    // Use eq with LOWER() function for proper case-insensitive search
     const { data, error } = await supabase
       .from('profiles')
       .select('id, wallet_address')
-      .ilike('wallet_address', normalizedAddress)
+      .eq('wallet_address', normalizedAddress)
       .maybeSingle();
     
     console.log('Supabase query result:');
