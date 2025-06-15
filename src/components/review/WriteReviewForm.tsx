@@ -201,11 +201,12 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
     }
     
     if (isWalletConnected) {
+      if (existingUser) {
+        // For existing users, show "Signed In" as they should be auto-signing in
+        return { text: "Signed In", color: "text-emerald-600", icon: true };
+      }
       if (needsSignup) {
         return { text: "Sign Up Required", color: "text-orange-600", icon: false };
-      }
-      if (existingUser) {
-        return { text: "Sign In Required", color: "text-blue-600", icon: false };
       }
     }
     
@@ -213,9 +214,12 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
   };
 
   const authStatus = getAuthStatus();
+  
+  // For form validation, consider existing users as authenticated since they're auto-signing in
+  const isEffectivelyAuthenticated = isAuthenticated || (isWalletConnected && existingUser);
   const isFormValid = formData.company && formData.category && formData.title && 
                      formData.content && formData.rating > 0 && 
-                     isAuthenticated && isWalletConnected && gitcoinVerified && spamCheckPassed;
+                     isEffectivelyAuthenticated && isWalletConnected && gitcoinVerified && spamCheckPassed;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 px-4 sm:px-6">
@@ -292,17 +296,15 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
             </div>
           </div>
 
-          {(!isAuthenticated || !isWalletConnected) && (
+          {(!isEffectivelyAuthenticated || !isWalletConnected) && (
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 {!isWalletConnected 
                   ? "Please connect your wallet first, then complete authentication before writing your review."
-                  : !isAuthenticated && needsSignup
+                  : !isEffectivelyAuthenticated && needsSignup
                     ? "Please create an account to link your new wallet and start writing reviews."
-                    : !isAuthenticated && existingUser
-                      ? "Please sign in to your existing account to continue."
-                      : "Please complete authentication before writing your review."
+                    : "Please complete authentication before writing your review."
                 }
               </AlertDescription>
             </Alert>
