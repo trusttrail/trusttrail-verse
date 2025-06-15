@@ -30,9 +30,10 @@ export const useWalletAuthLogic = (
       return true;
     }
     
-    // Check if wallet exists for non-authenticated users
+    // ALWAYS check if wallet exists for non-authenticated users
+    console.log('Checking wallet existence for non-authenticated user:', address);
     const { exists, userId } = await checkWalletExists(address);
-    console.log('Wallet exists check:', { exists, userId, address });
+    console.log('Wallet exists check result:', { exists, userId, address });
     
     if (exists && userId) {
       console.log('Existing wallet detected - setting existing user flag');

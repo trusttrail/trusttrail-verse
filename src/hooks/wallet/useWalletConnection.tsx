@@ -1,6 +1,7 @@
 
 import { useToast } from '@/hooks/use-toast';
 import { AMOY_CHAIN_ID, AMOY_NETWORK_NAME } from "@/constants/network";
+import { checkWalletExists } from '@/utils/authUtils';
 
 export const useWalletConnection = (
   setIsWalletConnected: (val: boolean) => void,
@@ -29,6 +30,8 @@ export const useWalletConnection = (
           setIsWalletConnected(true);
           setCurrentNetwork("amoy");
           localStorage.setItem('connected_wallet_address', address);
+          
+          // Return the address so wallet auth logic can check if it's new/existing
           return address;
         } else {
           console.log('Wrong network detected');
@@ -66,6 +69,7 @@ export const useWalletConnection = (
 
       if (accounts.length > 0) {
         const address = accounts[0];
+        console.log('Connected wallet address:', address);
         setWalletAddress(address);
         localStorage.setItem('connected_wallet_address', address);
 
@@ -90,6 +94,7 @@ export const useWalletConnection = (
             description: `Connected to ${address.substring(0, 6)}...${address.substring(address.length - 4)}`,
           });
           
+          // Return the address so wallet auth logic can determine if it's new/existing
           return address;
         }
       }
