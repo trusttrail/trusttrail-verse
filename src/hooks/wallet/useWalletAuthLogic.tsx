@@ -93,39 +93,58 @@ export const useWalletAuthLogic = (
       };
       
       if (exists && userId) {
-        console.log('✅ EXISTING WALLET DETECTED - ATTEMPTING AUTO SIGN-IN');
+        console.log('✅ EXISTING WALLET DETECTED - STARTING AUTO SIGN-IN IMMEDIATELY');
         console.log('Setting existingUser = true, needsSignup = false');
         setExistingUser(true);
         setNeedsSignup(false);
         
-        // Attempt automatic sign-in for existing users
+        // Show initial toast
         toast({
           title: "Welcome Back!",
           description: "Your wallet is recognized. Signing you in automatically...",
         });
         
+        // Immediately attempt automatic sign-in
         try {
+          console.log('Starting automatic sign-in process...');
           const autoSignInResult = await handleWalletAutoSignIn(address);
           console.log('Auto sign-in result:', autoSignInResult);
           
           if (autoSignInResult.success && autoSignInResult.autoSignInInitiated) {
-            // Auto sign-in was initiated, show success message
+            // Auto sign-in was initiated successfully
             toast({
-              title: "Signing In",
-              description: "Please check your email for the sign-in link, or wait a moment...",
+              title: "Signing In...",
+              description: autoSignInResult.message || "Please check your email or wait a moment...",
             });
+            
+            // Set a timeout to redirect to home if sign-in takes too long
+            setTimeout(() => {
+              const { data: { session } } = supabase.auth.getSession();
+              if (!session) {
+                toast({
+                  title: "Sign-in in progress",
+                  description: "If you don't get signed in automatically, please check your email for the sign-in link.",
+                });
+              }
+            }, 5000);
+            
           } else if (autoSignInResult.needsAuth) {
-            // Fallback to manual sign-in
+            // Fallback to manual sign-in only if auto sign-in completely fails
             toast({
               title: "Sign In Required",
               description: "Please complete the sign-in process to continue.",
+            });
+          } else if (autoSignInResult.message) {
+            toast({
+              title: "Signing In",
+              description: autoSignInResult.message,
             });
           }
         } catch (autoSignInError) {
           console.error('Auto sign-in failed:', autoSignInError);
           toast({
-            title: "Welcome Back!",
-            description: "Your wallet is recognized. Please sign in to continue.",
+            title: "Sign In Required",
+            description: "Automatic sign-in failed. Please sign in manually to continue.",
           });
         }
         

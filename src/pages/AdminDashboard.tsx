@@ -43,12 +43,16 @@ const AdminDashboard = () => {
         <div className="container mx-auto px-4 pt-24">
           <Card className="max-w-md mx-auto">
             <CardContent className="pt-6 text-center">
-              <h1 className="text-2xl font-bold mb-4">Sign In Required</h1>
+              <h1 className="text-2xl font-bold mb-4">Automatic Sign-In in Progress</h1>
               <p className="text-muted-foreground mb-4">
-                Your wallet ({walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}) is connected and recognized. Please sign in to access the admin dashboard.
+                Your admin wallet ({walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}) is connected and recognized. 
+                You should be signed in automatically shortly.
+              </p>
+              <p className="text-sm text-muted-foreground mb-4">
+                If automatic sign-in doesn't work, please check your email for a sign-in link or click below to sign in manually.
               </p>
               <Button onClick={() => navigate('/auth')} className="w-full">
-                Sign In to Continue
+                Sign In Manually
               </Button>
             </CardContent>
           </Card>
