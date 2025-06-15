@@ -76,7 +76,7 @@ const Header = () => {
               Review Portal
             </Button>
             <Button variant="ghost" size="sm" onClick={handleTestnet}>
-              Testnet
+              Testnet Tokens
             </Button>
             
             {/* Network Selector */}
@@ -144,7 +144,7 @@ const Header = () => {
                 Review Portal
               </Button>
               <Button variant="ghost" className="justify-start" onClick={handleTestnet}>
-                Testnet
+                Testnet Tokens
               </Button>
               
               {/* Mobile Network Selector */}
