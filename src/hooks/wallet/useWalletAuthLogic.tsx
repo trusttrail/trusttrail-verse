@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useRecentActivity } from '@/hooks/useRecentActivity';
 import { checkWalletExists, linkWalletToProfile } from '@/utils/authUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useWalletAuthLogic = (
   setNeedsSignup: (val: boolean) => void,
@@ -15,6 +16,63 @@ export const useWalletAuthLogic = (
   const lastProcessedWallet = useRef<string>('');
   const processingRef = useRef<boolean>(false);
   const lastResultRef = useRef<{ address: string; exists: boolean; timestamp: number } | null>(null);
+
+  const performAutoSignIn = async (userId: string, walletAddress: string) => {
+    try {
+      console.log('🔐 Attempting automatic sign-in for existing user:', userId);
+      
+      // Create a temporary session by refreshing with stored credentials
+      // This is a simplified approach - in production you might need more robust session management
+      const { data: { session }, error } = await supabase.auth.refreshSession();
+      
+      if (error) {
+        console.error('Session refresh failed:', error);
+        // Fallback: Guide user to manual sign-in
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to continue with your existing account.",
+        });
+        return false;
+      }
+
+      if (session?.user?.id === userId) {
+        console.log('✅ Automatic sign-in successful');
+        toast({
+          title: "Welcome Back!",
+          description: "You have been signed in automatically.",
+        });
+        
+        // Clear stored auth data
+        localStorage.removeItem('pending_wallet_auth_user_id');
+        localStorage.removeItem('pending_wallet_auth_address');
+        
+        return true;
+      } else {
+        console.log('Session user does not match expected user');
+        // Store user info for manual auth completion
+        localStorage.setItem('pending_wallet_auth_user_id', userId);
+        localStorage.setItem('pending_wallet_auth_address', walletAddress);
+        
+        toast({
+          title: "Almost There!",
+          description: "Please complete sign-in to access your account.",
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error('Auto sign-in error:', error);
+      
+      // Store user info for manual auth completion
+      localStorage.setItem('pending_wallet_auth_user_id', userId);
+      localStorage.setItem('pending_wallet_auth_address', walletAddress);
+      
+      toast({
+        title: "Sign-In Required",
+        description: "Please sign in to continue with your existing account.",
+      });
+      return false;
+    }
+  };
 
   const handleWalletConnection = async (address: string) => {
     console.log('=== WALLET AUTH DEBUG START ===');
@@ -93,24 +151,24 @@ export const useWalletAuthLogic = (
       };
       
       if (exists && userId) {
-        console.log('✅ EXISTING WALLET DETECTED - SETTING UP AUTO SIGN-IN');
+        console.log('✅ EXISTING WALLET DETECTED - ATTEMPTING AUTO SIGN-IN');
         console.log('Setting existingUser = true, needsSignup = false');
         setExistingUser(true);
         setNeedsSignup(false);
         
-        // Show success message
-        toast({
-          title: "Welcome Back!",
-          description: "Your wallet is recognized. You will be signed in automatically.",
-        });
+        // Attempt automatic sign-in
+        const autoSignInSuccess = await performAutoSignIn(userId, address);
         
-        // Store the user ID temporarily for the auto sign-in process
-        localStorage.setItem('pending_wallet_auth_user_id', userId);
-        localStorage.setItem('pending_wallet_auth_address', address);
+        if (!autoSignInSuccess) {
+          // Auto sign-in failed, but wallet is recognized
+          toast({
+            title: "Wallet Recognized",
+            description: "Your wallet is linked to an existing account. Please complete sign-in.",
+          });
+        }
         
-        console.log('✅ Wallet recognized, user should be redirected to auto sign-in');
-        
-        return false;
+        console.log('✅ Existing user processing complete');
+        return autoSignInSuccess;
       } else {
         // New wallet - needs signup
         console.log('❌ NEW WALLET DETECTED');

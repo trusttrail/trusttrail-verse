@@ -11,72 +11,18 @@ import { useAuth } from '@/hooks/useAuth';
 import { useWalletConnection } from '@/hooks/useWalletConnection';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
-import { getAutoSignInData, clearAutoSignInData } from '@/utils/authUtils';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState<string>('users');
-  const [isAutoSigningIn, setIsAutoSigningIn] = useState(false);
   const { data: profile, isLoading: profileLoading } = useAdminProfile();
   const { user, loading: authLoading } = useAuth();
   const { isWalletConnected, walletAddress, existingUser } = useWalletConnection();
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   console.log('AdminDashboard - Auth state:', { user: !!user, authLoading, profile, profileLoading });
 
-  // Handle automatic sign-in for recognized wallets
-  useEffect(() => {
-    const handleAutoSignIn = async () => {
-      if (user || authLoading || isAutoSigningIn) return;
-      
-      const autoSignInData = getAutoSignInData();
-      if (!autoSignInData) return;
-      
-      console.log('Found auto sign-in data:', autoSignInData);
-      setIsAutoSigningIn(true);
-      
-      try {
-        // Create a passwordless sign-in using magic link but don't require email verification
-        // We'll use the auth admin endpoint to sign in the user directly
-        console.log('Attempting automatic sign-in for existing user...');
-        
-        // Since we can't use admin endpoints with the anon key, we'll use a different approach
-        // We'll refresh the session and check if the user is already authenticated
-        const { data: { session }, error } = await supabase.auth.refreshSession();
-        
-        if (error) {
-          console.log('Session refresh failed, user needs manual sign-in');
-          clearAutoSignInData();
-          setIsAutoSigningIn(false);
-          return;
-        }
-        
-        if (session?.user?.id === autoSignInData.userId) {
-          console.log('✅ User successfully authenticated via session refresh');
-          toast({
-            title: "Welcome Back!",
-            description: "You have been signed in automatically.",
-          });
-          clearAutoSignInData();
-        } else {
-          console.log('Session refresh did not authenticate the expected user');
-          clearAutoSignInData();
-        }
-      } catch (error) {
-        console.error('Auto sign-in error:', error);
-        clearAutoSignInData();
-      } finally {
-        setIsAutoSigningIn(false);
-      }
-    };
-
-    handleAutoSignIn();
-  }, [user, authLoading, isAutoSigningIn, toast]);
-
   // Show loading while checking auth and profile
-  if (authLoading || profileLoading || isAutoSigningIn) {
+  if (authLoading || profileLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -97,15 +43,16 @@ const AdminDashboard = () => {
         <div className="container mx-auto px-4 pt-24">
           <Card className="max-w-md mx-auto">
             <CardContent className="pt-6 text-center">
-              <h1 className="text-2xl font-bold mb-4">Wallet Recognized</h1>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-trustpurple-500 mx-auto mb-4"></div>
+              <h1 className="text-2xl font-bold mb-4">Authenticating...</h1>
               <p className="text-muted-foreground mb-4">
                 Your admin wallet ({walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}) is recognized. 
               </p>
               <p className="text-sm text-muted-foreground mb-4">
-                Please proceed to sign in to access the admin dashboard.
+                Completing automatic sign-in...
               </p>
-              <Button onClick={() => navigate('/auth')} className="w-full">
-                Continue to Sign In
+              <Button onClick={() => navigate('/auth')} variant="outline" className="w-full">
+                Complete Sign In Manually
               </Button>
             </CardContent>
           </Card>

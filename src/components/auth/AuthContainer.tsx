@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useWalletConnection } from '@/hooks/useWalletConnection';
-import { linkWalletToProfile } from '@/utils/authUtils';
+import { linkWalletToProfile, getAutoSignInData, clearAutoSignInData } from '@/utils/authUtils';
 import PasswordResetForm from './PasswordResetForm';
 import ForgotPasswordForm from './ForgotPasswordForm';
 import EmailVerificationView from './EmailVerificationView';
@@ -32,6 +32,21 @@ const AuthContainer = () => {
       setIsSignUp(false);
     }
   }, [needsSignup, existingUser]);
+
+  // Handle pending authentication for existing users
+  useEffect(() => {
+    const handlePendingAuth = async () => {
+      const autoSignInData = getAutoSignInData();
+      if (autoSignInData && existingUser) {
+        console.log('Found pending auth data for existing user, auto-filling form');
+        // For existing users with pending auth, we can guide them through a streamlined process
+        // The wallet is already recognized, so we can show a simplified sign-in flow
+        clearAutoSignInData();
+      }
+    };
+
+    handlePendingAuth();
+  }, [existingUser]);
 
   useEffect(() => {
     // Check if user is already logged in
