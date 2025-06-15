@@ -21,7 +21,7 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ isAdmin }) => {
   // Fetch all users with their profiles
   const { data: users, isLoading: usersLoading } = useQuery({
     queryKey: ['admin-users'],
-    queryFn: async () => {
+    queryFn: async (): Promise<AdminUser[]> => {
       // Get all profiles first
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
@@ -33,16 +33,19 @@ const UsersManagement: React.FC<UsersManagementProps> = ({ isAdmin }) => {
       // Get auth users data
       const { data: authData } = await supabase.auth.admin.listUsers();
       
-      // Combine the data
-      const combinedUsers: AdminUser[] = profiles.map(profile => {
+      // Combine the data with proper typing
+      const combinedUsers: AdminUser[] = (profiles || []).map(profile => {
         const authUser = authData?.users?.find(user => user.id === profile.id);
         return {
-          ...profile,
+          id: profile.id,
+          wallet_address: profile.wallet_address,
+          is_admin: profile.is_admin,
+          created_at: profile.created_at,
           email: authUser?.email,
           email_confirmed_at: authUser?.email_confirmed_at,
           last_sign_in_at: authUser?.last_sign_in_at,
           auth_created_at: authUser?.created_at
-        };
+        } as AdminUser;
       });
       
       return combinedUsers;
