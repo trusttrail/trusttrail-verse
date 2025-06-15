@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 
 interface Notification {
   id: string;
@@ -18,14 +18,16 @@ const RecentActivityContext = createContext<RecentActivityContextType | undefine
 
 export const RecentActivityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [recentMessages, setRecentMessages] = useState<Set<string>>(new Set());
+  // Use a ref to persist the recent messages across renders
+  const recentMessagesRef = useRef<Set<string>>(new Set());
+  const timeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   const pushNotification = useCallback((notification: Omit<Notification, 'id'>) => {
     // Create a unique key for the notification to prevent duplicates
     const notificationKey = `${notification.type}-${notification.message}-${notification.wallet}`;
     
-    // Check if we've already shown this notification recently (within 30 seconds)
-    if (recentMessages.has(notificationKey)) {
+    // Check if we've already shown this notification recently
+    if (recentMessagesRef.current.has(notificationKey)) {
       console.log('Duplicate notification blocked:', notificationKey);
       return;
     }
@@ -35,26 +37,35 @@ export const RecentActivityProvider: React.FC<{ children: React.ReactNode }> = (
     
     console.log('Adding notification:', notificationKey);
     setNotifications(prev => [...prev, newNotification]);
-    setRecentMessages(prev => new Set(prev).add(notificationKey));
+    recentMessagesRef.current.add(notificationKey);
     
     // Auto-remove notification after 4 seconds
-    setTimeout(() => {
+    const removeNotificationTimeout = setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id));
     }, 4000);
     
     // Remove from recent messages after 30 seconds to allow future notifications
-    setTimeout(() => {
-      setRecentMessages(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(notificationKey);
-        return newSet;
-      });
+    const removeFromRecentTimeout = setTimeout(() => {
+      recentMessagesRef.current.delete(notificationKey);
+      timeoutsRef.current.delete(notificationKey);
     }, 30000);
-  }, [recentMessages]);
+    
+    // Store the timeout reference to clean up if needed
+    timeoutsRef.current.set(notificationKey, removeFromRecentTimeout);
+    
+    return () => {
+      clearTimeout(removeNotificationTimeout);
+      clearTimeout(removeFromRecentTimeout);
+    };
+  }, []);
 
   const clearNotifications = useCallback(() => {
     setNotifications([]);
-    setRecentMessages(new Set());
+    recentMessagesRef.current.clear();
+    
+    // Clear all pending timeouts
+    timeoutsRef.current.forEach(timeout => clearTimeout(timeout));
+    timeoutsRef.current.clear();
   }, []);
 
   return (

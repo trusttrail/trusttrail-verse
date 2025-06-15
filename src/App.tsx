@@ -22,10 +22,16 @@ const queryClient = new QueryClient();
 const DemoActivityInjector: React.FC = () => {
   const { pushNotification } = useRecentActivity();
   const { isAuthenticated } = useAuth();
+  const hasStartedRef = React.useRef(false);
 
   React.useEffect(() => {
     // Only show demo notifications when user is not authenticated
-    if (isAuthenticated) return;
+    if (isAuthenticated || hasStartedRef.current) return;
+    
+    // Mark as started to prevent multiple initializations
+    hasStartedRef.current = true;
+    
+    console.log('Starting demo activity injector...');
     
     // Demo: Fire a new review every 45s and reward every 60s (increased intervals to prevent spam)
     const demoWallets = [
@@ -37,11 +43,14 @@ const DemoActivityInjector: React.FC = () => {
     let reviewInt: NodeJS.Timeout, rewardInt: NodeJS.Timeout;
 
     // Start with a delay to prevent immediate spam
-    setTimeout(() => {
+    const initTimeout = setTimeout(() => {
+      console.log('Starting demo intervals...');
+      
       reviewInt = setInterval(() => {
         const name = demoNames[Math.floor(Math.random() * demoNames.length)];
         const rating = 3 + Math.floor(Math.random() * 3);
         const wallet = demoWallets[Math.floor(Math.random() * demoWallets.length)];
+        console.log('Pushing demo review notification...');
         pushNotification({
           type: "review",
           message: `⭐ ${rating}/5 review for ${name}`,
@@ -52,6 +61,7 @@ const DemoActivityInjector: React.FC = () => {
       rewardInt = setInterval(() => {
         const amount = (Math.random() * 5 + 1).toFixed(2);
         const wallet = demoWallets[Math.floor(Math.random() * demoWallets.length)];
+        console.log('Pushing demo reward notification...');
         pushNotification({
           type: "reward",
           message: `You earned ${amount} $TRAIL tokens 💰`,
@@ -61,8 +71,11 @@ const DemoActivityInjector: React.FC = () => {
     }, 10000); // Start after 10 seconds
 
     return () => {
+      console.log('Cleaning up demo activity injector...');
+      clearTimeout(initTimeout);
       if (reviewInt) clearInterval(reviewInt);
       if (rewardInt) clearInterval(rewardInt);
+      hasStartedRef.current = false;
     };
   }, [pushNotification, isAuthenticated]);
 
