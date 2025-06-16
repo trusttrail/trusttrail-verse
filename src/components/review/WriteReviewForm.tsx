@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,6 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [gitcoinVerified, setGitcoinVerified] = useState(false);
-  const [spamCheckPassed, setSpamCheckPassed] = useState(false);
 
   // Mock companies for CompanySelector
   const mockCompanies = [
@@ -70,52 +70,21 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
 
   const handleVerifyGitcoin = async () => {
     try {
-      // Simulate Gitcoin Passport verification
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setGitcoinVerified(true);
-      toast({
-        title: "Gitcoin Passport Verified",
-        description: "Your identity has been verified with Gitcoin Passport.",
-      });
+      // Redirect to Gitcoin Passport
+      window.open('https://app.passport.xyz/#/', '_blank');
+      
+      // For demo purposes, simulate verification after a delay
+      setTimeout(() => {
+        setGitcoinVerified(true);
+        toast({
+          title: "Gitcoin Passport Verified",
+          description: "Your identity has been verified with Gitcoin Passport.",
+        });
+      }, 3000);
     } catch (error) {
       toast({
         title: "Verification Failed",
         description: "Failed to verify with Gitcoin Passport. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleSpamCheck = async () => {
-    try {
-      // Simulate spam detection check
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Simple spam detection simulation
-      const spamKeywords = ['spam', 'fake', 'bot', 'scam'];
-      const hasSpamContent = spamKeywords.some(keyword => 
-        formData.content.toLowerCase().includes(keyword) || 
-        formData.title.toLowerCase().includes(keyword)
-      );
-
-      if (hasSpamContent) {
-        toast({
-          title: "Content Flagged",
-          description: "Your review contains flagged content. Please revise and try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setSpamCheckPassed(true);
-      toast({
-        title: "Spam Check Passed",
-        description: "Your review has passed spam detection.",
-      });
-    } catch (error) {
-      toast({
-        title: "Spam Check Failed",
-        description: "Failed to run spam detection. Please try again.",
         variant: "destructive",
       });
     }
@@ -127,7 +96,7 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
     if (!isAuthenticated) {
       toast({
         title: "Authentication Required",
-        description: "Please sign in to submit a review.",
+        description: "Please connect your wallet to submit a review.",
         variant: "destructive",
       });
       return;
@@ -151,15 +120,6 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
       return;
     }
 
-    if (!spamCheckPassed) {
-      toast({
-        title: "Spam Check Required",
-        description: "Please run spam detection on your review first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       setIsSubmitting(true);
       
@@ -168,7 +128,7 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
       
       toast({
         title: "Review Submitted Successfully",
-        description: "Your review has been submitted and is pending moderation.",
+        description: "Your review has been submitted and you've earned $NOCAP tokens!",
       });
 
       // Reset form
@@ -181,7 +141,6 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
         proofFiles: [],
       });
       setGitcoinVerified(false);
-      setSpamCheckPassed(false);
       
     } catch (error) {
       toast({
@@ -197,20 +156,19 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
   // Determine authentication status display based on wallet connection state
   const getAuthStatus = () => {
     if (isAuthenticated) {
-      return { text: "Signed In", color: "text-emerald-600", icon: true };
+      return { text: "Wallet Connected", color: "text-emerald-600", icon: true };
     }
     
     if (isWalletConnected) {
       if (existingUser) {
-        // For existing users, show "Signed In" as they should be auto-signing in
-        return { text: "Signed In", color: "text-emerald-600", icon: true };
+        return { text: "Wallet Connected", color: "text-emerald-600", icon: true };
       }
       if (needsSignup) {
         return { text: "Sign Up Required", color: "text-orange-600", icon: false };
       }
     }
     
-    return { text: "Sign In Required", color: "text-gray-600", icon: false };
+    return { text: "Connect Wallet Required", color: "text-gray-600", icon: false };
   };
 
   const authStatus = getAuthStatus();
@@ -219,14 +177,14 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
   const isEffectivelyAuthenticated = isAuthenticated || (isWalletConnected && existingUser);
   const isFormValid = formData.company && formData.category && formData.title && 
                      formData.content && formData.rating > 0 && 
-                     isEffectivelyAuthenticated && isWalletConnected && gitcoinVerified && spamCheckPassed;
+                     isEffectivelyAuthenticated && isWalletConnected && gitcoinVerified;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 px-4 sm:px-6">
       <div className="text-center mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold mb-4">Write a Review</h1>
         <p className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base">
-          Share your experience with the community. Your review will be verified on-chain and contribute to building trust in the ecosystem.
+          Share your experience with the community. Your review will be verified on-chain and you'll earn $NOCAP tokens for contributing to the ecosystem.
         </p>
       </div>
 
@@ -242,18 +200,8 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex items-center justify-between p-3 border rounded-lg">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Account Authentication</span>
-                {authStatus.icon && <CheckCircle className="text-emerald-500" size={16} />}
-              </div>
-              <span className={`text-sm ${authStatus.color}`}>
-                {authStatus.text}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Wallet Connection</span>
-                {isWalletConnected && <CheckCircle className="text-emerald-500" size={16} />}
+                {authStatus.icon && <CheckCircle className="text-emerald-500" size={16} />}
               </div>
               {!isWalletConnected && (
                 <Button size="sm" variant="outline" onClick={connectWallet}>
@@ -279,21 +227,6 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
                 {gitcoinVerified ? "Verified" : "Verify Identity"}
               </Button>
             </div>
-
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Spam Detection</span>
-                {spamCheckPassed && <CheckCircle className="text-emerald-500" size={16} />}
-              </div>
-              <Button 
-                size="sm" 
-                variant={spamCheckPassed ? "outline" : "default"}
-                onClick={handleSpamCheck}
-                disabled={!formData.content || !formData.title}
-              >
-                {spamCheckPassed ? "Passed" : "Check Content"}
-              </Button>
-            </div>
           </div>
 
           {(!isEffectivelyAuthenticated || !isWalletConnected) && (
@@ -301,10 +234,10 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 {!isWalletConnected 
-                  ? "Please connect your wallet first, then complete authentication before writing your review."
+                  ? "Please connect your wallet to start writing your review."
                   : !isEffectivelyAuthenticated && needsSignup
-                    ? "Please create an account to link your new wallet and start writing reviews."
-                    : "Please complete authentication before writing your review."
+                    ? "Please create an account to link your wallet and start writing reviews."
+                    : "Please connect your wallet to write your review."
                 }
               </AlertDescription>
             </Alert>

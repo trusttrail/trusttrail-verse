@@ -1,84 +1,83 @@
 
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-interface Notification {
+interface ActivityNotification {
   id: string;
   type: 'review' | 'reward';
   message: string;
   wallet: string;
 }
 
-interface RecentActivityContextType {
-  notifications: Notification[];
-  pushNotification: (notification: Omit<Notification, 'id'>) => void;
-  clearNotifications: () => void;
-}
+const DEMO_COMPANIES = ['QuickSwap', 'Uniswap', 'OpenSea', 'Axie Infinity', 'SushiSwap', 'PancakeSwap'];
+const DEMO_WALLETS = ['0xA12b...F38C', '0xE54b...4a0d', '0x93ad...FbD1'];
 
-const RecentActivityContext = createContext<RecentActivityContextType | undefined>(undefined);
+const getRandomRating = () => Math.floor(Math.random() * 5) + 1;
+const getRandomCompany = () => DEMO_COMPANIES[Math.floor(Math.random() * DEMO_COMPANIES.length)];
+const getRandomWallet = () => DEMO_WALLETS[Math.floor(Math.random() * DEMO_WALLETS.length)];
+const getRandomReward = () => (Math.random() * 5 + 1).toFixed(2);
 
-export const RecentActivityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  // Use a ref to persist the recent messages across renders
-  const recentMessagesRef = useRef<Set<string>>(new Set());
-  const timeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
-
-  const pushNotification = useCallback((notification: Omit<Notification, 'id'>) => {
-    // Create a unique key for the notification to prevent duplicates
-    const notificationKey = `${notification.type}-${notification.message}-${notification.wallet}`;
-    
-    // Check if we've already shown this notification recently
-    if (recentMessagesRef.current.has(notificationKey)) {
-      console.log('Duplicate notification blocked:', notificationKey);
-      return;
-    }
-    
-    const id = Math.random().toString(36).substring(7);
-    const newNotification = { ...notification, id };
-    
-    console.log('Adding notification:', notificationKey);
-    setNotifications(prev => [...prev, newNotification]);
-    recentMessagesRef.current.add(notificationKey);
-    
-    // Auto-remove notification after 4 seconds
-    const removeNotificationTimeout = setTimeout(() => {
-      setNotifications(prev => prev.filter(n => n.id !== id));
-    }, 4000);
-    
-    // Remove from recent messages after 30 seconds to allow future notifications
-    const removeFromRecentTimeout = setTimeout(() => {
-      recentMessagesRef.current.delete(notificationKey);
-      timeoutsRef.current.delete(notificationKey);
-    }, 30000);
-    
-    // Store the timeout reference to clean up if needed
-    timeoutsRef.current.set(notificationKey, removeFromRecentTimeout);
-    
-    return () => {
-      clearTimeout(removeNotificationTimeout);
-      clearTimeout(removeFromRecentTimeout);
+const generateNotification = (type: 'review' | 'reward'): ActivityNotification => {
+  const id = `${type}-${Date.now()}-${Math.random()}`;
+  
+  if (type === 'review') {
+    const rating = getRandomRating();
+    const company = getRandomCompany();
+    const wallet = getRandomWallet();
+    return {
+      id,
+      type,
+      message: `⭐ ${rating}/5 review for ${company}`,
+      wallet,
     };
-  }, []);
-
-  const clearNotifications = useCallback(() => {
-    setNotifications([]);
-    recentMessagesRef.current.clear();
-    
-    // Clear all pending timeouts
-    timeoutsRef.current.forEach(timeout => clearTimeout(timeout));
-    timeoutsRef.current.clear();
-  }, []);
-
-  return (
-    <RecentActivityContext.Provider value={{ notifications, pushNotification, clearNotifications }}>
-      {children}
-    </RecentActivityContext.Provider>
-  );
+  } else {
+    const amount = getRandomReward();
+    const wallet = getRandomWallet();
+    return {
+      id,
+      type,
+      message: `You earned ${amount} $NOCAP tokens 💰`,
+      wallet,
+    };
+  }
 };
 
 export const useRecentActivity = () => {
-  const context = useContext(RecentActivityContext);
-  if (!context) {
-    throw new Error('useRecentActivity must be used within a RecentActivityProvider');
-  }
-  return context;
+  const [notifications, setNotifications] = useState<ActivityNotification[]>([]);
+
+  const addNotification = useCallback((notification: ActivityNotification) => {
+    console.log('Adding notification:', notification.id);
+    setNotifications(prev => [...prev, notification]);
+    
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== notification.id));
+    }, 4000);
+  }, []);
+
+  useEffect(() => {
+    const pushNotification = (type: 'review' | 'reward') => {
+      console.log(`Pushing demo ${type} notification...`);
+      const notification = generateNotification(type);
+      addNotification(notification);
+    };
+
+    // Initial notifications
+    setTimeout(() => pushNotification('review'), 3000);
+    setTimeout(() => pushNotification('reward'), 15000);
+
+    // Set up intervals for continuous notifications
+    const reviewInterval = setInterval(() => {
+      pushNotification('review');
+    }, 45000);
+
+    const rewardInterval = setInterval(() => {
+      pushNotification('reward');
+    }, 30000);
+
+    return () => {
+      clearInterval(reviewInterval);
+      clearInterval(rewardInterval);
+    };
+  }, [addNotification]);
+
+  return { notifications };
 };

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Menu, X, CheckCircle } from "lucide-react";
+import { Moon, Sun, Menu, X, CheckCircle, Home } from "lucide-react";
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useNavigate } from 'react-router-dom';
@@ -28,6 +28,11 @@ const Header = () => {
 
   const handleSignOut = async () => {
     await signOut();
+    setIsMobileMenuOpen(false);
+  };
+
+  const handleHome = () => {
+    navigate('/');
     setIsMobileMenuOpen(false);
   };
 
@@ -62,7 +67,11 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
+          <nav className="hidden md:flex items-center space-x-4">
+            <Button variant="ghost" size="sm" onClick={handleHome} className="flex items-center gap-2">
+              <Home size={16} />
+              Home
+            </Button>
             <Button variant="ghost" size="sm" onClick={() => scrollToSection('features')}>
               Features
             </Button>
@@ -131,6 +140,10 @@ const Header = () => {
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-border mt-4 py-4">
             <div className="flex flex-col space-y-3">
+              <Button variant="ghost" className="justify-start flex items-center gap-2" onClick={handleHome}>
+                <Home size={16} />
+                Home
+              </Button>
               <Button variant="ghost" className="justify-start" onClick={() => scrollToSection('features')}>
                 Features
               </Button>
