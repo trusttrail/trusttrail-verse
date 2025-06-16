@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,13 +18,22 @@ export const useWalletAuthLogic = (
   const lastResultRef = useRef<{ address: string; exists: boolean; timestamp: number } | null>(null);
   const authAttemptRef = useRef<string>('');
   const toastShownRef = useRef<Set<string>>(new Set());
-  const didAutoSignInRef = useRef<Set<string>>(new Set());
+  const successfulAuthRef = useRef<Set<string>>(new Set());
 
   const handleWalletConnection = async (address: string) => {
     console.log('=== WALLET AUTH DEBUG START ===');
     console.log('Input address:', address);
+    console.log('Is authenticated:', isAuthenticated);
     console.log('Last processed wallet:', lastProcessedWallet.current);
     console.log('Currently processing:', processingRef.current);
+    
+    // If user is already authenticated, don't process again
+    if (isAuthenticated) {
+      console.log('✅ User already authenticated, skipping wallet auth check');
+      setNeedsSignup(false);
+      setExistingUser(false);
+      return true;
+    }
     
     // Strict duplicate prevention
     if (processingRef.current && lastProcessedWallet.current === address) {
@@ -36,26 +46,26 @@ export const useWalletAuthLogic = (
         lastResultRef.current.address === address && 
         (Date.now() - lastResultRef.current.timestamp) < 10000) {
       const cached = lastResultRef.current;
+      console.log('Using cached result:', cached);
+      
       if (cached.exists) {
         setExistingUser(true);
         setNeedsSignup(false);
-        // Only proceed if not auto-authenticated yet
-        if (authAttemptRef.current !== address && !toastShownRef.current.has(address) && !didAutoSignInRef.current.has(address)) {
+        // Only attempt auth if not already successful for this wallet
+        if (!successfulAuthRef.current.has(address) && !authAttemptRef.current) {
           await attemptAutoAuthentication(address);
         }
       } else {
         setNeedsSignup(true);
         setExistingUser(false);
       }
-      return false;
+      return cached.exists;
     }
     
     processingRef.current = true;
     lastProcessedWallet.current = address;
     
     console.log('Processing wallet auth for:', address);
-    console.log('Is authenticated:', isAuthenticated);
-    console.log('Current user:', user?.id);
     
     clearNotifications();
     setNeedsSignup(false);
@@ -90,12 +100,12 @@ export const useWalletAuthLogic = (
       };
       
       if (exists && userId) {
-        console.log('✅ EXISTING WALLET DETECTED - Auto-authenticating...');
+        console.log('✅ EXISTING WALLET DETECTED - Setting up for auto-authentication...');
         setExistingUser(true);
         setNeedsSignup(false);
         
-        // On successful check, immediately attempt wallet authentication, but only once
-        if (authAttemptRef.current !== address && !didAutoSignInRef.current.has(address)) {
+        // Only attempt authentication if not already successful for this wallet
+        if (!successfulAuthRef.current.has(address) && !authAttemptRef.current) {
           await attemptAutoAuthentication(address);
         }
         
@@ -105,7 +115,7 @@ export const useWalletAuthLogic = (
         setNeedsSignup(true);
         setExistingUser(false);
         
-        // Show notification for new wallets
+        // Show notification for new wallets only once
         const sessionKey = `new_wallet_notified_${address}`;
         if (!sessionStorage.getItem(sessionKey) && !toastShownRef.current.has(`new-${address}`)) {
           sessionStorage.setItem(sessionKey, 'true');
@@ -137,14 +147,19 @@ export const useWalletAuthLogic = (
   };
 
   const attemptAutoAuthentication = async (address: string) => {
-    if (didAutoSignInRef.current.has(address)) {
-      // Already signed in for this wallet, no need to repeat
+    // Prevent multiple auth attempts for the same wallet
+    if (successfulAuthRef.current.has(address)) {
+      console.log('🔄 Authentication already successful for this wallet, skipping');
       return;
     }
-    if (authAttemptRef.current === address || toastShownRef.current.has(`auth-${address}`)) {
+    
+    if (authAttemptRef.current === address) {
+      console.log('🔄 Authentication already in progress for this wallet, skipping');
       return;
     }
+    
     authAttemptRef.current = address;
+    
     try {
       console.log('🔐 Attempting automatic authentication for wallet:', address);
       
@@ -153,6 +168,10 @@ export const useWalletAuthLogic = (
       if (authResult.success) {
         console.log('✅ Automatic authentication successful!');
         
+        // Mark as successful to prevent re-attempts
+        successfulAuthRef.current.add(address);
+        
+        // Show success toast only once
         if (!toastShownRef.current.has(`auth-success-${address}`)) {
           toastShownRef.current.add(`auth-success-${address}`);
           toast({
@@ -161,10 +180,13 @@ export const useWalletAuthLogic = (
           });
         }
         
-        // Force page reload for clean state
-        setTimeout(() => {
-          window.location.reload();
-        }, 700);
+        // Clear the auth attempt flag
+        authAttemptRef.current = '';
+        
+        // NO PAGE RELOAD - let React handle the state updates naturally
+        console.log('🎉 Authentication complete, letting React handle state updates');
+        return true;
+        
       } else {
         console.warn('⚠️ Automatic authentication failed:', authResult.error);
         authAttemptRef.current = '';
@@ -177,6 +199,7 @@ export const useWalletAuthLogic = (
             variant: "destructive",
           });
         }
+        return false;
       }
     } catch (error) {
       console.error('❌ Auto authentication error:', error);
@@ -190,20 +213,25 @@ export const useWalletAuthLogic = (
           variant: "destructive",
         });
       }
+      return false;
     }
   };
 
   // Reset everything when user authenticates
   React.useEffect(() => {
     if (isAuthenticated) {
+      console.log('🧹 User authenticated, cleaning up wallet auth state');
       lastProcessedWallet.current = '';
       processingRef.current = false;
       lastResultRef.current = null;
       authAttemptRef.current = '';
-      toastShownRef.current.clear();
-      didAutoSignInRef.current.clear();
+      // Don't clear toastShownRef and successfulAuthRef to prevent duplicate notifications
+      
+      // Clear the signup/existing user flags when authenticated
+      setNeedsSignup(false);
+      setExistingUser(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, setNeedsSignup, setExistingUser]);
 
   return {
     handleWalletConnection,

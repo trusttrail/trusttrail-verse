@@ -42,37 +42,20 @@ export const authenticateByWallet = async (walletAddress: string) => {
         session: sessionData.session 
       };
     } else {
-      // Fallback: Sign in the user directly using their email
-      // This bypasses token issues by using standard email authentication
-      const { data: { user } } = await supabase.auth.getUser();
+      // For fallback session responses, let Supabase handle the auth state naturally
+      console.log('✅ Wallet authentication successful with session data!');
       
-      if (!user && data.user?.email) {
-        console.log('🔄 Attempting direct email sign-in as fallback...');
-        
-        // Try to sign in using the user's email (this will require them to verify if not already)
-        // For wallet users, we'll create a temporary session
-        const tempSessionData = {
-          access_token: `temp_${Date.now()}`,
-          refresh_token: `refresh_${Date.now()}`,
-          expires_in: 3600,
-          token_type: 'bearer' as const,
-          user: data.user
-        };
-
-        // Store the user info temporarily for the UI to use
-        localStorage.setItem('wallet_auth_user', JSON.stringify(data.user));
-        localStorage.setItem('wallet_auth_session', JSON.stringify(tempSessionData));
-
-        console.log('✅ Wallet authentication successful with fallback!');
-        return { 
-          success: true, 
-          user: data.user,
-          session: tempSessionData,
-          isTemporary: true
-        };
+      // Store minimal auth info if needed but let Supabase manage the session
+      if (data.user) {
+        console.log('📝 User data received:', data.user.email);
       }
 
-      return { success: false, error: 'Unable to authenticate user' };
+      return { 
+        success: true, 
+        user: data.user,
+        session: data.session,
+        isTemporary: true
+      };
     }
 
   } catch (error) {

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { LogIn, Wallet, UserPlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useWalletConnection } from '@/hooks/useWalletConnection';
+import { useAuth } from '@/hooks/useAuth';
 
 interface WalletConnectCardProps {
   isMetaMaskAvailable: boolean;
@@ -23,11 +24,34 @@ const WalletConnectCard = ({
 }: WalletConnectCardProps) => {
   const navigate = useNavigate();
   const { needsSignup, existingUser } = useWalletConnection();
+  const { isAuthenticated, user } = useAuth();
 
   const handleAuthRedirect = () => {
     console.log('Redirecting to auth page');
     navigate('/auth');
   };
+
+  // If user is authenticated and wallet is connected, don't show auth prompts
+  if (isAuthenticated && user && isWalletConnected) {
+    console.log('✅ User authenticated with wallet connected, showing success state');
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-green-600">Ready to Go!</CardTitle>
+          <CardDescription>
+            Wallet connected and authenticated ({walletAddress.substring(0, 6)}...{walletAddress.substring(walletAddress.length - 4)}). 
+            You can now write reviews and access all features.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2 text-green-600">
+            <Wallet size={16} />
+            <span className="text-sm font-medium">All Set!</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!isWalletConnected) {
     return (
@@ -70,6 +94,7 @@ const WalletConnectCard = ({
     );
   }
 
+  // Show auth prompts only for non-authenticated users with connected wallets
   return (
     <Card>
       <CardHeader>
