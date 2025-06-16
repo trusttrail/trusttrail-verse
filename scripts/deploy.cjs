@@ -1,10 +1,17 @@
-
 const { ethers } = require("hardhat");
 const fs = require("fs");
 const path = require("path");
 
 async function main() {
-  console.log("Starting deployment...");
+  console.log("Starting secure deployment...");
+  
+  // Validate that we have the required private key
+  if (!process.env.PRIVATE_KEY) {
+    console.error("❌ PRIVATE_KEY environment variable is required for deployment");
+    console.log("Please set your private key as an environment variable:");
+    console.log("export PRIVATE_KEY=your_private_key_here");
+    process.exit(1);
+  }
   
   const [deployer] = await ethers.getSigners();
   console.log("Deploying contracts with account:", deployer.address);
@@ -42,7 +49,7 @@ async function main() {
   await transferTx.wait();
   console.log("Transferred", ethers.formatEther(rewardAmount), "tokens to reviews contract");
 
-  // Save deployment info
+  // Save deployment info securely
   const deploymentInfo = {
     network: hre.network.name,
     chainId: (await ethers.provider.getNetwork()).chainId.toString(),
@@ -72,7 +79,7 @@ async function main() {
     JSON.stringify(deploymentInfo, null, 2)
   );
   
-  console.log("\n=== DEPLOYMENT COMPLETE ===");
+  console.log("\n=== SECURE DEPLOYMENT COMPLETE ===");
   console.log("Network:", hre.network.name);
   console.log("TrustTrailToken:", tokenAddress);
   console.log("TrustTrailReviews:", reviewsAddress);
@@ -86,15 +93,25 @@ async function main() {
   console.log("1. Verify contracts on Polygonscan (optional)");
   console.log("2. Test contract interactions");
   console.log("3. Update frontend with new addresses");
+  console.log("\n⚠️  SECURITY REMINDER:");
+  console.log("- Keep your private keys secure and never commit them to version control");
+  console.log("- Use environment variables or secure key management systems");
+  console.log("- Regularly rotate your deployment keys");
 }
 
 function updateContractAddresses(network, tokenAddress, reviewsAddress) {
   const web3ServicePath = path.join(__dirname, "../src/services/web3Service.ts");
+  
+  if (!fs.existsSync(web3ServicePath)) {
+    console.log("⚠️  web3Service.ts not found, skipping address update");
+    return;
+  }
+  
   let content = fs.readFileSync(web3ServicePath, "utf8");
   
   if (network === "amoy") {
     content = content.replace(
-      /mumbai: {[\s\S]*?}/,
+      /amoy: {[\s\S]*?}/,
       `amoy: {
     reviewPlatform: '${reviewsAddress}',
     rewardToken: '${tokenAddress}',
@@ -123,6 +140,6 @@ function updateContractAddresses(network, tokenAddress, reviewsAddress) {
 main()
   .then(() => process.exit(0))
   .catch((error) => {
-    console.error(error);
+    console.error("❌ Deployment failed:", error);
     process.exit(1);
   });

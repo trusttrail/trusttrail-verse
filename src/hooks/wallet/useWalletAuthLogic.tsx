@@ -5,6 +5,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRecentActivity } from '@/hooks/useRecentActivity';
 import { checkWalletExists, linkWalletToProfile } from '@/utils/authUtils';
 import { authenticateByWallet } from '@/utils/auth/walletAuth';
+import { sanitizeWalletAddress, createRateLimiter } from '@/utils/inputSanitization';
+
+// Create rate limiter for wallet operations
+const walletOperationLimiter = createRateLimiter(3, 60000); // 3 attempts per minute
 
 export const useWalletAuthLogic = (
   setNeedsSignup: (val: boolean) => void,
@@ -13,200 +17,201 @@ export const useWalletAuthLogic = (
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
   const { clearNotifications } = useRecentActivity();
-  const lastProcessedWallet = useRef<string>('');
-  const processingRef = useRef<boolean>(false);
+  
+  // Enhanced state management with better deduplication
+  const processingRef = useRef<{ address: string; timestamp: number } | null>(null);
   const lastResultRef = useRef<{ address: string; exists: boolean; timestamp: number } | null>(null);
-  const authAttemptRef = useRef<string>('');
-  const toastShownRef = useRef<Set<string>>(new Set());
-  const successfulAuthRef = useRef<Set<string>>(new Set());
+  const notificationHistoryRef = useRef<Set<string>>(new Set());
+  const authStateRef = useRef<{ address: string; authenticated: boolean; timestamp: number } | null>(null);
 
   const handleWalletConnection = async (address: string) => {
-    console.log('=== WALLET AUTH DEBUG START ===');
+    console.log('=== SECURE WALLET AUTH START ===');
     console.log('Input address:', address);
     console.log('Is authenticated:', isAuthenticated);
-    console.log('Last processed wallet:', lastProcessedWallet.current);
-    console.log('Currently processing:', processingRef.current);
     
+    // Sanitize wallet address first
+    const sanitizedAddress = sanitizeWalletAddress(address);
+    if (!sanitizedAddress) {
+      console.error('❌ Invalid wallet address format');
+      toast({
+        title: "Invalid Wallet Address",
+        description: "The wallet address format is invalid.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     // If user is already authenticated, don't process again
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
       console.log('✅ User already authenticated, skipping wallet auth check');
       setNeedsSignup(false);
       setExistingUser(false);
+      
+      // Link wallet to profile if not already linked
+      if (sanitizedAddress !== authStateRef.current?.address) {
+        await linkWalletToProfile(user.id, sanitizedAddress);
+        authStateRef.current = { address: sanitizedAddress, authenticated: true, timestamp: Date.now() };
+      }
       return true;
     }
     
-    // Strict duplicate prevention
-    if (processingRef.current && lastProcessedWallet.current === address) {
-      console.log('⚠️ Authentication already in progress for this wallet, skipping');
+    // Rate limiting check
+    if (!walletOperationLimiter(sanitizedAddress)) {
+      console.log('⚠️ Rate limit exceeded for wallet operations');
+      return false;
+    }
+
+    // Check if already processing this exact address recently (within 5 seconds)
+    const now = Date.now();
+    if (processingRef.current && 
+        processingRef.current.address === sanitizedAddress && 
+        (now - processingRef.current.timestamp) < 5000) {
+      console.log('⚠️ Already processing this wallet, skipping duplicate request');
       return false;
     }
     
-    // Check for recent results (within 10 seconds)
+    // Check for recent cached results (within 30 seconds)
     if (lastResultRef.current && 
-        lastResultRef.current.address === address && 
-        (Date.now() - lastResultRef.current.timestamp) < 10000) {
+        lastResultRef.current.address === sanitizedAddress && 
+        (now - lastResultRef.current.timestamp) < 30000) {
       const cached = lastResultRef.current;
       console.log('Using cached result:', cached);
       
+      setNeedsSignup(!cached.exists);
+      setExistingUser(cached.exists);
+      
       if (cached.exists) {
-        setExistingUser(true);
-        setNeedsSignup(false);
-        // Only attempt auth if not already successful for this wallet
-        if (!successfulAuthRef.current.has(address) && !authAttemptRef.current) {
-          await attemptAutoAuthentication(address);
-        }
-      } else {
-        setNeedsSignup(true);
-        setExistingUser(false);
+        await attemptSecureAuthentication(sanitizedAddress);
       }
       return cached.exists;
     }
     
-    processingRef.current = true;
-    lastProcessedWallet.current = address;
-    
-    console.log('Processing wallet auth for:', address);
-    
-    clearNotifications();
-    setNeedsSignup(false);
-    setExistingUser(false);
+    // Set processing state
+    processingRef.current = { address: sanitizedAddress, timestamp: now };
     
     try {
-      // If user is already authenticated, just link the wallet
-      if (isAuthenticated && user) {
-        console.log('User already authenticated, linking wallet to profile');
-        const linkResult = await linkWalletToProfile(user.id, address);
-        if (linkResult.success && !toastShownRef.current.has(`link-${address}`)) {
-          toastShownRef.current.add(`link-${address}`);
-          toast({
-            title: "Wallet Linked",
-            description: "Your wallet has been successfully linked to your account.",
-          });
-        }
-        return true;
-      }
+      console.log('Processing secure wallet auth for:', sanitizedAddress);
       
-      console.log('Checking wallet existence for non-authenticated user...');
-      const walletCheckResult = await checkWalletExists(address);
+      // Clear notifications and reset state
+      clearNotifications();
+      setNeedsSignup(false);
+      setExistingUser(false);
+      
+      // Check if wallet exists in database
+      const walletCheckResult = await checkWalletExists(sanitizedAddress);
       console.log('Wallet check result:', walletCheckResult);
       
       const { exists, userId } = walletCheckResult;
       
-      // Cache the result
+      // Cache the result with longer expiry
       lastResultRef.current = {
-        address,
+        address: sanitizedAddress,
         exists,
-        timestamp: Date.now()
+        timestamp: now
       };
       
       if (exists && userId) {
-        console.log('✅ EXISTING WALLET DETECTED - Setting up for auto-authentication...');
+        console.log('✅ EXISTING WALLET DETECTED - Setting up for authentication...');
         setExistingUser(true);
         setNeedsSignup(false);
         
-        // Only attempt authentication if not already successful for this wallet
-        if (!successfulAuthRef.current.has(address) && !authAttemptRef.current) {
-          await attemptAutoAuthentication(address);
-        }
-        
+        // Attempt secure authentication
+        await attemptSecureAuthentication(sanitizedAddress);
         return true;
       } else {
         console.log('❌ NEW WALLET DETECTED');
         setNeedsSignup(true);
         setExistingUser(false);
         
-        // Show notification for new wallets only once
-        const sessionKey = `new_wallet_notified_${address}`;
-        if (!sessionStorage.getItem(sessionKey) && !toastShownRef.current.has(`new-${address}`)) {
-          sessionStorage.setItem(sessionKey, 'true');
-          toastShownRef.current.add(`new-${address}`);
+        // Show notification for new wallets (once per session)
+        const notificationKey = `new_wallet_${sanitizedAddress}`;
+        if (!notificationHistoryRef.current.has(notificationKey)) {
+          notificationHistoryRef.current.add(notificationKey);
           toast({
             title: "New Wallet Detected", 
             description: "This wallet needs to be linked to an account. Please create an account to continue.",
           });
         }
+        return false;
       }
     } catch (error) {
-      console.error('❌ ERROR in wallet check:', error);
+      console.error('❌ ERROR in secure wallet check:', error);
       setNeedsSignup(true);
       setExistingUser(false);
-      if (!toastShownRef.current.has(`error-${address}`)) {
-        toastShownRef.current.add(`error-${address}`);
+      
+      const errorKey = `error_${sanitizedAddress}`;
+      if (!notificationHistoryRef.current.has(errorKey)) {
+        notificationHistoryRef.current.add(errorKey);
         toast({
-          title: "Wallet Check Failed",
+          title: "Wallet Verification Failed",
           description: "Unable to verify wallet status. Please try again.",
           variant: "destructive",
         });
       }
+      return false;
     } finally {
-      processingRef.current = false;
-      console.log('=== WALLET AUTH DEBUG END ===');
+      processingRef.current = null;
+      console.log('=== SECURE WALLET AUTH END ===');
     }
-    
-    return false;
   };
 
-  const attemptAutoAuthentication = async (address: string) => {
-    // Prevent multiple auth attempts for the same wallet
-    if (successfulAuthRef.current.has(address)) {
-      console.log('🔄 Authentication already successful for this wallet, skipping');
-      return;
-    }
-    
-    if (authAttemptRef.current === address) {
-      console.log('🔄 Authentication already in progress for this wallet, skipping');
-      return;
-    }
-    
-    authAttemptRef.current = address;
-    
+  const attemptSecureAuthentication = async (address: string) => {
     try {
-      console.log('🔐 Attempting automatic authentication for wallet:', address);
+      console.log('🔐 Attempting secure authentication for wallet:', address);
       
       const authResult = await authenticateByWallet(address);
       
       if (authResult.success) {
-        console.log('✅ Automatic authentication successful!');
+        console.log('✅ Secure authentication successful!');
         
-        // Mark as successful to prevent re-attempts
-        successfulAuthRef.current.add(address);
+        // Update auth state
+        authStateRef.current = { address, authenticated: true, timestamp: Date.now() };
         
-        // Show success toast only once
-        if (!toastShownRef.current.has(`auth-success-${address}`)) {
-          toastShownRef.current.add(`auth-success-${address}`);
+        // Show success notification (once per session)
+        const successKey = `auth_success_${address}`;
+        if (!notificationHistoryRef.current.has(successKey)) {
+          notificationHistoryRef.current.add(successKey);
           toast({
             title: "Welcome Back!",
             description: "Successfully signed in with your wallet.",
           });
         }
         
-        // Clear the auth attempt flag
-        authAttemptRef.current = '';
+        // Clear processing state
+        processingRef.current = null;
         
-        // NO PAGE RELOAD - let React handle the state updates naturally
-        console.log('🎉 Authentication complete, letting React handle state updates');
+        console.log('🎉 Secure authentication complete');
         return true;
         
       } else {
-        console.warn('⚠️ Automatic authentication failed:', authResult.error);
-        authAttemptRef.current = '';
+        console.warn('⚠️ Secure authentication failed:', authResult.error);
         
-        if (!toastShownRef.current.has(`auth-fail-${address}`)) {
-          toastShownRef.current.add(`auth-fail-${address}`);
-          toast({
-            title: "Auto Sign-In Failed",  
-            description: "Your wallet is recognized but auto sign-in failed. Please try the manual sign-in button.",
-            variant: "destructive",
-          });
+        const failKey = `auth_fail_${address}`;
+        if (!notificationHistoryRef.current.has(failKey)) {
+          notificationHistoryRef.current.add(failKey);
+          
+          if (authResult.error?.includes('rate limit')) {
+            toast({
+              title: "Rate Limit Exceeded",  
+              description: "Too many authentication attempts. Please wait before trying again.",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Auto Sign-In Failed",  
+              description: "Your wallet is recognized but auto sign-in failed. Please try the manual sign-in button.",
+              variant: "destructive",
+            });
+          }
         }
         return false;
       }
     } catch (error) {
-      console.error('❌ Auto authentication error:', error);
-      authAttemptRef.current = '';
+      console.error('❌ Secure authentication error:', error);
       
-      if (!toastShownRef.current.has(`auth-error-${address}`)) {
-        toastShownRef.current.add(`auth-error-${address}`);
+      const errorKey = `auth_error_${address}`;
+      if (!notificationHistoryRef.current.has(errorKey)) {
+        notificationHistoryRef.current.add(errorKey);
         toast({
           title: "Authentication Error",
           description: "Failed to sign in automatically. Please try the manual sign-in button.",
@@ -217,21 +222,23 @@ export const useWalletAuthLogic = (
     }
   };
 
-  // Reset everything when user authenticates
+  // Clean up state when user authenticates successfully
   React.useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
       console.log('🧹 User authenticated, cleaning up wallet auth state');
-      lastProcessedWallet.current = '';
-      processingRef.current = false;
-      lastResultRef.current = null;
-      authAttemptRef.current = '';
-      // Don't clear toastShownRef and successfulAuthRef to prevent duplicate notifications
       
-      // Clear the signup/existing user flags when authenticated
+      // Clear processing states
+      processingRef.current = null;
+      lastResultRef.current = null;
+      
+      // Clear the signup/existing user flags
       setNeedsSignup(false);
       setExistingUser(false);
+      
+      // Don't clear notification history to prevent spam
+      console.log('✅ Wallet auth state cleaned up successfully');
     }
-  }, [isAuthenticated, setNeedsSignup, setExistingUser]);
+  }, [isAuthenticated, user, setNeedsSignup, setExistingUser]);
 
   return {
     handleWalletConnection,

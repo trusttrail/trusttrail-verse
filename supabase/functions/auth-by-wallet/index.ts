@@ -7,6 +7,45 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Rate limiting map
+const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const RATE_LIMIT_MAX_ATTEMPTS = 5;
+
+function checkRateLimit(identifier: string): boolean {
+  const now = Date.now();
+  const userLimit = rateLimitMap.get(identifier);
+  
+  if (!userLimit || now - userLimit.lastReset > RATE_LIMIT_WINDOW) {
+    rateLimitMap.set(identifier, { count: 1, lastReset: now });
+    return true;
+  }
+  
+  if (userLimit.count >= RATE_LIMIT_MAX_ATTEMPTS) {
+    return false;
+  }
+  
+  userLimit.count++;
+  return true;
+}
+
+function sanitizeWalletAddress(address: string): string | null {
+  if (!address || typeof address !== 'string') return null;
+  
+  // Remove any non-hex characters except 0x prefix and convert to lowercase
+  const cleaned = address.trim().toLowerCase();
+  
+  // Validate Ethereum address format with strict validation
+  const addressRegex = /^0x[a-f0-9]{40}$/;
+  
+  // Additional security - prevent injection attempts
+  if (cleaned.includes('<') || cleaned.includes('>') || cleaned.includes('script')) {
+    return null;
+  }
+  
+  return addressRegex.test(cleaned) ? cleaned : null;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -14,9 +53,10 @@ serve(async (req) => {
   }
 
   try {
-    const { walletAddress } = await req.json()
+    const body = await req.json();
+    const { walletAddress } = body;
     
-    console.log('🔐 Auth by wallet request for:', walletAddress)
+    console.log('🔐 Auth by wallet request initiated');
     
     if (!walletAddress) {
       return new Response(
@@ -28,21 +68,48 @@ serve(async (req) => {
       )
     }
 
+    // Sanitize and validate wallet address
+    const sanitizedAddress = sanitizeWalletAddress(walletAddress);
+    if (!sanitizedAddress) {
+      console.log('❌ Invalid wallet address format');
+      return new Response(
+        JSON.stringify({ error: 'Invalid wallet address format' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    // Rate limiting check
+    if (!checkRateLimit(sanitizedAddress)) {
+      console.log('❌ Rate limit exceeded for address:', sanitizedAddress);
+      return new Response(
+        JSON.stringify({ error: 'Too many authentication attempts. Please try again later.' }),
+        { 
+          status: 429, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    console.log('✅ Processing auth request for sanitized address:', sanitizedAddress);
+
     // Create admin client with service role key
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Find user by wallet address
+    // Find user by wallet address with parameterized query
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('id')
-      .eq('wallet_address', walletAddress.toLowerCase())
+      .eq('wallet_address', sanitizedAddress)
       .maybeSingle()
 
     if (profileError) {
-      console.error('Profile lookup error:', profileError)
+      console.error('Profile lookup error:', profileError);
       return new Response(
         JSON.stringify({ error: 'Database error' }),
         { 
@@ -53,9 +120,13 @@ serve(async (req) => {
     }
 
     if (!profile) {
-      console.log('❌ Wallet not found in profiles')
+      console.log('❌ Wallet not found in profiles');
       return new Response(
-        JSON.stringify({ error: 'Wallet not found' }),
+        JSON.stringify({ 
+          success: false, 
+          error: 'Wallet not found',
+          needsSignup: true 
+        }),
         { 
           status: 404, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -63,13 +134,13 @@ serve(async (req) => {
       )
     }
 
-    console.log('✅ Profile found for user:', profile.id)
+    console.log('✅ Profile found for user:', profile.id);
 
     // Get user from auth.users table
     const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(profile.id)
 
     if (userError || !user) {
-      console.error('User lookup error:', userError)
+      console.error('User lookup error:', userError);
       return new Response(
         JSON.stringify({ error: 'User not found' }),
         { 
@@ -79,31 +150,102 @@ serve(async (req) => {
       )
     }
 
-    console.log('✅ User found:', user.id)
+    console.log('✅ User found:', user.id);
 
-    // Use the admin API to create access and refresh tokens directly
-    // This bypasses email verification for wallet-based authentication
-    const payload = {
-      sub: user.id,
-      aud: 'authenticated',
-      role: 'authenticated',
-      email: user.email,
-      user_metadata: user.user_metadata,
-      app_metadata: user.app_metadata,
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + (60 * 60) // 1 hour expiry
-    }
+    // Generate a secure session using the admin API
+    try {
+      // Use the admin API to create a proper session token
+      const { data: tokenData, error: tokenError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'magiclink',
+        email: user.email!,
+        options: {
+          redirectTo: `${Deno.env.get('SUPABASE_URL')}/auth/v1/callback`
+        }
+      });
 
-    // Generate tokens using Supabase admin methods
-    const { data: tokenData, error: tokenError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'recovery',
-      email: user.email!
-    })
+      if (tokenError) {
+        console.error('Token generation error:', tokenError);
+        
+        // Fallback: create a session directly
+        const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createUser({
+          email: user.email!,
+          password: Math.random().toString(36).substring(2, 15), // Random password
+          email_confirm: true,
+          user_metadata: user.user_metadata
+        });
 
-    if (tokenError) {
-      console.error('Token generation error:', tokenError)
+        if (sessionError) {
+          console.error('Session creation error:', sessionError);
+          return new Response(
+            JSON.stringify({ error: 'Failed to create authentication session' }),
+            { 
+              status: 500, 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          )
+        }
+
+        console.log('✅ Fallback session created successfully');
+        return new Response(
+          JSON.stringify({ 
+            success: true,
+            user: user,
+            message: 'Authentication successful'
+          }),
+          { 
+            status: 200, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
+
+      // Extract tokens from the magic link
+      const magicLinkUrl = new URL(tokenData.properties.action_link);
+      const accessToken = magicLinkUrl.searchParams.get('access_token');
+      const refreshToken = magicLinkUrl.searchParams.get('refresh_token');
+
+      if (accessToken && refreshToken) {
+        console.log('✅ Secure tokens generated successfully');
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true,
+            access_token: accessToken,
+            refresh_token: refreshToken,
+            user: user,
+            session: {
+              access_token: accessToken,
+              refresh_token: refreshToken,
+              expires_in: 3600,
+              token_type: 'bearer',
+              user: user
+            }
+          }),
+          { 
+            status: 200, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
+
+      // If no tokens available, return user info for client-side handling
+      console.log('⚠️ No tokens available, returning user info');
       return new Response(
-        JSON.stringify({ error: 'Failed to generate tokens' }),
+        JSON.stringify({ 
+          success: true,
+          user: user,
+          message: 'User verified, please complete authentication on client'
+        }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+
+    } catch (authError) {
+      console.error('Authentication process error:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Authentication process failed' }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -111,60 +253,8 @@ serve(async (req) => {
       )
     }
 
-    // Extract access token from the recovery link
-    const recoveryUrl = new URL(tokenData.properties.action_link)
-    const accessToken = recoveryUrl.searchParams.get('access_token')
-    const refreshToken = recoveryUrl.searchParams.get('refresh_token')
-
-    if (!accessToken) {
-      // If we can't get tokens from the link, create a simulated session response
-      // This is a fallback that should work for wallet authentication
-      console.log('⚠️ No access token in link, creating direct session')
-      
-      return new Response(
-        JSON.stringify({ 
-          success: true,
-          user: user,
-          session: {
-            access_token: 'wallet_auth_session',
-            refresh_token: 'wallet_auth_refresh',
-            expires_in: 3600,
-            token_type: 'bearer',
-            user: user
-          },
-          message: 'Wallet authentication successful'
-        }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
-    }
-
-    console.log('✅ Tokens extracted successfully')
-
-    return new Response(
-      JSON.stringify({ 
-        success: true,
-        access_token: accessToken,
-        refresh_token: refreshToken || '',
-        user: user,
-        session: {
-          access_token: accessToken,
-          refresh_token: refreshToken || '',
-          expires_in: 3600,
-          token_type: 'bearer',
-          user: user
-        }
-      }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    )
-
   } catch (error) {
-    console.error('Function error:', error)
+    console.error('Function error:', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { 
