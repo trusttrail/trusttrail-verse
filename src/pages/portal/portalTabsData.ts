@@ -1,4 +1,5 @@
-import { Edit, Grid3X3, Building, Award, Home, Zap, Coins, ShoppingBag, Droplets, Building2, Image, Shield, Rocket, BarChart3 } from "lucide-react";
+
+import { Edit, Grid3X3, Building, Award, Home, Zap, Coins, ShoppingBag, Droplets, Building2, Image, Shield, BarChart3 } from "lucide-react";
 
 // Export lucide tab icons as references, not JSX
 export const categories = [
@@ -27,7 +28,7 @@ export const recentReviews = [
   { id: 3, companyName: "OpenSea", reviewerAddress: "0xabcd...ef12", rating: 3, title: "Good but needs improvements", content: "OpenSea has a good selection of NFTs, but the user interface could use some improvements.", date: "2025-05-13", verified: true }
 ];
 
-// Export lucide tab icons as references, not JSX/Fragments
+// Removed deployment tab from the portal tabs
 export const portalTabs = [
   { id: "home", label: "Home", icon: Home },
   { id: "write-review", label: "Write Review", icon: Edit },
@@ -37,6 +38,5 @@ export const portalTabs = [
   { id: "liquidity", label: "Liquidity", icon: Droplets },
   { id: "staking", label: "Staking", icon: Coins },
   { id: "passport", label: "Passport", icon: Shield },
-  { id: "deployment", label: "Deploy & Test", icon: Rocket },
   { id: "analytics", label: "Analytics", icon: BarChart3 }
 ];

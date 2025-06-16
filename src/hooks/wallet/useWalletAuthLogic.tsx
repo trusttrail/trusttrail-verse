@@ -5,10 +5,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRecentActivity } from '@/hooks/useRecentActivity';
 import { checkWalletExists, linkWalletToProfile } from '@/utils/authUtils';
 import { authenticateByWallet } from '@/utils/auth/walletAuth';
-import { sanitizeWalletAddress, createRateLimiter } from '@/utils/inputSanitization';
+import { sanitizeWalletAddress, createRateLimiter, generateSecureToken } from '@/utils/inputSanitization';
 
-// Create rate limiter for wallet operations
+// Create rate limiter for wallet operations with stricter limits
 const walletOperationLimiter = createRateLimiter(3, 60000); // 3 attempts per minute
+const authAttemptLimiter = createRateLimiter(5, 300000); // 5 attempts per 5 minutes
 
 export const useWalletAuthLogic = (
   setNeedsSignup: (val: boolean) => void,
@@ -18,24 +19,37 @@ export const useWalletAuthLogic = (
   const { user, isAuthenticated } = useAuth();
   const { clearNotifications } = useRecentActivity();
   
-  // Enhanced state management with better deduplication
-  const processingRef = useRef<{ address: string; timestamp: number } | null>(null);
+  // Enhanced state management with better security and deduplication
+  const processingRef = useRef<{ address: string; timestamp: number; nonce: string } | null>(null);
   const lastResultRef = useRef<{ address: string; exists: boolean; timestamp: number } | null>(null);
   const notificationHistoryRef = useRef<Set<string>>(new Set());
   const authStateRef = useRef<{ address: string; authenticated: boolean; timestamp: number } | null>(null);
+  const failedAttemptsRef = useRef<Map<string, number>>(new Map());
 
   const handleWalletConnection = async (address: string) => {
     console.log('=== SECURE WALLET AUTH START ===');
     console.log('Input address:', address);
     console.log('Is authenticated:', isAuthenticated);
     
-    // Sanitize wallet address first
+    // Sanitize wallet address first with enhanced validation
     const sanitizedAddress = sanitizeWalletAddress(address);
     if (!sanitizedAddress) {
       console.error('❌ Invalid wallet address format');
       toast({
         title: "Invalid Wallet Address",
-        description: "The wallet address format is invalid.",
+        description: "The wallet address format is invalid or contains malicious content.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Check for too many failed attempts
+    const failedAttempts = failedAttemptsRef.current.get(sanitizedAddress) || 0;
+    if (failedAttempts >= 3) {
+      console.log('🚫 Too many failed attempts for this address');
+      toast({
+        title: "Security Protection",
+        description: "Too many failed attempts for this wallet. Please try again later.",
         variant: "destructive",
       });
       return false;
@@ -55,11 +69,19 @@ export const useWalletAuthLogic = (
       return true;
     }
     
-    // Rate limiting check
-    if (!walletOperationLimiter(sanitizedAddress)) {
+    // Enhanced rate limiting check
+    if (!walletOperationLimiter(sanitizedAddress) || !authAttemptLimiter(sanitizedAddress)) {
       console.log('⚠️ Rate limit exceeded for wallet operations');
+      toast({
+        title: "Rate Limit Exceeded",
+        description: "Please wait before trying again.",
+        variant: "destructive",
+      });
       return false;
     }
+
+    // Generate secure nonce for this session
+    const sessionNonce = generateSecureToken();
 
     // Check if already processing this exact address recently (within 5 seconds)
     const now = Date.now();
@@ -86,8 +108,8 @@ export const useWalletAuthLogic = (
       return cached.exists;
     }
     
-    // Set processing state
-    processingRef.current = { address: sanitizedAddress, timestamp: now };
+    // Set processing state with nonce
+    processingRef.current = { address: sanitizedAddress, timestamp: now, nonce: sessionNonce };
     
     try {
       console.log('Processing secure wallet auth for:', sanitizedAddress);
@@ -97,8 +119,16 @@ export const useWalletAuthLogic = (
       setNeedsSignup(false);
       setExistingUser(false);
       
-      // Check if wallet exists in database
-      const walletCheckResult = await checkWalletExists(sanitizedAddress);
+      // Check if wallet exists in database with timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 10000)
+      );
+      
+      const walletCheckResult = await Promise.race([
+        checkWalletExists(sanitizedAddress),
+        timeoutPromise
+      ]) as any;
+      
       console.log('Wallet check result:', walletCheckResult);
       
       const { exists, userId } = walletCheckResult;
@@ -114,6 +144,9 @@ export const useWalletAuthLogic = (
         console.log('✅ EXISTING WALLET DETECTED - Setting up for authentication...');
         setExistingUser(true);
         setNeedsSignup(false);
+        
+        // Clear failed attempts on success
+        failedAttemptsRef.current.delete(sanitizedAddress);
         
         // Attempt secure authentication
         await attemptSecureAuthentication(sanitizedAddress);
@@ -136,6 +169,11 @@ export const useWalletAuthLogic = (
       }
     } catch (error) {
       console.error('❌ ERROR in secure wallet check:', error);
+      
+      // Increment failed attempts
+      const currentFailed = failedAttemptsRef.current.get(sanitizedAddress) || 0;
+      failedAttemptsRef.current.set(sanitizedAddress, currentFailed + 1);
+      
       setNeedsSignup(true);
       setExistingUser(false);
       
@@ -144,7 +182,7 @@ export const useWalletAuthLogic = (
         notificationHistoryRef.current.add(errorKey);
         toast({
           title: "Wallet Verification Failed",
-          description: "Unable to verify wallet status. Please try again.",
+          description: "Unable to verify wallet status securely. Please try again.",
           variant: "destructive",
         });
       }
@@ -159,13 +197,24 @@ export const useWalletAuthLogic = (
     try {
       console.log('🔐 Attempting secure authentication for wallet:', address);
       
-      const authResult = await authenticateByWallet(address);
+      // Add timeout for authentication attempt
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Authentication timeout')), 15000)
+      );
+      
+      const authResult = await Promise.race([
+        authenticateByWallet(address),
+        timeoutPromise
+      ]) as any;
       
       if (authResult.success) {
         console.log('✅ Secure authentication successful!');
         
         // Update auth state
         authStateRef.current = { address, authenticated: true, timestamp: Date.now() };
+        
+        // Clear failed attempts on success
+        failedAttemptsRef.current.delete(address);
         
         // Show success notification (once per session)
         const successKey = `auth_success_${address}`;
@@ -185,6 +234,10 @@ export const useWalletAuthLogic = (
         
       } else {
         console.warn('⚠️ Secure authentication failed:', authResult.error);
+        
+        // Increment failed attempts
+        const currentFailed = failedAttemptsRef.current.get(address) || 0;
+        failedAttemptsRef.current.set(address, currentFailed + 1);
         
         const failKey = `auth_fail_${address}`;
         if (!notificationHistoryRef.current.has(failKey)) {
@@ -209,14 +262,27 @@ export const useWalletAuthLogic = (
     } catch (error) {
       console.error('❌ Secure authentication error:', error);
       
+      // Increment failed attempts
+      const currentFailed = failedAttemptsRef.current.get(address) || 0;
+      failedAttemptsRef.current.set(address, currentFailed + 1);
+      
       const errorKey = `auth_error_${address}`;
       if (!notificationHistoryRef.current.has(errorKey)) {
         notificationHistoryRef.current.add(errorKey);
-        toast({
-          title: "Authentication Error",
-          description: "Failed to sign in automatically. Please try the manual sign-in button.",
-          variant: "destructive",
-        });
+        
+        if (error instanceof Error && error.message.includes('timeout')) {
+          toast({
+            title: "Authentication Timeout",
+            description: "Authentication took too long. Please try again.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Authentication Error",
+            description: "Failed to sign in automatically. Please try the manual sign-in button.",
+            variant: "destructive",
+          });
+        }
       }
       return false;
     }
@@ -235,7 +301,11 @@ export const useWalletAuthLogic = (
       setNeedsSignup(false);
       setExistingUser(false);
       
-      // Don't clear notification history to prevent spam
+      // Clear failed attempts for this session
+      if (authStateRef.current?.address) {
+        failedAttemptsRef.current.delete(authStateRef.current.address);
+      }
+      
       console.log('✅ Wallet auth state cleaned up successfully');
     }
   }, [isAuthenticated, user, setNeedsSignup, setExistingUser]);

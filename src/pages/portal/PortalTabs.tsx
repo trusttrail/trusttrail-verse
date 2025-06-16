@@ -10,7 +10,6 @@ import BusinessesTab from "@/components/review/portal/BusinessesTab";
 import NFTMarketplaceTab from "@/components/review/portal/NFTMarketplaceTab";
 import LiquidityTab from "@/components/review/portal/LiquidityTab";
 import StakingTab from "@/components/review/portal/StakingTab";
-import DeploymentTab from "@/components/review/portal/DeploymentTab";
 import AnalyticsTab from "@/components/review/portal/AnalyticsTab";
 import PassportTab from "@/components/review/portal/PassportTab";
 import { portalTabs, categories, topCompanies, recentReviews } from "./portalTabsData";
@@ -105,13 +104,6 @@ export const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connect
           </TabsContent>
           <TabsContent value="passport">
             <PassportTab isWalletConnected={isWalletConnected} connectWallet={connectWallet} />
-          </TabsContent>
-          <TabsContent value="deployment">
-            <div className="mb-4 text-foreground/70 text-sm border border-border rounded bg-muted/40 p-3">
-              <strong>What is Deploy & Test?</strong> <br />
-              Use this area to deploy mock smart contracts and test blockchain features. Perfect for verifying functionality on Polygon Amoy testnet before going live!
-            </div>
-            <DeploymentTab />
           </TabsContent>
           <TabsContent value="analytics">
             <AnalyticsTab />

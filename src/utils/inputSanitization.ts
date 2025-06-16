@@ -28,14 +28,22 @@ export const sanitizeInput = (input: string): string => {
   const xssPatterns = [
     /javascript:/gi,
     /vbscript:/gi,
+    /data:/gi,
     /onload/gi,
     /onerror/gi,
     /onclick/gi,
     /onmouseover/gi,
+    /onfocus/gi,
+    /onblur/gi,
     /<script/gi,
     /<\/script>/gi,
+    /<iframe/gi,
+    /<embed/gi,
+    /<object/gi,
     /eval\(/gi,
-    /expression\(/gi
+    /expression\(/gi,
+    /import\(/gi,
+    /require\(/gi
   ];
   
   let cleaned = sanitized;
@@ -43,8 +51,8 @@ export const sanitizeInput = (input: string): string => {
     cleaned = cleaned.replace(pattern, '');
   });
   
-  // Trim whitespace and limit length
-  return cleaned.trim().substring(0, 5000);
+  // Trim whitespace and limit length to prevent DoS
+  return cleaned.trim().substring(0, 10000);
 };
 
 export const sanitizeEmail = (email: string): string => {
@@ -53,8 +61,8 @@ export const sanitizeEmail = (email: string): string => {
   // Basic email sanitization - remove potential XSS
   const sanitized = sanitizeInput(email).toLowerCase().trim();
   
-  // Simple email validation with enhanced security
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  // Enhanced email validation with stricter rules
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
   
   // Additional security - prevent email injection attacks
   const dangerousPatterns = [
@@ -63,13 +71,18 @@ export const sanitizeEmail = (email: string): string => {
     /cc:/gi,
     /to:/gi,
     /from:/gi,
-    /subject:/gi
+    /subject:/gi,
+    /content-type:/gi,
+    /mime-version:/gi
   ];
   
   let cleaned = sanitized;
   dangerousPatterns.forEach(pattern => {
     cleaned = cleaned.replace(pattern, '');
   });
+  
+  // Length validation
+  if (cleaned.length > 254) return '';
   
   return emailRegex.test(cleaned) ? cleaned : '';
 };
@@ -84,11 +97,20 @@ export const sanitizeWalletAddress = (address: string): string => {
   const addressRegex = /^0x[a-f0-9]{40}$/;
   
   // Additional security - prevent injection attempts
-  if (cleaned.includes('<') || cleaned.includes('>') || cleaned.includes('script')) {
-    return '';
-  }
+  const dangerousPatterns = [
+    /<[^>]*>/g, // HTML tags
+    /javascript:/gi,
+    /data:/gi,
+    /vbscript:/gi,
+    /on\w+=/gi // Event handlers
+  ];
   
-  return addressRegex.test(cleaned) ? cleaned : '';
+  let secureAddress = cleaned;
+  dangerousPatterns.forEach(pattern => {
+    secureAddress = secureAddress.replace(pattern, '');
+  });
+  
+  return addressRegex.test(secureAddress) ? secureAddress : '';
 };
 
 export const validateFileType = (file: File): boolean => {
@@ -96,25 +118,33 @@ export const validateFileType = (file: File): boolean => {
     'application/pdf',
     'image/png', 
     'image/jpeg',
-    'image/jpg'
+    'image/jpg',
+    'image/webp'
   ];
   
   // Additional MIME type validation
-  const allowedExtensions = ['.pdf', '.png', '.jpg', '.jpeg'];
+  const allowedExtensions = ['.pdf', '.png', '.jpg', '.jpeg', '.webp'];
   const fileExtension = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
   
-  return allowedTypes.includes(file.type) && allowedExtensions.includes(fileExtension);
+  // Check both MIME type and extension for double validation
+  const isValidType = allowedTypes.includes(file.type);
+  const isValidExtension = allowedExtensions.includes(fileExtension);
+  
+  // Additional security check for file name
+  const hasValidName = !/[<>:"/\\|?*\x00-\x1f]/.test(file.name);
+  
+  return isValidType && isValidExtension && hasValidName;
 };
 
-export const validateFileSize = (file: File, maxSizeInMB: number = 5): boolean => {
+export const validateFileSize = (file: File, maxSizeInMB: number = 10): boolean => {
   const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
   return file.size <= maxSizeInBytes && file.size > 0; // Ensure file is not empty
 };
 
-// New security utilities
+// Enhanced security utilities
 export const sanitizeNumericInput = (input: string | number): number | null => {
   if (typeof input === 'number') {
-    return isFinite(input) ? input : null;
+    return isFinite(input) && !isNaN(input) ? input : null;
   }
   
   if (typeof input !== 'string') return null;
@@ -123,22 +153,27 @@ export const sanitizeNumericInput = (input: string | number): number | null => {
   const cleaned = input.replace(/[^0-9.-]/g, '');
   const parsed = parseFloat(cleaned);
   
-  return isFinite(parsed) ? parsed : null;
+  // Additional validation for safety
+  if (!isFinite(parsed) || isNaN(parsed)) return null;
+  if (Math.abs(parsed) > Number.MAX_SAFE_INTEGER) return null;
+  
+  return parsed;
 };
 
 export const validateUrl = (url: string): boolean => {
-  if (!url || typeof url !== 'string') return false;
+  if (!url || typeof url !== 'string' || url.length > 2048) return false;
   
   try {
     const urlObj = new URL(url);
     // Only allow http and https protocols
-    return ['http:', 'https:'].includes(urlObj.protocol);
+    const allowedProtocols = ['http:', 'https:'];
+    return allowedProtocols.includes(urlObj.protocol);
   } catch {
     return false;
   }
 };
 
-// Rate limiting utility for client-side
+// Enhanced rate limiting utility for client-side
 export const createRateLimiter = (maxAttempts: number, windowMs: number) => {
   const attempts = new Map<string, number[]>();
   
@@ -155,6 +190,41 @@ export const createRateLimiter = (maxAttempts: number, windowMs: number) => {
     
     validAttempts.push(now);
     attempts.set(key, validAttempts);
+    
+    // Clean up old entries periodically
+    if (attempts.size > 1000) {
+      attempts.clear();
+    }
+    
     return true;
   };
+};
+
+// Content Security Policy helper
+export const sanitizeReviewContent = (content: string): string => {
+  if (!content || typeof content !== 'string') return '';
+  
+  // Apply base sanitization
+  let sanitized = sanitizeInput(content);
+  
+  // Additional review-specific sanitization
+  const reviewPatterns = [
+    /<[^>]*>/g, // Remove all HTML tags
+    /\b(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?\b/g, // Remove URLs
+    /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g // Remove email addresses
+  ];
+  
+  reviewPatterns.forEach(pattern => {
+    sanitized = sanitized.replace(pattern, '[FILTERED]');
+  });
+  
+  // Limit length for reviews
+  return sanitized.substring(0, 5000);
+};
+
+// Secure token generation for client-side nonces
+export const generateSecureToken = (): string => {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 };
