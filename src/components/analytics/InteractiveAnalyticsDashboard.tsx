@@ -1,294 +1,331 @@
 
-import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useMemo } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { 
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell, Legend, LineChart, Line, AreaChart, Area,
-  ScatterChart, Scatter, RadialBarChart, RadialBar
+import { Button } from "@/components/ui/button";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from "@/components/ui/chart";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, TrendingDown, Users, Star, Award, Shield, Activity } from "lucide-react";
-
-// Enhanced mock data that simulates real review data
-const generateReviewData = () => {
-  const categories = ["DeFi", "Exchanges", "NFT", "Gaming", "Social", "Infrastructure", "Staking"];
-  const companies = ["Uniswap", "OpenSea", "Axie Infinity", "Compound", "QuickSwap", "Binance", "Coinbase"];
-  
-  return {
-    totalReviews: 1247,
-    approvedReviews: 1089,
-    rejectedReviews: 158,
-    pendingReviews: 23,
-    verifiedUsers: 892,
-    totalRewards: 24567.89,
-    avgRating: 4.2,
-    categoryData: categories.map(cat => ({
-      category: cat,
-      reviews: Math.floor(Math.random() * 200) + 50,
-      avgRating: (Math.random() * 2 + 3).toFixed(1),
-      growth: Math.floor(Math.random() * 40) - 10
-    })),
-    trendingCompanies: companies.map(company => ({
-      name: company,
-      reviews: Math.floor(Math.random() * 150) + 20,
-      rating: (Math.random() * 2 + 3).toFixed(1),
-      change: Math.floor(Math.random() * 20) - 5
-    })),
-    monthlyTrend: Array.from({length: 12}, (_, i) => ({
-      month: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i],
-      reviews: Math.floor(Math.random() * 100) + 50,
-      rewards: Math.floor(Math.random() * 2000) + 1000
-    })),
-    qualityMetrics: [
-      { name: "Verified Reviews", value: 87, color: "#22C55E" },
-      { name: "Suspicious/Fake", value: 13, color: "#EF4444" }
-    ],
-    userEngagement: [
-      { metric: "Daily Active Users", value: 234, change: 12 },
-      { metric: "Review Completion Rate", value: 89, change: 5 },
-      { metric: "User Retention", value: 76, change: -2 },
-      { metric: "Avg. Session Time", value: 8.5, change: 15 }
-    ]
-  };
-};
-
-const COLORS = ['#8B5CF6', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#6366F1', '#EC4899'];
+import {
+  TrendingUp,
+  Star,
+  Users,
+  Activity,
+  Award,
+  Eye,
+  MessageSquare,
+  ThumbsUp,
+  Download,
+} from "lucide-react";
 
 const InteractiveAnalyticsDashboard = () => {
-  const [data, setData] = useState(generateReviewData());
-  const [activeMetric, setActiveMetric] = useState('reviews');
-  const [timeRange, setTimeRange] = useState('30d');
+  const [timeRange, setTimeRange] = useState("7d");
 
-  // Simulate real-time data updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setData(generateReviewData());
-    }, 30000); // Update every 30 seconds
-    return () => clearInterval(interval);
-  }, []);
+  const mockData = useMemo(() => ({
+    overview: {
+      totalReviews: 47,
+      avgRating: 4.2,
+      totalViews: 1243,
+      engagementRate: 12.4,
+    },
+    reviewsOverTime: [
+      { date: "2024-01-01", reviews: 12, rating: 4.1 },
+      { date: "2024-01-02", reviews: 19, rating: 4.3 },
+      { date: "2024-01-03", reviews: 8, rating: 3.9 },
+      { date: "2024-01-04", reviews: 15, rating: 4.5 },
+      { date: "2024-01-05", reviews: 22, rating: 4.2 },
+      { date: "2024-01-06", reviews: 11, rating: 4.0 },
+      { date: "2024-01-07", reviews: 16, rating: 4.4 },
+    ],
+    categoryBreakdown: [
+      { category: "DeFi", reviews: 18, color: "#7b58f6" },
+      { category: "NFT", reviews: 12, color: "#2c9fff" },
+      { category: "Gaming", reviews: 9, color: "#f0b003" },
+      { category: "Exchanges", reviews: 8, color: "#54baff" },
+    ],
+    topReviews: [
+      { company: "Uniswap", rating: 5, views: 234, engagement: 18 },
+      { company: "OpenSea", rating: 4, views: 189, engagement: 15 },
+      { company: "Polygon", rating: 5, views: 156, engagement: 22 },
+    ],
+  }), []);
 
-  const reviewAccuracy = ((data.approvedReviews / data.totalReviews) * 100).toFixed(1);
-  const rejectionRate = ((data.rejectedReviews / data.totalReviews) * 100).toFixed(1);
+  const chartConfig = {
+    reviews: {
+      label: "Reviews",
+      color: "#7b58f6",
+    },
+    rating: {
+      label: "Avg Rating",
+      color: "#2c9fff",
+    },
+  };
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Key Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Reviews</p>
-                <p className="text-2xl font-bold text-purple-600">{data.totalReviews.toLocaleString()}</p>
-                <div className="flex items-center mt-1">
-                  <TrendingUp className="text-green-500" size={16} />
-                  <span className="text-sm text-green-600 ml-1">+12% this month</span>
-                </div>
-              </div>
-              <Activity className="text-purple-500" size={32} />
-            </div>
+    <div className="space-y-8">
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Reviews</CardTitle>
+            <MessageSquare className="h-5 w-5 text-trustpurple-500" />
+          </CardHeader>
+          <CardContent className="pb-4">
+            <div className="text-3xl font-bold text-foreground">{mockData.overview.totalReviews}</div>
+            <p className="text-xs text-green-600 flex items-center mt-2">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              +12% from last week
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Review Accuracy</p>
-                <p className="text-2xl font-bold text-green-600">{reviewAccuracy}%</p>
-                <Badge variant="secondary" className="mt-1 bg-green-100 text-green-800">
-                  {data.approvedReviews} approved
-                </Badge>
-              </div>
-              <Shield className="text-green-500" size={32} />
-            </div>
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Average Rating</CardTitle>
+            <Star className="h-5 w-5 text-yellow-500" />
+          </CardHeader>
+          <CardContent className="pb-4">
+            <div className="text-3xl font-bold text-foreground">{mockData.overview.avgRating}</div>
+            <p className="text-xs text-green-600 flex items-center mt-2">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              +0.3 from last week
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">$NOCAP Distributed</p>
-                <p className="text-2xl font-bold text-blue-600">{data.totalRewards.toLocaleString()}</p>
-                <div className="flex items-center mt-1">
-                  <TrendingUp className="text-green-500" size={16} />
-                  <span className="text-sm text-green-600 ml-1">+8% this week</span>
-                </div>
-              </div>
-              <Award className="text-blue-500" size={32} />
-            </div>
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Views</CardTitle>
+            <Eye className="h-5 w-5 text-trustblue-500" />
+          </CardHeader>
+          <CardContent className="pb-4">
+            <div className="text-3xl font-bold text-foreground">{mockData.overview.totalViews.toLocaleString()}</div>
+            <p className="text-xs text-green-600 flex items-center mt-2">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              +8% from last week
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Verified Users</p>
-                <p className="text-2xl font-bold text-orange-600">{data.verifiedUsers}</p>
-                <div className="flex items-center mt-1">
-                  <Star className="text-yellow-500" size={16} />
-                  <span className="text-sm text-muted-foreground ml-1">Avg: {data.avgRating}/5</span>
-                </div>
-              </div>
-              <Users className="text-orange-500" size={32} />
-            </div>
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Engagement Rate</CardTitle>
+            <Activity className="h-5 w-5 text-green-500" />
+          </CardHeader>
+          <CardContent className="pb-4">
+            <div className="text-3xl font-bold text-foreground">{mockData.overview.engagementRate}%</div>
+            <p className="text-xs text-green-600 flex items-center mt-2">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              +2.1% from last week
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="quality">Quality Metrics</TabsTrigger>
-          <TabsTrigger value="trends">Trends</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Review Status Distribution */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Review Status Distribution</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie
-                      data={[
-                        { name: 'Approved', value: data.approvedReviews, color: '#22C55E' },
-                        { name: 'Rejected', value: data.rejectedReviews, color: '#EF4444' },
-                        { name: 'Pending', value: data.pendingReviews, color: '#F59E0B' }
-                      ]}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                    >
-                      {[
-                        { name: 'Approved', value: data.approvedReviews, color: '#22C55E' },
-                        { name: 'Rejected', value: data.rejectedReviews, color: '#EF4444' },
-                        { name: 'Pending', value: data.pendingReviews, color: '#F59E0B' }
-                      ].map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Trending Companies */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Top Reviewed Companies</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={data.trendingCompanies.slice(0, 5)}>
-                    <XAxis dataKey="name" fontSize={12} />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="reviews" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+      {/* Charts Section */}
+      <Tabs defaultValue="trends" className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <TabsList className="bg-muted/50 backdrop-blur-sm border border-border/50 p-1 rounded-lg">
+            <TabsTrigger value="trends" className="px-4 py-2 text-sm">Trends</TabsTrigger>
+            <TabsTrigger value="categories" className="px-4 py-2 text-sm">Categories</TabsTrigger>
+            <TabsTrigger value="performance" className="px-4 py-2 text-sm">Performance</TabsTrigger>
+          </TabsList>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant={timeRange === "7d" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setTimeRange("7d")}
+              className="text-xs"
+            >
+              7 Days
+            </Button>
+            <Button
+              variant={timeRange === "30d" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setTimeRange("30d")}
+              className="text-xs"
+            >
+              30 Days
+            </Button>
+            <Button variant="outline" size="sm" className="text-xs">
+              <Download className="h-3 w-3 mr-1" />
+              Export
+            </Button>
           </div>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="categories" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Reviews by Category</CardTitle>
-            </CardHeader>  
+        <TabsContent value="trends" className="space-y-6">
+          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl">Review Activity Over Time</CardTitle>
+              <CardDescription>
+                Daily review submissions and average ratings
+              </CardDescription>
+            </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={data.categoryData}>
-                  <XAxis dataKey="category" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="reviews" fill="#06B6D4" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <ChartContainer config={chartConfig} className="h-[400px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={mockData.reviewsOverTime} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                    <XAxis 
+                      dataKey="date" 
+                      className="text-xs fill-muted-foreground"
+                      tick={{ fontSize: 12 }}
+                      tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    />
+                    <YAxis 
+                      yAxisId="left" 
+                      className="text-xs fill-muted-foreground"
+                      tick={{ fontSize: 12 }}
+                    />
+                    <YAxis 
+                      yAxisId="right" 
+                      orientation="right" 
+                      className="text-xs fill-muted-foreground"
+                      tick={{ fontSize: 12 }}
+                    />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <ChartLegend content={<ChartLegendContent />} />
+                    <Bar yAxisId="left" dataKey="reviews" fill="var(--color-reviews)" name="Reviews" radius={[4, 4, 0, 0]} />
+                    <Line 
+                      yAxisId="right" 
+                      type="monotone" 
+                      dataKey="rating" 
+                      stroke="var(--color-rating)" 
+                      strokeWidth={3}
+                      dot={{ fill: "var(--color-rating)", r: 4 }}
+                      name="Avg Rating"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="quality" className="space-y-6">
+        <TabsContent value="categories" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Review Quality Breakdown</CardTitle>
+            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl">Reviews by Category</CardTitle>
+                <CardDescription>Distribution of your reviews across different Web3 categories</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between mb-2">
-                      <span>Verified Reviews</span>
-                      <span className="font-semibold">{reviewAccuracy}%</span>
-                    </div>
-                    <Progress value={parseFloat(reviewAccuracy)} className="h-2" />
-                  </div>
-                  <div>
-                    <div className="flex justify-between mb-2">
-                      <span>Rejection Rate</span>  
-                      <span className="font-semibold text-red-600">{rejectionRate}%</span>
-                    </div>
-                    <Progress value={parseFloat(rejectionRate)} className="h-2 bg-red-100" />
-                  </div>
-                </div>
+                <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={mockData.categoryBreakdown}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={120}
+                        paddingAngle={5}
+                        dataKey="reviews"
+                      >
+                        {mockData.categoryBreakdown.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>User Engagement Metrics</CardTitle>
+            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl">Category Breakdown</CardTitle>
+                <CardDescription>Detailed view of review distribution</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {data.userEngagement.map((metric, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <span className="text-sm">{metric.metric}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">{metric.value}{metric.metric.includes('Time') ? 'min' : metric.metric.includes('Rate') || metric.metric.includes('Retention') ? '%' : ''}</span>
-                        <div className={`flex items-center ${metric.change > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {metric.change > 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                          <span className="text-xs ml-1">{Math.abs(metric.change)}%</span>
-                        </div>
-                      </div>
+              <CardContent className="space-y-4">
+                {mockData.categoryBreakdown.map((category, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-4 h-4 rounded-full"
+                        style={{ backgroundColor: category.color }}
+                      />
+                      <span className="font-medium">{category.category}</span>
                     </div>
-                  ))}
-                </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {category.reviews} reviews
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {Math.round((category.reviews / mockData.overview.totalReviews) * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
-        <TabsContent value="trends" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Monthly Review & Reward Trends</CardTitle>
+        <TabsContent value="performance" className="space-y-6">
+          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl">Top Performing Reviews</CardTitle>
+              <CardDescription>Your most viewed and engaged reviews</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <AreaChart data={data.monthlyTrend}>
-                  <XAxis dataKey="month" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip />
-                  <Legend />
-                  <Area yAxisId="left" type="monotone" dataKey="reviews" stackId="1" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.6} />
-                  <Line yAxisId="right" type="monotone" dataKey="rewards" stroke="#F59E0B" strokeWidth={3} />
-                </AreaChart>
-              </ResponsiveContainer>
+              <div className="space-y-4">
+                {mockData.topReviews.map((review, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/50">
+                    <div className="flex items-center gap-4">
+                      <Badge variant="outline" className="text-xs font-mono">#{index + 1}</Badge>
+                      <div>
+                        <h4 className="font-semibold">{review.company}</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                size={14}
+                                className={`${
+                                  i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-sm text-muted-foreground">{review.rating}/5</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Eye size={14} />
+                        <span>{review.views}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <ThumbsUp size={14} />
+                        <span>{review.engagement}%</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
