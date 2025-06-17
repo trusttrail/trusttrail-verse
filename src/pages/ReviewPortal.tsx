@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import ParticleContainer from '@/components/ParticleContainer';
 import { useWalletConnection } from '@/hooks/useWalletConnection';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
@@ -17,7 +18,8 @@ const ReviewPortal = () => {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Header />
-      <div className="flex-grow container mx-auto px-4 pt-24 pb-16">
+      <ParticleContainer theme={theme} />
+      <div className="flex-grow container mx-auto px-4 pt-24 pb-16 relative z-10">
         {/* Show SignUp prompt for non-authenticated users with connected wallets that need action */}
         {!isAuthenticated && isWalletConnected && (needsSignup || existingUser) && (
           <SignUpPrompt 
