@@ -48,15 +48,15 @@ const PassportStatusCard = ({
               </p>
               <p className="text-sm text-muted-foreground">
                 {isVerifying 
-                  ? 'Verifying your passport...' 
+                  ? 'Verifying your passport - complete stamps in the Gitcoin window...' 
                   : isVerified 
-                    ? `Verified with score: ${passportScore} (Permanently linked to your account)` 
-                    : 'Not verified - Complete verification to write reviews'
+                    ? `Verified with score: ${passportScore.toFixed(2)} (Synced from Gitcoin Passport)` 
+                    : 'Not verified - Connect to Gitcoin Passport to write reviews'
                 }
               </p>
               {passportData && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Last verified: {new Date(passportData.timestamp).toLocaleDateString()}
+                  Last synced: {new Date(passportData.timestamp).toLocaleDateString()}
                 </p>
               )}
             </div>
@@ -64,7 +64,7 @@ const PassportStatusCard = ({
           <div className="flex items-center gap-2">
             {isVerified && (
               <Badge variant="secondary" className="bg-green-100 text-green-800">
-                Score: {passportScore}
+                Score: {passportScore.toFixed(2)}
               </Badge>
             )}
             {needsRefresh && (
@@ -84,7 +84,7 @@ const PassportStatusCard = ({
                 ) : (
                   <RefreshCw size={16} />
                 )}
-                {isVerifying ? 'Refreshing...' : 'Refresh Score'}
+                {isVerifying ? 'Syncing...' : 'Refresh Score'}
               </Button>
             ) : (
               <Button 
@@ -108,12 +108,13 @@ const PassportStatusCard = ({
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
             <AlertCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
             <div className="text-sm text-blue-700">
-              <p className="font-medium mb-1">How to verify:</p>
+              <p className="font-medium mb-1">How to get verified:</p>
               <ol className="list-decimal list-inside space-y-1 text-xs">
-                <li>Click "Verify Identity" to open Gitcoin Passport</li>
-                <li>Connect the same wallet address you're using here</li>
-                <li>Complete stamp verification to build your score</li>
-                <li>Return here - your score will be automatically detected</li>
+                <li>Click "Verify Identity" to open Gitcoin Passport dashboard</li>
+                <li><strong>Connect the same wallet address</strong> you're using here</li>
+                <li>Add stamps by connecting your social accounts (Twitter, Google, etc.)</li>
+                <li>Wait for your score to build up in Gitcoin Passport</li>
+                <li>Return here - your score will automatically sync</li>
               </ol>
             </div>
           </div>
@@ -126,7 +127,8 @@ const PassportStatusCard = ({
             <div className="text-sm text-yellow-700">
               <p className="font-medium">Verification in progress</p>
               <p className="text-xs mt-1">
-                Complete your verification in the Gitcoin Passport window. Make sure to connect the same wallet address and complete your stamps. We'll automatically detect your score when ready.
+                Complete your verification in Gitcoin Passport: connect your wallet, add stamps, and wait for your score to appear. 
+                We'll automatically sync your score once it's ready.
               </p>
             </div>
           </div>

@@ -10,37 +10,50 @@ export const pollForPassportScore = async (
   savePassportData: (address: string, score: number) => GitcoinPassportData
 ): Promise<void> => {
   let attempts = 0;
-  const maxAttempts = 30; // Poll for 5 minutes (30 * 10 seconds)
+  const maxAttempts = 60; // Poll for 10 minutes (60 * 10 seconds)
   
   const checkScore = async () => {
-    if (attempts >= maxAttempts) {
-      onError("Please try refreshing your passport score manually once verification is complete.");
-      return;
-    }
-    
     attempts++;
     console.log(`Checking for passport score (attempt ${attempts}/${maxAttempts})...`);
     
-    // Check if window is still open
-    if (passportWindow.closed) {
-      console.log('Passport window closed, checking for score...');
+    try {
       const score = await fetchGitcoinScore(walletAddress);
       
       if (score !== null && score > 0) {
+        console.log('✅ Passport score detected:', score);
         const data = savePassportData(walletAddress, score);
         onSuccess(data);
         return;
       }
-    }
-    
-    // Continue polling if window is still open or no score found yet
-    if (!passportWindow.closed || attempts < 5) {
-      setTimeout(checkScore, 10000); // Check every 10 seconds
-    } else {
-      onError("No passport score detected. Please ensure you completed the verification process.");
+      
+      // Check if window is closed
+      if (passportWindow.closed) {
+        console.log('Passport window closed, continuing to poll for score...');
+        
+        // Give user a bit more time after closing window
+        if (attempts >= maxAttempts) {
+          onError("No passport score detected. Please ensure you completed the verification process with stamps and try refreshing manually.");
+          return;
+        }
+      }
+      
+      // Continue polling if we haven't reached max attempts
+      if (attempts < maxAttempts) {
+        setTimeout(checkScore, 10000); // Check every 10 seconds
+      } else {
+        onError("Verification timeout. Please ensure you completed the passport verification with stamps and try refreshing your score manually.");
+      }
+      
+    } catch (error) {
+      console.error('Error checking passport score:', error);
+      if (attempts < maxAttempts) {
+        setTimeout(checkScore, 10000);
+      } else {
+        onError("Failed to check passport score. Please try refreshing manually.");
+      }
     }
   };
   
-  // Start checking after 15 seconds to give user time to complete verification
-  setTimeout(checkScore, 15000);
+  // Start checking after 5 seconds to give user time to navigate
+  setTimeout(checkScore, 5000);
 };

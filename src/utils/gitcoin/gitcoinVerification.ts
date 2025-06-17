@@ -4,8 +4,13 @@ import { pollForPassportScore } from './gitcoinPolling';
 import { GitcoinPassportData } from '@/types/gitcoinPassport';
 
 export const openGitcoinPassportWindow = (): Window | null => {
-  const passportUrl = `https://passport.gitcoin.co/?utm_source=trusttrail&utm_medium=webapp`;
-  const passportWindow = window.open(passportUrl, 'gitcoin_passport', 'width=800,height=600,scrollbars=yes,resizable=yes');
+  // Direct users to the scorer page where they can connect wallet and build score
+  const passportUrl = `https://passport.gitcoin.co/#/dashboard`;
+  const passportWindow = window.open(
+    passportUrl, 
+    'gitcoin_passport', 
+    'width=1200,height=800,scrollbars=yes,resizable=yes,location=yes'
+  );
   
   if (!passportWindow) {
     throw new Error('Failed to open passport window - popup may be blocked. Please enable popups for this site and try again.');
@@ -30,7 +35,7 @@ export const handlePassportVerification = async (
     if (existingScore !== null && existingScore > 0) {
       // User already has a passport, just save the score
       const data = savePassportData(walletAddress, existingScore);
-      onSuccess(data, `Your existing passport score (${existingScore}) has been successfully linked to your account.`);
+      onSuccess(data, `Your existing passport score (${existingScore.toFixed(2)}) has been successfully linked to your account.`);
       return true;
     }
     
@@ -38,11 +43,11 @@ export const handlePassportVerification = async (
     const passportWindow = openGitcoinPassportWindow();
     onOpenWindow();
     
-    // Poll for score updates
+    // Poll for score updates with improved detection
     await pollForPassportScore(
       walletAddress,
       passportWindow,
-      (data) => onSuccess(data, `Your passport score (${data.score}) has been successfully verified and linked to your account.`),
+      (data) => onSuccess(data, `Your passport score (${data.score.toFixed(2)}) has been successfully verified and linked to your account.`),
       onError,
       savePassportData
     );
