@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Share2, ExternalLink } from "lucide-react";
+import { Share2, ExternalLink, Eye } from "lucide-react";
 import ReviewCard from "@/components/review/ReviewCard";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -56,16 +56,16 @@ const RecentReviewsSection = ({ reviews }: RecentReviewsSectionProps) => {
   const fetchRecentReviews = async () => {
     try {
       setLoading(true);
-      console.log('🔍 Fetching all approved reviews from database...');
+      console.log('🔍 Fetching all reviews from database (including pending/rejected for debugging)...');
       
-      const { data, error } = await supabase
+      // Fetch ALL reviews for debugging, but prioritize approved ones
+      const { data: allReviews, error: allError } = await supabase
         .from('reviews')
         .select('*')
-        .eq('status', 'approved') // Only show approved reviews
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('❌ Error fetching recent reviews:', error);
+      if (allError) {
+        console.error('❌ Error fetching all reviews:', allError);
         toast({
           title: "Error",
           description: "Failed to load reviews. Please try again.",
@@ -74,9 +74,23 @@ const RecentReviewsSection = ({ reviews }: RecentReviewsSectionProps) => {
         return;
       }
 
-      if (data) {
-        console.log('✅ Fetched approved reviews from database:', data.length, data);
-        setDatabaseReviews(data);
+      if (allReviews) {
+        console.log('✅ Fetched all reviews from database:', allReviews.length, allReviews);
+        
+        // Show approved reviews publicly, but log all for debugging
+        const approvedReviews = allReviews.filter(r => r.status === 'approved');
+        const pendingReviews = allReviews.filter(r => r.status === 'pending');
+        const rejectedReviews = allReviews.filter(r => r.status === 'rejected');
+        
+        console.log('📊 Review status breakdown:', {
+          total: allReviews.length,
+          approved: approvedReviews.length,
+          pending: pendingReviews.length,
+          rejected: rejectedReviews.length
+        });
+        
+        // For Recent Reviews section, show only approved reviews
+        setDatabaseReviews(approvedReviews);
       }
     } catch (error) {
       console.error('❌ Error in fetchRecentReviews:', error);
@@ -203,10 +217,12 @@ const RecentReviewsSection = ({ reviews }: RecentReviewsSectionProps) => {
           </Button>
           {allReviews.length > 10 && (
             <Button 
-              variant="link" 
-              className="text-trustpurple-400"
+              variant="outline" 
+              size="sm"
               onClick={() => setShowAll(!showAll)}
+              className="flex items-center gap-1"
             >
+              <Eye className="h-4 w-4" />
               {showAll ? 'Show Less' : `View All Reviews (${allReviews.length})`}
             </Button>
           )}

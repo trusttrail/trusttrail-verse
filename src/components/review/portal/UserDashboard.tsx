@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -55,7 +54,7 @@ const UserDashboard = () => {
       console.log('📊 DEBUG: Current connected wallet address:', address);
       console.log('📊 DEBUG: Querying reviews for wallet address:', address);
       
-      // First, let's check ALL reviews in the database to see what we have
+      // Enhanced debugging - check all reviews first
       const { data: allReviews, error: allError } = await supabase
         .from('reviews')
         .select('*')
@@ -66,18 +65,21 @@ const UserDashboard = () => {
       } else {
         console.log('📋 DEBUG: All reviews in database:', allReviews?.length || 0, allReviews);
         
-        // Check for exact matches and case variations
-        const exactMatches = allReviews?.filter(r => r.wallet_address === address) || [];
-        const caseInsensitiveMatches = allReviews?.filter(r => r.wallet_address.toLowerCase() === address.toLowerCase()) || [];
+        // Check for any potential matches with current address
+        const potentialMatches = allReviews?.filter(r => {
+          const dbAddress = r.wallet_address?.toLowerCase();
+          const currentAddress = address?.toLowerCase();
+          console.log(`🔍 Comparing: DB="${dbAddress}" vs Current="${currentAddress}"`);
+          return dbAddress === currentAddress;
+        }) || [];
         
-        console.log('🎯 DEBUG: Exact address matches:', exactMatches.length, exactMatches);
-        console.log('🎯 DEBUG: Case-insensitive matches:', caseInsensitiveMatches.length, caseInsensitiveMatches);
+        console.log('🎯 DEBUG: Potential matches found:', potentialMatches.length, potentialMatches);
       }
 
-      // Now fetch user-specific reviews with multiple query approaches
-      console.log('📊 Attempting multiple query approaches...');
+      // Try multiple approaches to find user reviews
+      console.log('📊 Attempting comprehensive review queries...');
       
-      // Approach 1: Exact match
+      // Approach 1: Exact case match
       const { data: exactReviews, error: exactError } = await supabase
         .from('reviews')
         .select('*')
@@ -86,7 +88,7 @@ const UserDashboard = () => {
 
       console.log('🔍 Exact match query result:', exactReviews?.length || 0, exactReviews);
 
-      // Approach 2: Case-insensitive match
+      // Approach 2: Case-insensitive match using ilike
       const { data: iLikeReviews, error: iLikeError } = await supabase
         .from('reviews')
         .select('*')
@@ -95,9 +97,23 @@ const UserDashboard = () => {
 
       console.log('🔍 Case-insensitive query result:', iLikeReviews?.length || 0, iLikeReviews);
 
-      // Use whichever query returned results
-      const reviews = exactReviews?.length ? exactReviews : iLikeReviews;
-      const queryError = exactReviews?.length ? exactError : iLikeError;
+      // Approach 3: Case-insensitive using SQL functions
+      const { data: lowerReviews, error: lowerError } = await supabase
+        .from('reviews')
+        .select('*')
+        .filter('wallet_address', 'ilike', `%${address.toLowerCase()}%`)
+        .order('created_at', { ascending: false });
+
+      console.log('🔍 Lowercase filter query result:', lowerReviews?.length || 0, lowerReviews);
+
+      // Use the best result set
+      let reviews = exactReviews?.length ? exactReviews : 
+                   iLikeReviews?.length ? iLikeReviews : 
+                   lowerReviews || [];
+      
+      const queryError = exactReviews?.length ? exactError : 
+                        iLikeReviews?.length ? iLikeError : 
+                        lowerError;
 
       if (queryError) {
         console.error('❌ Error fetching user reviews:', queryError);
@@ -114,13 +130,13 @@ const UserDashboard = () => {
       if (reviews) {
         setUserReviews(reviews);
         
-        // Calculate real stats from database
+        // Calculate stats from actual database data
         const totalReviews = reviews.length;
         const verifiedReviews = reviews.filter(r => r.status === 'approved').length;
         const pendingReviews = reviews.filter(r => r.status === 'pending').length;
         const rejectedReviews = reviews.filter(r => r.status === 'rejected').length;
         
-        // Calculate rewards: 10 $NOCAP per verified review
+        // Calculate rewards: 10 $TRUST per verified review
         const totalRewards = verifiedReviews * 10;
         
         console.log('📊 User stats calculated:', {
@@ -245,7 +261,7 @@ const UserDashboard = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">$NOCAP Earned</p>
+                <p className="text-sm font-medium text-muted-foreground">$TRUST Earned</p>
                 <p className="text-2xl font-bold">{userStats.totalRewards}</p>
               </div>
               <div className="bg-purple-100 dark:bg-purple-900/20 p-2 rounded-full">
@@ -271,13 +287,14 @@ const UserDashboard = () => {
               <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <p className="text-muted-foreground">You haven't submitted any reviews yet.</p>
               <p className="text-sm text-muted-foreground mt-2">
-                Start by writing your first review to earn $NOCAP rewards!
+                Start by writing your first review to earn $TRUST rewards!
               </p>
               <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border">
                 <p className="text-sm text-yellow-800 dark:text-yellow-200">
                   <strong>Debugging Info:</strong><br/>
                   Connected Address: {address}<br/>
-                  If you recently submitted a review, please check that the wallet address matches exactly.
+                  Transaction Hashes: 0xe042540db60e9c6d0164f90da84073e80ee5e087b38f2eef3198fdaca8f2b886, 0x112c481ead0914edfb3c8e7b2a69c1a387f50334573f4b9ed3bcb1ac738d9f6d<br/>
+                  If you recently submitted reviews with these transaction hashes, there may be a database sync issue.
                 </p>
               </div>
             </div>
@@ -324,7 +341,7 @@ const UserDashboard = () => {
                   {review.status === 'approved' && (
                     <div className="flex items-center gap-1 text-sm text-green-600">
                       <Coins className="h-4 w-4" />
-                      <span>Reward earned: 10 $NOCAP</span>
+                      <span>Reward earned: 10 $TRUST</span>
                     </div>
                   )}
                 </div>

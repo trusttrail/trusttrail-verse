@@ -55,7 +55,7 @@ export const submitReviewToDatabase = async (
     return {
       success: true,
       message: txHash 
-        ? 'Review submitted successfully and approved! You have earned 10 $NOCAP tokens.'
+        ? 'Review submitted successfully and approved! You have earned 10 $TRUST tokens.'
         : 'Review submitted successfully and is pending approval.',
       reviewId: data.id,
       txHash
