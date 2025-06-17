@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { useWeb3 } from '@/hooks/useWeb3';
 import { useToast } from '@/hooks/use-toast';
-import { ethers } from 'ethers';
 
 export const useWeb3Transaction = () => {
   const { web3Service, isConnected, address } = useWeb3();
@@ -23,30 +22,47 @@ export const useWeb3Transaction = () => {
     try {
       setIsTransacting(true);
       
-      toast({
-        title: "Preparing Transaction",
-        description: "Please confirm the transaction in your MetaMask wallet...",
-      });
-
       console.log('Starting Web3 transaction for review submission');
+      console.log('Review data:', reviewData);
+      console.log('Connected address:', address);
+      console.log('Current network:', web3Service.getCurrentNetwork());
       
+      // Check if contracts are deployed
+      if (!web3Service.isContractsDeployed()) {
+        toast({
+          title: "Demo Mode",
+          description: "Smart contracts not deployed yet. Creating a demo transaction to show MetaMask integration.",
+        });
+      } else {
+        toast({
+          title: "Preparing Transaction",
+          description: "Please confirm the transaction in your MetaMask wallet...",
+        });
+      }
+
       // Prepare review data for blockchain
       const blockchainReviewData = {
         companyName: reviewData.companyName,
         category: reviewData.category,
-        ipfsHash: 'QmHash123', // This would be actual IPFS hash in production
-        proofIpfsHash: 'QmProofHash456', // This would be actual proof IPFS hash
+        ipfsHash: `QmHash_${Date.now()}`, // Generate unique IPFS hash for demo
+        proofIpfsHash: `QmProofHash_${Date.now()}`, // Generate unique proof IPFS hash for demo
         rating: reviewData.rating
       };
 
-      // Submit review to smart contract
+      console.log('Blockchain review data:', blockchainReviewData);
+
+      // Submit review to smart contract (or demo transaction)
       const txHash = await web3Service.submitReview(blockchainReviewData);
       
       setLastTxHash(txHash);
       
+      const isDemo = !web3Service.isContractsDeployed();
+      
       toast({
-        title: "Transaction Successful! 🎉",
-        description: `Review submitted to blockchain. Transaction: ${txHash.substring(0, 10)}...`,
+        title: isDemo ? "Demo Transaction Successful! 🎉" : "Transaction Successful! 🎉",
+        description: isDemo 
+          ? `Demo transaction completed. In production, this would submit your review to the blockchain. Tx: ${txHash.substring(0, 10)}...`
+          : `Review submitted to blockchain. Transaction: ${txHash.substring(0, 10)}...`,
       });
 
       console.log('Review transaction successful:', txHash);
@@ -64,6 +80,10 @@ export const useWeb3Transaction = () => {
         errorMessage = "Insufficient funds for gas fee.";
       } else if (error.message?.includes('insufficient funds')) {
         errorMessage = "Insufficient POL for transaction fee.";
+      } else if (error.message?.includes('Smart contracts are not deployed')) {
+        errorMessage = "Smart contracts not deployed. Please deploy contracts first.";
+      } else if (error.message?.includes('user rejected')) {
+        errorMessage = "Transaction was cancelled by user.";
       }
       
       toast({
