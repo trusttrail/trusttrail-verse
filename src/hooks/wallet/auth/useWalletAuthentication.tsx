@@ -38,7 +38,11 @@ export const useWalletAuthentication = () => {
 
       if (userData) {
         console.log('✅ Existing user found, attempting sign in');
-        const signInResult = await signIn(userData.email, 'wallet-auth-' + generateSecureToken());
+        
+        // For existing users, we'll use a temporary email based approach
+        // In a real implementation, you'd want to use a more secure method
+        const tempEmail = `${walletAddress.toLowerCase()}@wallet.temp`;
+        const signInResult = await signIn(tempEmail, 'wallet-auth-' + generateSecureToken());
         
         if (signInResult.success) {
           return { 
@@ -74,8 +78,33 @@ export const useWalletAuthentication = () => {
     }
   }, [checkRateLimit, generateSecureToken, signIn]);
 
+  const attemptSecureAuthentication = useCallback(async (
+    address: string,
+    onSuccess: (address: string) => void,
+    onError: (address: string, error: string) => void
+  ) => {
+    try {
+      const result = await authenticateWallet(address);
+      
+      if (result.success && !result.isNewUser) {
+        onSuccess(address);
+        return true;
+      } else if (result.error) {
+        onError(address, result.error);
+        return false;
+      }
+      
+      return false;
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Authentication failed';
+      onError(address, errorMsg);
+      return false;
+    }
+  }, [authenticateWallet]);
+
   return {
     authenticateWallet,
+    attemptSecureAuthentication,
     isAuthenticating
   };
 };

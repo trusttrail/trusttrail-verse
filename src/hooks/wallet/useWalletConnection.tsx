@@ -10,7 +10,7 @@ export const useWalletConnection = (
 ) => {
   const { toast } = useToast();
 
-  const checkIfWalletIsConnected = async () => {
+  const checkIfWalletIsConnected = async (): Promise<string | null> => {
     try {
       if (!window.ethereum) return null;
 
@@ -52,7 +52,7 @@ export const useWalletConnection = (
     return null;
   };
 
-  const connectWallet = async () => {
+  const connectWallet = async (): Promise<string | null> => {
     try {
       setIsWalletConnecting(true);
       console.log('=== CONNECT WALLET DEBUG ===');

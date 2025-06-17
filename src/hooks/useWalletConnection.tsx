@@ -1,18 +1,44 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { useWalletAuth } from '@/hooks/wallet/useWalletAuth';
+import { useWalletState } from '@/hooks/wallet/useWalletState';
+import { useWalletConnection as useWalletConnectionCore } from '@/hooks/wallet/useWalletConnection';
+import { useWalletAuthLogic } from '@/hooks/wallet/useWalletAuthLogic';
 import { useToast } from '@/hooks/use-toast';
 
 export const useWalletConnection = () => {
-  const [isWalletConnected, setIsWalletConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string>('');
-  const [needsSignup, setNeedsSignup] = useState(false);
-  const [existingUser, setExistingUser] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [lastConnectionCheck, setLastConnectionCheck] = useState<number>(0);
+  const {
+    isWalletConnected,
+    walletAddress,
+    currentNetwork,
+    isMetaMaskAvailable,
+    isWalletConnecting,
+    needsSignup,
+    existingUser,
+    setIsWalletConnected,
+    setWalletAddress,
+    setCurrentNetwork,
+    setIsWalletConnecting,
+    setNeedsSignup,
+    setExistingUser,
+    disconnectWallet,
+    handleNetworkChange,
+  } = useWalletState();
 
-  const { checkWalletConnection, connectWallet: connectWalletAuth } = useWalletAuth();
+  const {
+    checkIfWalletIsConnected,
+    connectWallet: connectWalletCore,
+    connectWithWalletConnect: connectWithWalletConnectCore,
+  } = useWalletConnectionCore(
+    setIsWalletConnected,
+    setWalletAddress,
+    setCurrentNetwork,
+    setIsWalletConnecting
+  );
+
+  const { handleWalletConnection } = useWalletAuthLogic(setNeedsSignup, setExistingUser);
   const { toast } = useToast();
+
+  const [lastConnectionCheck, setLastConnectionCheck] = useState<number>(0);
 
   // Throttled connection check - only check every 2 seconds
   const throttledConnectionCheck = useCallback(async () => {
@@ -24,12 +50,15 @@ export const useWalletConnection = () => {
     setLastConnectionCheck(now);
     
     try {
-      const address = await checkWalletConnection();
+      const address = await checkIfWalletIsConnected();
       
       if (address && address !== walletAddress) {
         console.log('🔍 New wallet address detected:', address);
         setWalletAddress(address);
         setIsWalletConnected(true);
+        
+        // Handle wallet authentication
+        await handleWalletConnection(address);
       } else if (!address && isWalletConnected) {
         console.log('🔌 Wallet disconnected');
         setIsWalletConnected(false);
@@ -40,7 +69,7 @@ export const useWalletConnection = () => {
     } catch (error) {
       console.error('Connection check error:', error);
     }
-  }, [checkWalletConnection, walletAddress, isWalletConnected, lastConnectionCheck]);
+  }, [checkIfWalletIsConnected, walletAddress, isWalletConnected, lastConnectionCheck, setWalletAddress, setIsWalletConnected, setNeedsSignup, setExistingUser, handleWalletConnection]);
 
   // Check wallet connection on mount and periodically
   useEffect(() => {
@@ -53,47 +82,52 @@ export const useWalletConnection = () => {
   }, [throttledConnectionCheck]);
 
   const connectWallet = useCallback(async () => {
-    if (isConnecting) return;
+    if (isWalletConnecting) return { success: false, error: 'Already connecting' };
     
     try {
-      setIsConnecting(true);
-      const result = await connectWalletAuth();
+      const address = await connectWalletCore();
       
-      if (result.success) {
-        setIsWalletConnected(true);
-        setWalletAddress(result.address || '');
-        setNeedsSignup(result.isNewUser || false);
-        setExistingUser(!result.isNewUser || false);
+      if (address) {
+        // Handle wallet authentication
+        await handleWalletConnection(address);
         
-        toast({
-          title: "Wallet Connected! 🎉",
-          description: result.message || "Successfully connected to MetaMask",
-        });
+        return {
+          success: true,
+          address,
+          isNewUser: needsSignup,
+          message: "Successfully connected to MetaMask"
+        };
       } else {
-        toast({
-          title: "Connection Failed",
-          description: result.error || "Failed to connect wallet",
-          variant: "destructive",
-        });
+        return {
+          success: false,
+          error: "Failed to connect wallet"
+        };
       }
     } catch (error) {
       console.error('Connect wallet error:', error);
-      toast({
-        title: "Connection Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setIsConnecting(false);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Connection failed"
+      };
     }
-  }, [connectWalletAuth, isConnecting, toast]);
+  }, [connectWalletCore, isWalletConnecting, needsSignup, handleWalletConnection]);
+
+  const connectWithWalletConnect = useCallback(async () => {
+    return await connectWithWalletConnectCore();
+  }, [connectWithWalletConnectCore]);
 
   return {
     isWalletConnected,
     walletAddress,
     needsSignup,
     existingUser,
-    isConnecting,
-    connectWallet
+    isConnecting: isWalletConnecting,
+    connectWallet,
+    currentNetwork,
+    connectWithWalletConnect,
+    disconnectWallet,
+    handleNetworkChange,
+    isMetaMaskAvailable,
+    isWalletConnecting
   };
 };
