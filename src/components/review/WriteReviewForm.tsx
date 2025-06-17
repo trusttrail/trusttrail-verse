@@ -144,8 +144,8 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
   console.log('gitcoinVerified:', gitcoinVerified);
   console.log('files.length:', files.length);
 
-  // Improved form validation logic
-  const isEffectivelyAuthenticated = isAuthenticated || (isWalletConnected && existingUser);
+  // Updated form validation logic - allow wallet-only users with Gitcoin verification
+  const isEffectivelyAuthenticated = isAuthenticated || isWalletConnected;
   
   // Check all required fields are filled
   const allFieldsFilled = formData.companyName.trim() && 
@@ -154,9 +154,8 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
                          formData.review.trim() && 
                          formData.rating > 0;
 
-  // Final form validation
+  // Final form validation - wallet + gitcoin verification is sufficient
   const isFormValid = allFieldsFilled && 
-                     isEffectivelyAuthenticated && 
                      isWalletConnected && 
                      gitcoinVerified;
 
