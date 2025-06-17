@@ -22,73 +22,48 @@ export const useWeb3Transaction = () => {
     try {
       setIsTransacting(true);
       
-      console.log('Starting Web3 transaction for review submission');
-      console.log('Review data:', reviewData);
-      console.log('Connected address:', address);
-      console.log('Current network:', web3Service.getCurrentNetwork());
+      console.log('🎯 Starting Web3 transaction for review submission');
+      console.log('📊 Review data:', reviewData);
+      console.log('👤 Connected address:', address);
+      console.log('🌐 Current network:', web3Service.getCurrentNetwork());
       
-      // Check if contracts are deployed
-      if (!web3Service.isContractsDeployed()) {
-        toast({
-          title: "Demo Mode",
-          description: "Smart contracts not deployed yet. Creating a demo transaction to show MetaMask integration.",
-        });
-      } else {
-        toast({
-          title: "Preparing Transaction",
-          description: "Please confirm the transaction in your MetaMask wallet...",
-        });
-      }
+      // Show initial toast
+      toast({
+        title: "Preparing Transaction",
+        description: "Please confirm the transaction in your MetaMask wallet...",
+      });
 
       // Prepare review data for blockchain
       const blockchainReviewData = {
         companyName: reviewData.companyName,
         category: reviewData.category,
-        ipfsHash: `QmHash_${Date.now()}`, // Generate unique IPFS hash for demo
-        proofIpfsHash: `QmProofHash_${Date.now()}`, // Generate unique proof IPFS hash for demo
+        ipfsHash: `QmHash_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // Unique IPFS hash
+        proofIpfsHash: `QmProofHash_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // Unique proof hash
         rating: reviewData.rating
       };
 
-      console.log('Blockchain review data:', blockchainReviewData);
+      console.log('🔗 Blockchain review data:', blockchainReviewData);
 
-      // Submit review to smart contract (or demo transaction)
+      // Submit review to smart contract
       const txHash = await web3Service.submitReview(blockchainReviewData);
       
       setLastTxHash(txHash);
       
-      const isDemo = !web3Service.isContractsDeployed();
-      
       toast({
-        title: isDemo ? "Demo Transaction Successful! 🎉" : "Transaction Successful! 🎉",
-        description: isDemo 
-          ? `Demo transaction completed. In production, this would submit your review to the blockchain. Tx: ${txHash.substring(0, 10)}...`
-          : `Review submitted to blockchain. Transaction: ${txHash.substring(0, 10)}...`,
+        title: "Transaction Successful! 🎉",
+        description: `Review submitted to Amoy testnet. Transaction: ${txHash.substring(0, 10)}...`,
       });
 
-      console.log('Review transaction successful:', txHash);
+      console.log('✅ Review transaction successful:', txHash);
       
       return txHash;
       
     } catch (error: any) {
-      console.error('Transaction failed:', error);
-      
-      let errorMessage = "Transaction failed. Please try again.";
-      
-      if (error.code === 4001) {
-        errorMessage = "Transaction was rejected by user.";
-      } else if (error.code === -32603) {
-        errorMessage = "Insufficient funds for gas fee.";
-      } else if (error.message?.includes('insufficient funds')) {
-        errorMessage = "Insufficient POL for transaction fee.";
-      } else if (error.message?.includes('Smart contracts are not deployed')) {
-        errorMessage = "Smart contracts not deployed. Please deploy contracts first.";
-      } else if (error.message?.includes('user rejected')) {
-        errorMessage = "Transaction was cancelled by user.";
-      }
+      console.error('❌ Transaction failed:', error);
       
       toast({
         title: "Transaction Failed",
-        description: errorMessage,
+        description: error.message || "Transaction failed. Please try again.",
         variant: "destructive",
       });
       

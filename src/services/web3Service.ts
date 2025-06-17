@@ -1,4 +1,3 @@
-
 import { ethers } from 'ethers';
 import { ReviewPlatformABI } from '../contracts/abis/ReviewPlatform';
 import { RewardTokenABI } from '../contracts/abis/RewardToken';
@@ -133,64 +132,107 @@ export class Web3Service {
   }
 
   async submitReview(reviewData: ReviewData): Promise<string> {
-    console.log('Web3Service: Starting review submission');
-    console.log('Current network:', this.currentNetwork);
-    console.log('Contract addresses:', CONTRACTS[this.currentNetwork]);
+    console.log('🚀 Web3Service: Starting review submission');
+    console.log('📊 Current network:', this.currentNetwork);
+    console.log('📝 Review data:', reviewData);
+    console.log('🏗️ Contract addresses:', CONTRACTS[this.currentNetwork]);
 
-    // Check if contracts are deployed
+    // Validate network and contracts
     const networkConfig = CONTRACTS[this.currentNetwork];
-    if (networkConfig.reviewPlatform === '0x0000000000000000000000000000000000000000') {
-      console.error('Smart contracts not deployed yet');
-      throw new Error('Smart contracts are not deployed yet. Please deploy the contracts first or use a test transaction.');
-    }
-
     if (!this.provider || !this.signer) {
-      console.error('Provider or signer not available');
-      throw new Error('Wallet not connected properly');
+      console.error('❌ Provider or signer not available');
+      throw new Error('Wallet not connected properly. Please reconnect your wallet.');
     }
 
-    // For demo purposes, if contracts aren't deployed, simulate a transaction
     if (!this.reviewContract) {
-      console.log('Simulating transaction for demo purposes...');
+      console.error('❌ Review contract not initialized');
+      throw new Error('Review contract not initialized. Please switch to Amoy network.');
+    }
+
+    try {
+      // Check wallet balance first
+      const balance = await this.provider.getBalance(await this.signer.getAddress());
+      console.log('💰 Wallet balance (MATIC):', ethers.formatEther(balance));
+      
+      if (balance === 0n) {
+        throw new Error('Insufficient MATIC balance. Please get test MATIC from Polygon faucet.');
+      }
+
+      // Check current network
+      const network = await this.provider.getNetwork();
+      console.log('🌐 Current network chainId:', network.chainId);
+      
+      if (Number(network.chainId) !== networkConfig.chainId) {
+        throw new Error(`Please switch to Polygon Amoy testnet (Chain ID: ${networkConfig.chainId})`);
+      }
+
+      // Estimate gas first
+      console.log('⛽ Estimating gas for review submission...');
       
       try {
-        // Create a simple transaction to show MetaMask popup
-        const tx = await this.signer.sendTransaction({
-          to: await this.signer.getAddress(), // Send to self
-          value: ethers.parseEther('0'), // 0 ETH
-          data: '0x' // Empty data
-        });
-
-        console.log('Demo transaction created:', tx.hash);
+        const gasEstimate = await this.reviewContract.submitReview.estimateGas(
+          reviewData.companyName,
+          reviewData.category,
+          reviewData.ipfsHash,
+          reviewData.proofIpfsHash,
+          reviewData.rating
+        );
+        console.log('⛽ Gas estimate:', gasEstimate.toString());
+      } catch (gasError: any) {
+        console.error('❌ Gas estimation failed:', gasError);
         
-        // Wait for confirmation
-        const receipt = await tx.wait();
-        console.log('Demo transaction confirmed:', receipt);
-        
-        return tx.hash;
-      } catch (error) {
-        console.error('Demo transaction failed:', error);
-        throw error;
+        // Check if it's a contract execution error
+        if (gasError.reason) {
+          throw new Error(`Contract error: ${gasError.reason}`);
+        } else if (gasError.message?.includes('insufficient funds')) {
+          throw new Error('Insufficient MATIC for gas fees. Please get test MATIC from faucet.');
+        } else {
+          throw new Error(`Gas estimation failed: ${gasError.message || 'Unknown error'}`);
+        }
       }
-    }
 
-    // Real contract interaction (when contracts are deployed)
-    try {
+      // Submit the review transaction
+      console.log('📤 Submitting review transaction...');
+      
       const tx = await this.reviewContract.submitReview(
         reviewData.companyName,
         reviewData.category,
         reviewData.ipfsHash,
         reviewData.proofIpfsHash,
-        reviewData.rating
+        reviewData.rating,
+        {
+          gasLimit: 300000, // Set a reasonable gas limit
+        }
       );
 
-      console.log('Review submission transaction:', tx.hash);
-      await tx.wait();
+      console.log('✅ Transaction submitted:', tx.hash);
+      console.log('⏳ Waiting for confirmation...');
+      
+      // Wait for transaction confirmation
+      const receipt = await tx.wait();
+      console.log('🎉 Transaction confirmed:', receipt);
       
       return tx.hash;
-    } catch (error) {
-      console.error('Failed to submit review:', error);
-      throw error;
+
+    } catch (error: any) {
+      console.error('❌ Review submission failed:', error);
+      
+      // Enhanced error handling
+      if (error.code === 4001) {
+        throw new Error('Transaction rejected by user');
+      } else if (error.code === -32603) {
+        throw new Error('Internal JSON-RPC error. Please try again.');
+      } else if (error.message?.includes('insufficient funds')) {
+        throw new Error('Insufficient MATIC for transaction fee. Get test MATIC from Polygon faucet.');
+      } else if (error.message?.includes('execution reverted')) {
+        throw new Error('Smart contract execution failed. Contract may need configuration.');
+      } else if (error.message?.includes('nonce')) {
+        throw new Error('Transaction nonce error. Please reset MetaMask account.');
+      } else if (error.message?.includes('network')) {
+        throw new Error('Network error. Please check your connection and try again.');
+      } else {
+        throw new Error(error.message || 'Transaction failed. Please try again.');
+      }
     }
   }
 
