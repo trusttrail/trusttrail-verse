@@ -24,7 +24,7 @@ interface UserStats {
   totalReviews: number;
   verifiedReviews: number;
   pendingReviews: number;
-  totalRewards: string;
+  totalRewards: number;
 }
 
 const UserDashboard = () => {
@@ -36,21 +36,21 @@ const UserDashboard = () => {
     totalReviews: 0,
     verifiedReviews: 0,
     pendingReviews: 0,
-    totalRewards: '0'
+    totalRewards: 0
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user && address) {
+    if (address) {
       fetchUserData();
     }
-  }, [user, address]);
+  }, [address]);
 
   const fetchUserData = async () => {
     try {
       setLoading(true);
       
-      // Fetch user reviews from Supabase
+      // Fetch user reviews from Supabase using wallet address
       const { data: reviews, error } = await supabase
         .from('reviews')
         .select('*')
@@ -70,16 +70,19 @@ const UserDashboard = () => {
       if (reviews) {
         setUserReviews(reviews);
         
-        // Calculate stats
+        // Calculate real stats from database
         const totalReviews = reviews.length;
         const verifiedReviews = reviews.filter(r => r.status === 'approved').length;
         const pendingReviews = reviews.filter(r => r.status === 'pending').length;
+        
+        // Calculate rewards: 10 $NOCAP per verified review
+        const totalRewards = verifiedReviews * 10;
         
         setUserStats({
           totalReviews,
           verifiedReviews,
           pendingReviews,
-          totalRewards: tokenBalance || '0'
+          totalRewards
         });
       }
     } catch (error) {
@@ -97,13 +100,13 @@ const UserDashboard = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
       case 'rejected':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
     }
   };
 
@@ -115,7 +118,7 @@ const UserDashboard = () => {
     });
   };
 
-  if (!user || !address) {
+  if (!address) {
     return (
       <div className="text-center py-8">
         <p className="text-muted-foreground">Please connect your wallet to view your dashboard.</p>
@@ -130,9 +133,9 @@ const UserDashboard = () => {
           <h2 className="text-2xl font-bold">My Dashboard</h2>
           <p className="text-muted-foreground">Track your reviews and rewards</p>
         </div>
-        <Button onClick={fetchUserData} variant="outline" size="sm">
+        <Button onClick={fetchUserData} variant="outline" size="sm" disabled={loading}>
           <ArrowUpRight className="h-4 w-4" />
-          Refresh
+          {loading ? 'Loading...' : 'Refresh'}
         </Button>
       </div>
 
@@ -185,7 +188,7 @@ const UserDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">$NOCAP Earned</p>
-                <p className="text-2xl font-bold">{parseFloat(userStats.totalRewards).toFixed(2)}</p>
+                <p className="text-2xl font-bold">{userStats.totalRewards}</p>
               </div>
               <div className="bg-purple-100 dark:bg-purple-900/20 p-2 rounded-full">
                 <Coins className="text-purple-600 dark:text-purple-400" size={16} />

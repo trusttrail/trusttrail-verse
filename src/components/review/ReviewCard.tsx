@@ -1,10 +1,12 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Star, CheckCircle, ThumbsUp, ThumbsDown, MessageCircle, Flag, Shield } from "lucide-react";
+import { Star, CheckCircle, ThumbsUp, ThumbsDown, MessageCircle, Flag, Shield, Share2 } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
+import { useWeb3 } from '@/hooks/useWeb3';
 import { useToast } from '@/hooks/use-toast';
 
 interface ReviewProps {
@@ -29,11 +31,13 @@ interface ReviewProps {
     trustScore?: number;
     hasUserVoted?: boolean;
     userVoteType?: 'up' | 'down' | null;
+    shareReview?: () => void;
   }
 }
 
 const ReviewCard = ({ review }: ReviewProps) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const { address } = useWeb3();
   const { toast } = useToast();
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -42,20 +46,27 @@ const ReviewCard = ({ review }: ReviewProps) => {
   const [localDownvotes, setLocalDownvotes] = useState(review.downvotes || 0);
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(review.userVoteType || null);
 
+  const isWalletConnected = !!address;
+
   const formatAddress = (address: string) => {
     if (address.includes('...')) return address;
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
 
-  const handleVote = async (voteType: 'up' | 'down') => {
-    if (!isAuthenticated) {
+  const requireWalletConnection = (action: string) => {
+    if (!isWalletConnected) {
       toast({
-        title: "Authentication Required",
-        description: "Please sign in to vote on reviews.",
+        title: "Wallet Connection Required",
+        description: `Please connect your wallet to ${action}.`,
         variant: "destructive",
       });
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const handleVote = async (voteType: 'up' | 'down') => {
+    if (!requireWalletConnection("vote on reviews")) return;
 
     try {
       // Simulate voting logic - in real app, this would call an API
@@ -106,14 +117,7 @@ const ReviewCard = ({ review }: ReviewProps) => {
   };
 
   const handleSubmitComment = async () => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to comment on reviews.",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!requireWalletConnection("comment on reviews")) return;
 
     if (!newComment.trim()) {
       toast({
@@ -146,14 +150,7 @@ const ReviewCard = ({ review }: ReviewProps) => {
   };
 
   const handleFlag = async () => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to flag reviews.",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!requireWalletConnection("flag reviews")) return;
 
     toast({
       title: "Review Flagged",
@@ -161,8 +158,38 @@ const ReviewCard = ({ review }: ReviewProps) => {
     });
   };
 
+  const handleShare = async () => {
+    if (review.shareReview) {
+      review.shareReview();
+    } else {
+      const shareData = {
+        title: `Review: ${review.companyName} - ${review.title}`,
+        text: `Check out this review of ${review.companyName}: ${review.title}`,
+        url: window.location.href
+      };
+
+      try {
+        if (navigator.share && navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+        } else {
+          await navigator.clipboard.writeText(`${shareData.title}\n${shareData.text}\n${shareData.url}`);
+          toast({
+            title: "Link Copied",
+            description: "Review link copied to clipboard!",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Share Failed",
+          description: "Could not share the review.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   return (
-    <Card className="hover:border-trustpurple-500/30 transition-colors">
+    <Card className="hover:border-trustpurple-500/30 transition-colors group">
       <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2 gap-2">
           <h3 className="font-semibold text-base sm:text-lg pr-2">{review.title}</h3>
@@ -178,6 +205,14 @@ const ReviewCard = ({ review }: ReviewProps) => {
                 />
               ))}
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleShare}
+              className="opacity-50 group-hover:opacity-100 transition-opacity"
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
           </div>
         </div>
         
@@ -202,14 +237,16 @@ const ReviewCard = ({ review }: ReviewProps) => {
         
         <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{review.content}</p>
 
-        {/* Voting and Actions */}
+        {/* Voting and Actions - Only for wallet-connected users */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
             <Button
               variant={userVote === 'up' ? 'default' : 'outline'}
               size="sm"
               onClick={() => handleVote('up')}
+              disabled={!isWalletConnected}
               className="flex items-center gap-1"
+              title={!isWalletConnected ? "Connect wallet to vote" : ""}
             >
               <ThumbsUp size={14} />
               <span>{localUpvotes}</span>
@@ -218,7 +255,9 @@ const ReviewCard = ({ review }: ReviewProps) => {
               variant={userVote === 'down' ? 'destructive' : 'outline'}
               size="sm"
               onClick={() => handleVote('down')}
+              disabled={!isWalletConnected}
               className="flex items-center gap-1"
+              title={!isWalletConnected ? "Connect wallet to vote" : ""}
             >
               <ThumbsDown size={14} />
               <span>{localDownvotes}</span>
@@ -234,15 +273,17 @@ const ReviewCard = ({ review }: ReviewProps) => {
               <span className="sm:hidden">({review.comments?.length || 0})</span>
             </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleFlag}
-            className="flex items-center gap-1 text-orange-600 hover:text-orange-700"
-          >
-            <Flag size={14} />
-            <span className="hidden sm:inline">Flag</span>
-          </Button>
+          {isWalletConnected && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleFlag}
+              className="flex items-center gap-1 text-orange-600 hover:text-orange-700"
+            >
+              <Flag size={14} />
+              <span className="hidden sm:inline">Flag</span>
+            </Button>
+          )}
         </div>
 
         {/* Comments Section */}
@@ -265,8 +306,8 @@ const ReviewCard = ({ review }: ReviewProps) => {
               </div>
             )}
 
-            {/* Add Comment */}
-            {isAuthenticated && (
+            {/* Add Comment - Only for wallet-connected users */}
+            {isWalletConnected ? (
               <div className="space-y-2">
                 <Textarea
                   placeholder="Add a comment..."
@@ -283,6 +324,12 @@ const ReviewCard = ({ review }: ReviewProps) => {
                     {isSubmittingComment ? 'Posting...' : 'Post Comment'}
                   </Button>
                 </div>
+              </div>
+            ) : (
+              <div className="text-center py-4 border-2 border-dashed border-muted rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Connect your wallet to interact with reviews and add comments
+                </p>
               </div>
             )}
           </div>
