@@ -9,7 +9,9 @@ import CategorySelector from "./CategorySelector";
 import CompanySelector from "./CompanySelector";
 import FileUpload from "./FileUpload";
 import ReviewSubmissionSection from "./ReviewSubmissionSection";
+import ReviewPrerequisites from "./ReviewPrerequisites";
 import { ReviewFormData } from '@/hooks/useReviewForm';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ReviewFormContentProps {
   formData: ReviewFormData;
@@ -39,6 +41,7 @@ interface ReviewFormContentProps {
   onFormSubmit: (e: React.FormEvent) => void;
   handleVerifyGitcoin: () => Promise<void>;
   handleCheckVerification: () => Promise<void>;
+  connectWallet: () => void;
 }
 
 const ReviewFormContent = ({
@@ -69,128 +72,116 @@ const ReviewFormContent = ({
   onFormSubmit,
   handleVerifyGitcoin,
   handleCheckVerification,
+  connectWallet,
 }: ReviewFormContentProps) => {
+  const { isAuthenticated } = useAuth();
+
   return (
-    <form onSubmit={onFormSubmit} className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Review Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="company">Company/Project *</Label>
-              <CompanySelector
-                companyName={formData.companyName}
-                setCompanyName={handleCompanyChange}
-                setCategory={handleCategoryChange}
-                openCompanySelect={openCompanySelect}
-                setOpenCompanySelect={setOpenCompanySelect}
-                filteredCompanies={filteredCompanies}
-                handleCompanySearch={handleCompanySearch}
-                handleCompanySelect={handleCompanySelect}
-              />
-            </div>
+    <div className="space-y-6">
+      {/* Prerequisites Section - At the top */}
+      <ReviewPrerequisites
+        isWalletConnected={isWalletConnected}
+        connectWallet={connectWallet}
+        isAuthenticated={isAuthenticated}
+        existingUser={existingUser}
+        gitcoinVerified={gitcoinVerified}
+        passportScore={0}
+        needsRefresh={false}
+        isVerifying={isVerifying}
+        handleVerifyGitcoin={handleVerifyGitcoin}
+        handleRefreshGitcoin={handleCheckVerification}
+      />
 
-            <div className="space-y-2">
-              <Label htmlFor="category">Category *</Label>
-              <CategorySelector
-                category={formData.category}
-                setCategory={handleCategoryChange}
-                categories={categories?.map(cat => ({ id: cat.id, name: cat.name })) || []}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="title">Review Title *</Label>
-            <Input
-              id="title"
-              name="title"
-              placeholder="Summarize your experience in a few words"
-              value={formData.title}
-              onChange={handleInputChange}
-              className="text-sm sm:text-base"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="rating">Rating *</Label>
-            <StarRating
-              rating={formData.rating}
-              setRating={handleRatingChange}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="content">Review Content *</Label>
-            <Textarea
-              id="review"
-              name="review"
-              placeholder="Share your detailed experience, what went well, what could be improved..."
-              value={formData.review}
-              onChange={handleInputChange}
-              className="min-h-[120px] text-sm sm:text-base"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Supporting Documents (Required for Blockchain Submission)</Label>
-            <FileUpload
-              selectedFiles={files}
-              setSelectedFiles={setFiles}
-              fileError={fileError}
-              setFileError={setFileError}
-            />
-            <p className="text-xs text-muted-foreground">
-              Upload proof documents to support your review. This will be stored on IPFS and linked to your blockchain transaction.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Gitcoin Verification Section */}
-      {isWalletConnected && !gitcoinVerified && (
+      {/* Review Form */}
+      <form onSubmit={onFormSubmit} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Identity Verification Required</CardTitle>
+            <CardTitle>Review Details</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Please verify your identity with Gitcoin Passport to submit reviews to the blockchain.
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleVerifyGitcoin}
-                disabled={isVerifying}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-              >
-                {isVerifying ? 'Verifying...' : 'Verify with Gitcoin'}
-              </button>
-              <button
-                type="button"
-                onClick={handleCheckVerification}
-                disabled={isVerifying}
-                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
-              >
-                Check Status
-              </button>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="company">Company/Project *</Label>
+                <CompanySelector
+                  companyName={formData.companyName}
+                  setCompanyName={handleCompanyChange}
+                  setCategory={handleCategoryChange}
+                  openCompanySelect={openCompanySelect}
+                  setOpenCompanySelect={setOpenCompanySelect}
+                  filteredCompanies={filteredCompanies}
+                  handleCompanySearch={handleCompanySearch}
+                  handleCompanySelect={handleCompanySelect}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="category">Category *</Label>
+                <CategorySelector
+                  category={formData.category}
+                  setCategory={handleCategoryChange}
+                  categories={categories?.map(cat => ({ id: cat.id, name: cat.name })) || []}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="title">Review Title *</Label>
+              <Input
+                id="title"
+                name="title"
+                placeholder="Summarize your experience in a few words"
+                value={formData.title}
+                onChange={handleInputChange}
+                className="text-sm sm:text-base"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="rating">Rating *</Label>
+              <StarRating
+                rating={formData.rating}
+                setRating={handleRatingChange}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="content">Review Content *</Label>
+              <Textarea
+                id="review"
+                name="review"
+                placeholder="Share your detailed experience, what went well, what could be improved..."
+                value={formData.review}
+                onChange={handleInputChange}
+                className="min-h-[120px] text-sm sm:text-base"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Supporting Documents (Required for Blockchain Submission)</Label>
+              <FileUpload
+                selectedFiles={files}
+                setSelectedFiles={setFiles}
+                fileError={fileError}
+                setFileError={setFileError}
+              />
+              <p className="text-xs text-muted-foreground">
+                Upload proof documents to support your review. This will be stored on IPFS and linked to your blockchain transaction.
+              </p>
             </div>
           </CardContent>
         </Card>
-      )}
 
-      {/* Submit Section */}
-      <ReviewSubmissionSection
-        isFormValid={isFormValid}
-        isSubmitting={isSubmitting}
-        isTransacting={isTransacting}
-        isVerifying={isVerifying}
-        filesLength={files.length}
-        onSubmit={onFormSubmit}
-      />
-    </form>
+        {/* Submit Section - At the bottom */}
+        <ReviewSubmissionSection
+          isFormValid={isFormValid}
+          isSubmitting={isSubmitting}
+          isTransacting={isTransacting}
+          isVerifying={isVerifying}
+          filesLength={files.length}
+          onSubmit={onFormSubmit}
+        />
+      </form>
+    </div>
   );
 };
 

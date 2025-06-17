@@ -19,7 +19,8 @@ const ReviewFormContainer = ({ categories }: ReviewFormContainerProps) => {
     isWalletConnected, 
     walletAddress, 
     needsSignup, 
-    existingUser 
+    existingUser,
+    connectWallet
   } = useWalletConnection();
   
   const {
@@ -97,6 +98,7 @@ const ReviewFormContainer = ({ categories }: ReviewFormContainerProps) => {
       onFormSubmit={onFormSubmit}
       handleVerifyGitcoin={handleVerifyGitcoin}
       handleCheckVerification={handleCheckVerification}
+      connectWallet={connectWallet}
     />
   );
 };
