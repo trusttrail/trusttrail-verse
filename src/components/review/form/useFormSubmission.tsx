@@ -48,15 +48,20 @@ export const useFormSubmission = ({
     try {
       console.log('🚀 Starting review submission process...');
       
-      // Show AI screening toast
+      // Show AI screening toast with more detail
       toast({
-        title: "AI Screening in Progress",
-        description: "Your review is being analyzed for authenticity and quality...",
+        title: "🤖 AI Screening Started",
+        description: "Analyzing your review for authenticity, quality, and compliance...",
       });
+      
+      const aiStartTime = Date.now();
       
       // Submit to database with AI screening
       console.log('💾 Submitting to database with AI screening...');
       const dbResult = await submitReviewToDatabase(formData, walletAddress);
+      
+      const aiEndTime = Date.now();
+      const aiProcessingTime = aiEndTime - aiStartTime;
       
       if (!dbResult.success) {
         toast({
@@ -69,16 +74,18 @@ export const useFormSubmission = ({
 
       console.log('✅ Database submission successful:', dbResult);
       
-      // Show appropriate success message based on AI approval
+      // Show detailed AI screening results
       if (dbResult.aiScreeningResult?.approved) {
         toast({
-          title: "Review Approved! 🎉",
-          description: "Your review passed AI screening and has been automatically approved. It will appear in Recent Reviews!",
+          title: "🎉 Review Approved!",
+          description: `AI screening completed in ${Math.round(aiProcessingTime/1000)}s. Confidence: ${dbResult.aiScreeningResult.confidence}%. Your review is now live!`,
+          duration: 5000,
         });
       } else {
         toast({
           title: "Review Submitted",
-          description: "Your review has been submitted but requires additional review before approval.",
+          description: `AI screening completed in ${Math.round(aiProcessingTime/1000)}s. Review requires additional verification before approval.`,
+          duration: 5000,
         });
       }
 
@@ -90,12 +97,12 @@ export const useFormSubmission = ({
         console.log('✅ Blockchain transaction successful:', txHash);
         
         toast({
-          title: "Blockchain Success! 🎉",
-          description: "Review also submitted to blockchain! You have earned 10 $TRUST tokens.",
+          title: "💎 Blockchain Success!",
+          description: "Review also secured on blockchain! You've earned 10 $TRUST tokens.",
+          duration: 5000,
         });
       } else {
         console.log('❌ Blockchain transaction failed, but database save succeeded');
-        // Don't show error toast since database submission was successful
       }
       
       // Reset form after successful submission
