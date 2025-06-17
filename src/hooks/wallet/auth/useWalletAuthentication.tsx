@@ -1,76 +1,81 @@
 
-import { authenticateByWallet } from '@/utils/auth/walletAuth';
+import { useState, useCallback } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useWalletSecurity } from './useWalletSecurity';
 import { useToast } from '@/hooks/use-toast';
 
 export const useWalletAuthentication = () => {
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const { signIn } = useAuth();
+  const { checkRateLimit, generateSecureToken } = useWalletSecurity();
   const { toast } = useToast();
 
-  const attemptSecureAuthentication = async (
-    address: string,
-    onSuccess: (address: string) => void,
-    onFailure: (address: string, error?: string) => void
-  ) => {
-    try {
-      console.log('🔐 Attempting secure authentication for wallet:', address);
-      
-      // Add timeout for authentication attempt
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Authentication timeout')), 20000)
-      );
-      
-      const authResult = await Promise.race([
-        authenticateByWallet(address),
-        timeoutPromise
-      ]) as any;
-      
-      if (authResult.success) {
-        console.log('✅ Secure authentication successful!');
-        onSuccess(address);
-        
-        toast({
-          title: "Welcome Back!",
-          description: "Successfully signed in with your wallet.",
-        });
-        
-        console.log('🎉 Secure authentication complete');
-        return true;
-        
-      } else {
-        console.warn('⚠️ Secure authentication failed:', authResult.error);
-        onFailure(address, authResult.error);
-        
-        if (authResult.error?.includes('rate limit')) {
-          console.log('Rate limit detected, authentication will retry automatically');
-        } else {
-          toast({
-            title: "Authentication Notice",  
-            description: "Wallet recognized. You may need to complete authentication manually if auto sign-in doesn't work.",
-          });
-        }
-        return false;
-      }
-    } catch (error) {
-      console.error('❌ Secure authentication error:', error);
-      onFailure(address, error instanceof Error ? error.message : 'Unknown error');
-      
-      if (error instanceof Error && error.message.includes('timeout')) {
-        toast({
-          title: "Connection Timeout",
-          description: "Please check your connection and try again.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Authentication Error",
-          description: "Please try connecting your wallet again.",
-          variant: "destructive",
-        });
-      }
-      return false;
+  const authenticateWallet = useCallback(async (walletAddress: string) => {
+    if (checkRateLimit('wallet_auth')) {
+      return { success: false, error: 'Rate limited' };
     }
-  };
+
+    if (!walletAddress) {
+      return { success: false, error: 'No wallet address provided' };
+    }
+
+    try {
+      setIsAuthenticating(true);
+      console.log('🔐 Starting wallet authentication for:', walletAddress);
+
+      // Check if user exists
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('wallet_address', walletAddress.toLowerCase())
+        .maybeSingle();
+
+      if (userError) {
+        console.error('Error checking user profile:', userError);
+        return { success: false, error: 'Database error' };
+      }
+
+      if (userData) {
+        console.log('✅ Existing user found, attempting sign in');
+        const signInResult = await signIn(userData.email, 'wallet-auth-' + generateSecureToken());
+        
+        if (signInResult.success) {
+          return { 
+            success: true, 
+            isNewUser: false, 
+            userData,
+            message: 'Successfully signed in!' 
+          };
+        } else {
+          return { 
+            success: false, 
+            error: 'Sign in failed',
+            isNewUser: false 
+          };
+        }
+      } else {
+        console.log('👤 New user detected');
+        return { 
+          success: true, 
+          isNewUser: true, 
+          message: 'New user - registration required' 
+        };
+      }
+
+    } catch (error) {
+      console.error('Wallet authentication error:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Authentication failed' 
+      };
+    } finally {
+      setIsAuthenticating(false);
+    }
+  }, [checkRateLimit, generateSecureToken, signIn]);
 
   return {
-    attemptSecureAuthentication,
+    authenticateWallet,
+    isAuthenticating
   };
 };

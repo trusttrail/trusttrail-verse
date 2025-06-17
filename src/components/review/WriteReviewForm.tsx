@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Shield, CheckCircle, RefreshCw, ExternalLink } from "lucide-react";
+import { AlertCircle, Shield, CheckCircle, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import StarRating from "./StarRating";
 import CategorySelector from "./CategorySelector";
@@ -23,7 +23,7 @@ import { useTrustScore } from '@/hooks/useTrustScore';
 interface WriteReviewFormProps {
   isWalletConnected: boolean;
   connectWallet: () => void;
-  categories: Array<{ id: string; name: string; icon: string }>;
+  categories: Array<{ id: string; name: string; icon?: string }>;
 }
 
 const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: WriteReviewFormProps) => {

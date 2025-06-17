@@ -8,12 +8,16 @@ interface WriteReviewTabProps {
   categories: any[];
 }
 
-const WriteReviewTab = ({ isWalletConnected, connectWallet, categories }: WriteReviewTabProps) => (
-  <WriteReviewForm
-    isWalletConnected={isWalletConnected}
-    connectWallet={connectWallet}
-    categories={categories}
-  />
-);
+const WriteReviewTab = ({ isWalletConnected, connectWallet, categories }: WriteReviewTabProps) => {
+  return (
+    <div className="w-full">
+      <WriteReviewForm
+        isWalletConnected={isWalletConnected}
+        connectWallet={connectWallet}
+        categories={categories}
+      />
+    </div>
+  );
+};
 
 export default WriteReviewTab;
