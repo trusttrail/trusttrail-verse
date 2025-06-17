@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Coins, Trophy, FileText, Star, Calendar, ArrowUpRight, ExternalLink } from "lucide-react";
+import { Coins, Trophy, FileText, Star, Calendar, ArrowUpRight } from "lucide-react";
 import { useAuth } from '@/hooks/useAuth';
 import { useWeb3 } from '@/hooks/useWeb3';
 import { supabase } from '@/integrations/supabase/client';
@@ -52,17 +52,55 @@ const UserDashboard = () => {
     try {
       setLoading(true);
       
-      console.log('📊 Querying reviews for wallet address:', address);
+      console.log('📊 DEBUG: Current connected wallet address:', address);
+      console.log('📊 DEBUG: Querying reviews for wallet address:', address);
       
-      // Fetch user reviews from Supabase using wallet address (case-insensitive)
-      const { data: reviews, error } = await supabase
+      // First, let's check ALL reviews in the database to see what we have
+      const { data: allReviews, error: allError } = await supabase
         .from('reviews')
         .select('*')
-        .ilike('wallet_address', address) // Case-insensitive match
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('❌ Error fetching user reviews:', error);
+      if (allError) {
+        console.error('❌ Error fetching all reviews:', allError);
+      } else {
+        console.log('📋 DEBUG: All reviews in database:', allReviews?.length || 0, allReviews);
+        
+        // Check for exact matches and case variations
+        const exactMatches = allReviews?.filter(r => r.wallet_address === address) || [];
+        const caseInsensitiveMatches = allReviews?.filter(r => r.wallet_address.toLowerCase() === address.toLowerCase()) || [];
+        
+        console.log('🎯 DEBUG: Exact address matches:', exactMatches.length, exactMatches);
+        console.log('🎯 DEBUG: Case-insensitive matches:', caseInsensitiveMatches.length, caseInsensitiveMatches);
+      }
+
+      // Now fetch user-specific reviews with multiple query approaches
+      console.log('📊 Attempting multiple query approaches...');
+      
+      // Approach 1: Exact match
+      const { data: exactReviews, error: exactError } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('wallet_address', address)
+        .order('created_at', { ascending: false });
+
+      console.log('🔍 Exact match query result:', exactReviews?.length || 0, exactReviews);
+
+      // Approach 2: Case-insensitive match
+      const { data: iLikeReviews, error: iLikeError } = await supabase
+        .from('reviews')
+        .select('*')
+        .ilike('wallet_address', address)
+        .order('created_at', { ascending: false });
+
+      console.log('🔍 Case-insensitive query result:', iLikeReviews?.length || 0, iLikeReviews);
+
+      // Use whichever query returned results
+      const reviews = exactReviews?.length ? exactReviews : iLikeReviews;
+      const queryError = exactReviews?.length ? exactError : iLikeError;
+
+      if (queryError) {
+        console.error('❌ Error fetching user reviews:', queryError);
         toast({
           title: "Error",
           description: "Failed to fetch your reviews. Please try again.",
@@ -71,7 +109,7 @@ const UserDashboard = () => {
         return;
       }
 
-      console.log('📋 Found reviews for user:', reviews?.length || 0, reviews);
+      console.log('📋 Final reviews for user:', reviews?.length || 0, reviews);
 
       if (reviews) {
         setUserReviews(reviews);
@@ -133,21 +171,6 @@ const UserDashboard = () => {
     });
   };
 
-  const navigateToAllReviews = () => {
-    // Scroll to Recent Reviews section
-    const recentReviewsSection = document.querySelector('h3:contains("Recent Reviews")') || 
-                                document.querySelector('[data-testid="recent-reviews"]') ||
-                                document.querySelector('section');
-    if (recentReviewsSection) {
-      recentReviewsSection.scrollIntoView({ behavior: 'smooth' });
-    }
-    
-    toast({
-      title: "Navigating",
-      description: "Scrolling to Recent Reviews section to view all reviews.",
-    });
-  };
-
   if (!address) {
     return (
       <div className="text-center py-8">
@@ -170,10 +193,6 @@ const UserDashboard = () => {
           <Button onClick={fetchUserData} variant="outline" size="sm" disabled={loading}>
             <ArrowUpRight className="h-4 w-4" />
             {loading ? 'Loading...' : 'Refresh'}
-          </Button>
-          <Button onClick={navigateToAllReviews} variant="outline" size="sm">
-            <ExternalLink className="h-4 w-4" />
-            View All Reviews
           </Button>
         </div>
       </div>
@@ -254,6 +273,13 @@ const UserDashboard = () => {
               <p className="text-sm text-muted-foreground mt-2">
                 Start by writing your first review to earn $NOCAP rewards!
               </p>
+              <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  <strong>Debugging Info:</strong><br/>
+                  Connected Address: {address}<br/>
+                  If you recently submitted a review, please check that the wallet address matches exactly.
+                </p>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
