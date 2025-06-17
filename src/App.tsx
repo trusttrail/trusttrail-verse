@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/hooks/useTheme";
+import { Web3Provider } from "@/hooks/useWeb3";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ReviewPortal from "./pages/ReviewPortal";
@@ -138,27 +139,29 @@ const DemoActivityInjector: React.FC = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <TooltipProvider>
-        <RecentActivityProvider>
-          <div className="transition-colors duration-300">
-            <RecentActivityOverlay />
-            <DemoActivityInjector />
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/review-portal" element={<ReviewPortal />} />
-                <Route path="/testnet-faucet" element={<TestnetFaucet />} />
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/auth" element={<Auth />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </div>
-        </RecentActivityProvider>
-      </TooltipProvider>
+      <Web3Provider>
+        <TooltipProvider>
+          <RecentActivityProvider>
+            <div className="transition-colors duration-300">
+              <RecentActivityOverlay />
+              <DemoActivityInjector />
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/review-portal" element={<ReviewPortal />} />
+                  <Route path="/testnet-faucet" element={<TestnetFaucet />} />
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/auth" element={<Auth />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </div>
+          </RecentActivityProvider>
+        </TooltipProvider>
+      </Web3Provider>
     </ThemeProvider>
   </QueryClientProvider>
 );
