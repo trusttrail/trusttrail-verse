@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, ExternalLink, RefreshCw, CheckCircle } from "lucide-react";
+import { Shield, ExternalLink, RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
 
 interface PassportStatusCardProps {
   isVerified: boolean;
@@ -102,6 +102,35 @@ const PassportStatusCard = ({
             )}
           </div>
         </div>
+
+        {/* Instructions for verification */}
+        {!isVerified && !isVerifying && (
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-blue-700">
+              <p className="font-medium mb-1">How to verify:</p>
+              <ol className="list-decimal list-inside space-y-1 text-xs">
+                <li>Click "Verify Identity" to open Gitcoin Passport</li>
+                <li>Connect the same wallet address you're using here</li>
+                <li>Complete stamp verification to build your score</li>
+                <li>Return here - your score will be automatically detected</li>
+              </ol>
+            </div>
+          </div>
+        )}
+
+        {/* Verification in progress */}
+        {isVerifying && (
+          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
+            <RefreshCw className="h-4 w-4 text-yellow-500 animate-spin mt-0.5" />
+            <div className="text-sm text-yellow-700">
+              <p className="font-medium">Verification in progress</p>
+              <p className="text-xs mt-1">
+                Complete your verification in the Gitcoin Passport window. Make sure to connect the same wallet address and complete your stamps. We'll automatically detect your score when ready.
+              </p>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

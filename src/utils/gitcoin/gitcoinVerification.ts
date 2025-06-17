@@ -8,7 +8,7 @@ export const openGitcoinPassportWindow = (): Window | null => {
   const passportWindow = window.open(passportUrl, 'gitcoin_passport', 'width=800,height=600,scrollbars=yes,resizable=yes');
   
   if (!passportWindow) {
-    throw new Error('Failed to open passport window - popup may be blocked');
+    throw new Error('Failed to open passport window - popup may be blocked. Please enable popups for this site and try again.');
   }
   
   return passportWindow;
@@ -30,7 +30,7 @@ export const handlePassportVerification = async (
     if (existingScore !== null && existingScore > 0) {
       // User already has a passport, just save the score
       const data = savePassportData(walletAddress, existingScore);
-      onSuccess(data, `Your existing passport score (${existingScore}) has been linked to your account.`);
+      onSuccess(data, `Your existing passport score (${existingScore}) has been successfully linked to your account.`);
       return true;
     }
     
@@ -42,7 +42,7 @@ export const handlePassportVerification = async (
     await pollForPassportScore(
       walletAddress,
       passportWindow,
-      (data) => onSuccess(data, `Your passport score (${data.score}) has been successfully linked to your account.`),
+      (data) => onSuccess(data, `Your passport score (${data.score}) has been successfully verified and linked to your account.`),
       onError,
       savePassportData
     );
@@ -51,7 +51,17 @@ export const handlePassportVerification = async (
     
   } catch (error) {
     console.error('Failed to verify Gitcoin Passport:', error);
-    onError(error instanceof Error ? error.message : "Failed to start verification process.");
+    let errorMessage = "Failed to start verification process.";
+    
+    if (error instanceof Error) {
+      if (error.message.includes('popup')) {
+        errorMessage = "Popup blocked. Please enable popups for this site and try again.";
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
+    onError(errorMessage);
     return false;
   }
 };

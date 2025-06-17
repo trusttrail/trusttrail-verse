@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useWalletConnection } from '@/hooks/useWalletConnection';
 import { useToast } from '@/hooks/use-toast';
 import { GitcoinPassportData, GitcoinPassportHook } from '@/types/gitcoinPassport';
 import { 
@@ -14,6 +15,7 @@ import { handlePassportVerification } from '@/utils/gitcoin/gitcoinVerification'
 
 export const useGitcoinPassport = (): GitcoinPassportHook => {
   const { user, isAuthenticated } = useAuth();
+  const { walletAddress, isWalletConnected } = useWalletConnection();
   const { toast } = useToast();
   const [passportData, setPassportData] = useState<GitcoinPassportData | null>(null);
   const [isVerified, setIsVerified] = useState(false);
@@ -21,10 +23,18 @@ export const useGitcoinPassport = (): GitcoinPassportHook => {
   const [needsRefresh, setNeedsRefresh] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
+  // Create a user identifier that works for both authenticated users and wallet-connected users
+  const getUserId = () => {
+    if (user?.id) return user.id;
+    if (walletAddress) return `wallet_${walletAddress}`;
+    return null;
+  };
+
   // Load passport data from localStorage on mount
   useEffect(() => {
-    if (isAuthenticated && user) {
-      const storedData = loadPassportDataFromStorage(user.id);
+    const userId = getUserId();
+    if (userId) {
+      const storedData = loadPassportDataFromStorage(userId);
       if (storedData) {
         // Check if data is stale
         if (checkIfDataIsStale(storedData)) {
@@ -41,22 +51,23 @@ export const useGitcoinPassport = (): GitcoinPassportHook => {
         setPassportScore(storedData.score);
       }
     }
-  }, [isAuthenticated, user, toast]);
+  }, [isAuthenticated, user, walletAddress, toast]);
 
-  // Clear passport data when user logs out
+  // Clear passport data when user logs out and wallet disconnects
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !isWalletConnected) {
       setPassportData(null);
       setIsVerified(false);
       setPassportScore(0);
       setNeedsRefresh(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isWalletConnected]);
 
   const savePassportData = (address: string, score: number): GitcoinPassportData => {
-    if (!user) throw new Error('User not authenticated');
+    const userId = getUserId();
+    if (!userId) throw new Error('No user identifier available');
 
-    const data = savePassportDataToStorage(user.id, address, score);
+    const data = savePassportDataToStorage(userId, address, score);
     setPassportData(data);
     setIsVerified(true);
     setPassportScore(score);
@@ -102,8 +113,9 @@ export const useGitcoinPassport = (): GitcoinPassportHook => {
   };
 
   const clearPassportData = (): void => {
-    if (user) {
-      clearPassportDataFromStorage(user.id);
+    const userId = getUserId();
+    if (userId) {
+      clearPassportDataFromStorage(userId);
     }
     setPassportData(null);
     setIsVerified(false);
@@ -112,7 +124,19 @@ export const useGitcoinPassport = (): GitcoinPassportHook => {
   };
 
   const verifyPassport = async (walletAddress: string): Promise<boolean> => {
+    // Check if we have a valid user identifier (either authenticated user or wallet)
+    const userId = getUserId();
+    if (!userId) {
+      toast({
+        title: "Connection Required",
+        description: "Please connect your wallet or sign in to verify your passport.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     setIsVerifying(true);
+    console.log('Starting passport verification for wallet:', walletAddress, 'userId:', userId);
     
     return handlePassportVerification(
       walletAddress,
@@ -135,7 +159,7 @@ export const useGitcoinPassport = (): GitcoinPassportHook => {
       () => {
         toast({
           title: "Gitcoin Passport Opened",
-          description: "Complete your verification in the new window. The page will automatically detect your score when ready.",
+          description: "Complete your verification in the new window. Connect the same wallet address and complete your stamps. The page will automatically detect your score when ready.",
         });
       }
     );
