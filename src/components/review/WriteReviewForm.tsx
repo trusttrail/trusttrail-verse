@@ -131,11 +131,39 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
     }
   };
 
-  // For form validation, consider existing users as authenticated since they're auto-signing in
+  // Debug form validation - log all conditions
+  console.log('=== FORM VALIDATION DEBUG ===');
+  console.log('formData.companyName:', formData.companyName);
+  console.log('formData.category:', formData.category);
+  console.log('formData.title:', formData.title);
+  console.log('formData.review:', formData.review);
+  console.log('formData.rating:', formData.rating);
+  console.log('isAuthenticated:', isAuthenticated);
+  console.log('isWalletConnected:', isWalletConnected);
+  console.log('existingUser:', existingUser);
+  console.log('gitcoinVerified:', gitcoinVerified);
+  console.log('files.length:', files.length);
+
+  // Improved form validation logic
   const isEffectivelyAuthenticated = isAuthenticated || (isWalletConnected && existingUser);
-  const isFormValid = formData.companyName && formData.category && formData.title && 
-                     formData.review && formData.rating > 0 && 
-                     isEffectivelyAuthenticated && isWalletConnected && gitcoinVerified;
+  
+  // Check all required fields are filled
+  const allFieldsFilled = formData.companyName.trim() && 
+                         formData.category.trim() && 
+                         formData.title.trim() && 
+                         formData.review.trim() && 
+                         formData.rating > 0;
+
+  // Final form validation
+  const isFormValid = allFieldsFilled && 
+                     isEffectivelyAuthenticated && 
+                     isWalletConnected && 
+                     gitcoinVerified;
+
+  console.log('allFieldsFilled:', allFieldsFilled);
+  console.log('isEffectivelyAuthenticated:', isEffectivelyAuthenticated);
+  console.log('Final isFormValid:', isFormValid);
+  console.log('=== END FORM VALIDATION DEBUG ===');
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 px-4 sm:px-6">
