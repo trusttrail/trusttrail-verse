@@ -5,10 +5,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { useWalletConnection } from '@/hooks/useWalletConnection';
 import { useGitcoinPassport } from '@/hooks/useGitcoinPassport';
 import { useReviewForm } from '@/hooks/useReviewForm';
-import { useToast } from '@/hooks/use-toast';
 import { useTrustScore } from '@/hooks/useTrustScore';
 import { useFormValidation } from './useFormValidation';
 import { useFormSubmission } from './useFormSubmission';
+import { useGitcoinHandlers } from './useGitcoinHandlers';
+import { useFormEventHandlers } from './useFormEventHandlers';
 import { useFormDebugLogger } from '@/hooks/useFormDebugLogger';
 import ReviewPrerequisites from '../ReviewPrerequisites';
 import ReviewFormContent from '../ReviewFormContent';
@@ -31,7 +32,6 @@ const ReviewFormContainer = ({ isWalletConnected, connectWallet, categories }: R
     verifyPassport, 
     refreshPassportScore 
   } = useGitcoinPassport();
-  const { toast } = useToast();
   const { trustScoreData } = useTrustScore();
   
   const {
@@ -67,6 +67,17 @@ const ReviewFormContainer = ({ isWalletConnected, connectWallet, categories }: R
     resetForm,
   });
 
+  const { handleVerifyGitcoin, handleRefreshGitcoin } = useGitcoinHandlers({
+    walletAddress,
+    verifyPassport,
+    refreshPassportScore,
+  });
+
+  const { onFormSubmit } = useFormEventHandlers({
+    handleSubmit,
+    formData,
+  });
+
   // Debug logging
   useFormDebugLogger({
     formData,
@@ -79,32 +90,6 @@ const ReviewFormContainer = ({ isWalletConnected, connectWallet, categories }: R
     isEffectivelyAuthenticated,
     isFormValid,
   });
-
-  const handleVerifyGitcoin = async () => {
-    if (!walletAddress) {
-      toast({
-        title: "Wallet Required",
-        description: "Please connect your wallet first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    await verifyPassport(walletAddress);
-  };
-
-  const handleRefreshGitcoin = async () => {
-    if (!walletAddress) {
-      toast({
-        title: "Wallet Required",
-        description: "Please connect your wallet first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    await refreshPassportScore(walletAddress);
-  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 px-4 sm:px-6">
@@ -137,7 +122,7 @@ const ReviewFormContainer = ({ isWalletConnected, connectWallet, categories }: R
       />
 
       {/* Review Form */}
-      <form onSubmit={(e) => handleSubmit(e, formData)} className="space-y-6">
+      <form onSubmit={onFormSubmit} className="space-y-6">
         <ReviewFormContent
           formData={formData}
           files={files}
@@ -162,7 +147,7 @@ const ReviewFormContainer = ({ isWalletConnected, connectWallet, categories }: R
           isTransacting={isTransacting}
           isVerifying={isVerifying}
           filesLength={files.length}
-          onSubmit={(e) => handleSubmit(e, formData)}
+          onSubmit={onFormSubmit}
         />
       </form>
     </div>
