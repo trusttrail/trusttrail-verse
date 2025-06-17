@@ -7,12 +7,14 @@ import { ReviewFormData } from '@/hooks/useReviewForm';
 
 interface UseFormSubmissionProps {
   isWalletConnected: boolean;
+  walletAddress: string; // Add wallet address prop
   gitcoinVerified: boolean;
   resetForm: () => void;
 }
 
 export const useFormSubmission = ({
   isWalletConnected,
+  walletAddress,
   gitcoinVerified,
   resetForm,
 }: UseFormSubmissionProps) => {
@@ -24,7 +26,7 @@ export const useFormSubmission = ({
   const handleSubmit = async (e: React.FormEvent, formData: ReviewFormData) => {
     e.preventDefault();
     
-    if (!isWalletConnected) {
+    if (!isWalletConnected || !walletAddress) {
       toast({
         title: "Wallet Required",
         description: "Please connect your wallet to submit a review.",
@@ -45,8 +47,10 @@ export const useFormSubmission = ({
     try {
       setIsSubmitting(true);
       
-      // Submit transaction to blockchain
-      const txHash = await submitReviewTransaction(formData);
+      console.log('🚀 Starting form submission with wallet:', walletAddress);
+      
+      // Submit transaction to blockchain with wallet address
+      const txHash = await submitReviewTransaction(formData, walletAddress);
       
       if (txHash) {
         // Update trust score for successful review submission

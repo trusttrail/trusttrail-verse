@@ -1,16 +1,16 @@
 
 import { useState } from 'react';
-import { useWeb3 } from '@/hooks/useWeb3';
 import { useToast } from '@/hooks/use-toast';
+import { web3Service } from '@/services/web3Service';
 
 export const useWeb3Transaction = () => {
-  const { web3Service, isConnected, address } = useWeb3();
   const { toast } = useToast();
   const [isTransacting, setIsTransacting] = useState(false);
   const [lastTxHash, setLastTxHash] = useState<string>('');
 
-  const submitReviewTransaction = async (reviewData: any): Promise<string | null> => {
-    if (!isConnected || !address) {
+  const submitReviewTransaction = async (reviewData: any, walletAddress?: string): Promise<string | null> => {
+    // Check if we have wallet address from the calling component
+    if (!walletAddress) {
       toast({
         title: "Wallet Not Connected",
         description: "Please connect your MetaMask wallet first.",
@@ -24,7 +24,7 @@ export const useWeb3Transaction = () => {
       
       console.log('🎯 Starting Web3 transaction for review submission');
       console.log('📊 Review data:', reviewData);
-      console.log('👤 Connected address:', address);
+      console.log('👤 Connected address:', walletAddress);
       console.log('🌐 Current network:', web3Service.getCurrentNetwork());
       
       // Show initial toast
@@ -32,6 +32,14 @@ export const useWeb3Transaction = () => {
         title: "Preparing Transaction",
         description: "Please confirm the transaction in your MetaMask wallet...",
       });
+
+      // Initialize web3Service connection if needed
+      if (!web3Service.isContractsDeployed()) {
+        throw new Error('Smart contracts are not properly deployed. Please check deployment status.');
+      }
+
+      // Connect web3Service to current wallet
+      await web3Service.connect();
 
       // Prepare review data for blockchain
       const blockchainReviewData = {
@@ -82,8 +90,6 @@ export const useWeb3Transaction = () => {
     submitReviewTransaction,
     isTransacting,
     lastTxHash,
-    getExplorerUrl,
-    isConnected,
-    address
+    getExplorerUrl
   };
 };
