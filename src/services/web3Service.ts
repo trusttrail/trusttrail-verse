@@ -1,4 +1,5 @@
 
+
 import { ethers } from 'ethers';
 import { ReviewPlatformABI } from '../contracts/abis/ReviewPlatform';
 import { RewardTokenABI } from '../contracts/abis/RewardToken';
@@ -156,7 +157,9 @@ export class Web3Service {
     try {
       // Check wallet balance first
       const balance = await this.provider.getBalance(await this.signer.getAddress());
+      const signerAddress = await this.signer.getAddress();
       console.log('💰 Wallet balance (MATIC):', ethers.formatEther(balance));
+      console.log('👤 Signer address:', signerAddress);
       
       if (balance === 0n) {
         throw new Error('Insufficient MATIC balance. Please get test MATIC from Polygon faucet.');
@@ -174,23 +177,67 @@ export class Web3Service {
       const rating = Math.max(1, Math.min(5, Math.floor(reviewData.rating)));
       
       console.log('📋 Contract functions available:', this.reviewContract.interface.fragments.filter(f => f.type === 'function').map(f => (f as any).name));
+      
+      // Check contract status before submission
+      console.log('🔍 Checking contract status...');
+      
+      try {
+        // Check if contract is paused
+        const isPaused = await this.reviewContract.paused();
+        console.log('⏸️ Contract paused status:', isPaused);
+        
+        if (isPaused) {
+          throw new Error('The review contract is currently paused. Please try again later.');
+        }
+      } catch (pauseError) {
+        console.warn('⚠️ Could not check pause status:', pauseError);
+      }
+
+      try {
+        // Check token contract balance
+        if (this.tokenContract) {
+          const tokenBalance = await this.tokenContract.balanceOf(networkConfig.reviewPlatform);
+          console.log('🪙 Review contract token balance:', ethers.formatEther(tokenBalance));
+          
+          if (tokenBalance === 0n) {
+            console.warn('⚠️ Review contract has no reward tokens - rewards may fail');
+          }
+        }
+      } catch (tokenError) {
+        console.warn('⚠️ Could not check token balance:', tokenError);
+      }
+
+      // Validate input parameters more thoroughly
+      if (!reviewData.companyName || reviewData.companyName.trim() === '') {
+        throw new Error('Company name cannot be empty');
+      }
+      if (!reviewData.category || reviewData.category.trim() === '') {
+        throw new Error('Category cannot be empty');
+      }
+      if (!reviewData.ipfsHash || reviewData.ipfsHash.trim() === '') {
+        throw new Error('IPFS hash cannot be empty');
+      }
+      if (!reviewData.proofIpfsHash || reviewData.proofIpfsHash.trim() === '') {
+        throw new Error('Proof IPFS hash cannot be empty');
+      }
+
       console.log('📊 Submitting with parameters:', {
-        companyName: reviewData.companyName,
-        category: reviewData.category,
-        ipfsHash: reviewData.ipfsHash,
-        proofIpfsHash: reviewData.proofIpfsHash,
+        companyName: reviewData.companyName.trim(),
+        category: reviewData.category.trim(),
+        ipfsHash: reviewData.ipfsHash.trim(),
+        proofIpfsHash: reviewData.proofIpfsHash.trim(),
         rating: rating
       });
 
-      // Estimate gas first
+      // Estimate gas first with detailed error handling
       console.log('⛽ Estimating gas for review submission...');
       
       try {
         const gasEstimate = await this.reviewContract.submitReview.estimateGas(
-          reviewData.companyName,
-          reviewData.category,
-          reviewData.ipfsHash,
-          reviewData.proofIpfsHash,
+          reviewData.companyName.trim(),
+          reviewData.category.trim(),
+          reviewData.ipfsHash.trim(),
+          reviewData.proofIpfsHash.trim(),
           rating
         );
         console.log('⛽ Gas estimate:', gasEstimate.toString());
@@ -200,16 +247,27 @@ export class Web3Service {
           reason: gasError.reason,
           code: gasError.code,
           method: gasError.method,
+          data: gasError.data,
           transaction: gasError.transaction
         });
         
-        // Check if it's a contract execution error
+        // More specific error handling
         if (gasError.reason) {
-          throw new Error(`Contract error: ${gasError.reason}`);
+          if (gasError.reason.includes('paused')) {
+            throw new Error('Contract is paused. Please try again later.');
+          } else if (gasError.reason.includes('empty')) {
+            throw new Error('One of the required fields is empty. Please check your inputs.');
+          } else if (gasError.reason.includes('rating')) {
+            throw new Error('Invalid rating. Please provide a rating between 1 and 5.');
+          } else {
+            throw new Error(`Contract validation failed: ${gasError.reason}`);
+          }
         } else if (gasError.message?.includes('insufficient funds')) {
           throw new Error('Insufficient MATIC for gas fees. Please get test MATIC from faucet.');
+        } else if (gasError.code === 'UNPREDICTABLE_GAS_LIMIT') {
+          throw new Error('Transaction will likely fail. The contract may be misconfigured or paused.');
         } else {
-          throw new Error(`Gas estimation failed: ${gasError.message || 'Unknown error'}`);
+          throw new Error(`Gas estimation failed: ${gasError.message || 'Unknown contract error'}`);
         }
       }
 
@@ -217,13 +275,13 @@ export class Web3Service {
       console.log('📤 Submitting review transaction...');
       
       const tx = await this.reviewContract.submitReview(
-        reviewData.companyName,
-        reviewData.category,
-        reviewData.ipfsHash,
-        reviewData.proofIpfsHash,
+        reviewData.companyName.trim(),
+        reviewData.category.trim(),
+        reviewData.ipfsHash.trim(),
+        reviewData.proofIpfsHash.trim(),
         rating,
         {
-          gasLimit: 300000, // Set a reasonable gas limit
+          gasLimit: 500000, // Increased gas limit for safety
         }
       );
 
@@ -242,7 +300,8 @@ export class Web3Service {
         code: error.code,
         method: error.method,
         reason: error.reason,
-        info: error.info
+        info: error.info,
+        data: error.data
       });
       
       // Enhanced error handling
@@ -250,12 +309,19 @@ export class Web3Service {
         throw new Error('Transaction rejected by user');
       } else if (error.code === -32603) {
         throw new Error('Internal JSON-RPC error. Please try again.');
+      } else if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
+        throw new Error('Transaction will fail. Contract may be paused or misconfigured.');
       } else if (error.code === 'UNSUPPORTED_OPERATION') {
         throw new Error('Smart contract function not found. Please check contract deployment.');
       } else if (error.message?.includes('insufficient funds')) {
         throw new Error('Insufficient MATIC for transaction fee. Get test MATIC from Polygon faucet.');
       } else if (error.message?.includes('execution reverted')) {
-        throw new Error('Smart contract execution failed. Contract may need configuration.');
+        // Try to extract revert reason
+        if (error.reason) {
+          throw new Error(`Contract error: ${error.reason}`);
+        } else {
+          throw new Error('Smart contract execution failed. Contract may need configuration or be paused.');
+        }
       } else if (error.message?.includes('nonce')) {
         throw new Error('Transaction nonce error. Please reset MetaMask account.');
       } else if (error.message?.includes('network')) {
