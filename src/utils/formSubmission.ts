@@ -31,10 +31,12 @@ export const submitReviewToDatabase = async (
       title: sanitizeInput(formData.title),
       content: sanitizeInput(formData.review),
       rating: Math.max(1, Math.min(5, formData.rating)),
-      wallet_address: walletAddress,
+      wallet_address: walletAddress.toLowerCase(), // Ensure consistent case
       // If there's a successful transaction hash, automatically approve the review
       status: txHash ? 'approved' as const : 'pending' as const
     };
+
+    console.log('📝 Prepared data for database:', sanitizedData);
 
     const { data, error } = await supabase
       .from('reviews')
@@ -44,9 +46,30 @@ export const submitReviewToDatabase = async (
 
     if (error) {
       console.error('❌ Database submission error:', error);
+      
+      // Try alternative insertion method if the first one fails
+      console.log('🔄 Retrying with alternative method...');
+      const { data: retryData, error: retryError } = await supabase
+        .from('reviews')
+        .insert([sanitizedData])
+        .select();
+
+      if (retryError) {
+        console.error('❌ Retry also failed:', retryError);
+        return {
+          success: false,
+          message: 'Failed to save review to database. Please contact support.',
+        };
+      }
+
+      console.log('✅ Review saved on retry:', retryData);
       return {
-        success: false,
-        message: 'Failed to save review to database. Please try again.',
+        success: true,
+        message: txHash 
+          ? 'Review submitted successfully and approved! You have earned 10 $TRUST tokens.'
+          : 'Review submitted successfully and is pending approval.',
+        reviewId: retryData?.[0]?.id,
+        txHash
       };
     }
 
