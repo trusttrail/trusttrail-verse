@@ -9,7 +9,11 @@ import { useWalletConnection } from '@/hooks/useWalletConnection';
 import { useAuth } from '@/hooks/useAuth';
 import ReviewFormContent from '../ReviewFormContent';
 
-const ReviewFormContainer = () => {
+interface ReviewFormContainerProps {
+  categories: Array<{ id: string; name: string; icon?: string }>;
+}
+
+const ReviewFormContainer = ({ categories }: ReviewFormContainerProps) => {
   const { isAuthenticated } = useAuth();
   const { 
     isWalletConnected, 
@@ -21,11 +25,21 @@ const ReviewFormContainer = () => {
   const {
     formData,
     files,
+    setFiles,
+    fileError,
+    setFileError,
+    openCompanySelect,
+    setOpenCompanySelect,
+    filteredCompanies,
     gitcoinVerified,
-    resetForm,
-    updateFormData,
-    updateFiles,
     setGitcoinVerified,
+    handleInputChange,
+    handleRatingChange,
+    handleCategoryChange,
+    handleCompanyChange,
+    handleCompanySearch,
+    handleCompanySelect,
+    resetForm,
   } = useReviewForm();
 
   const { isFormValid } = useFormValidation({
@@ -39,7 +53,7 @@ const ReviewFormContainer = () => {
 
   const { handleSubmit, isSubmitting, isTransacting } = useFormSubmission({
     isWalletConnected,
-    walletAddress, // Pass wallet address here
+    walletAddress,
     gitcoinVerified,
     resetForm,
   });
@@ -58,6 +72,13 @@ const ReviewFormContainer = () => {
     <ReviewFormContent
       formData={formData}
       files={files}
+      setFiles={setFiles}
+      fileError={fileError}
+      setFileError={setFileError}
+      openCompanySelect={openCompanySelect}
+      setOpenCompanySelect={setOpenCompanySelect}
+      filteredCompanies={filteredCompanies}
+      categories={categories}
       gitcoinVerified={gitcoinVerified}
       isFormValid={isFormValid}
       isSubmitting={isSubmitting}
@@ -67,8 +88,12 @@ const ReviewFormContainer = () => {
       walletAddress={walletAddress}
       needsSignup={needsSignup}
       existingUser={existingUser}
-      updateFormData={updateFormData}
-      updateFiles={updateFiles}
+      handleInputChange={handleInputChange}
+      handleRatingChange={handleRatingChange}
+      handleCategoryChange={handleCategoryChange}
+      handleCompanyChange={handleCompanyChange}
+      handleCompanySearch={handleCompanySearch}
+      handleCompanySelect={handleCompanySelect}
       onFormSubmit={onFormSubmit}
       handleVerifyGitcoin={handleVerifyGitcoin}
       handleCheckVerification={handleCheckVerification}

@@ -83,7 +83,7 @@ const ReviewFormContent = ({
             <CategorySelector
               category={formData.category}
               setCategory={handleCategoryChange}
-              categories={categories.map(cat => ({ id: cat.id, name: cat.name }))}
+              categories={categories?.map(cat => ({ id: cat.id, name: cat.name })) || []}
             />
           </div>
         </div>

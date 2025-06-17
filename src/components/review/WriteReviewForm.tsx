@@ -10,7 +10,9 @@ interface WriteReviewFormProps {
 
 const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: WriteReviewFormProps) => {
   return (
-    <ReviewFormContainer />
+    <ReviewFormContainer 
+      categories={categories}
+    />
   );
 };
 
