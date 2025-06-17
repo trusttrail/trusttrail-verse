@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Shield, CheckCircle } from "lucide-react";
+import { AlertCircle, Shield, CheckCircle, RefreshCw, ExternalLink } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import StarRating from "./StarRating";
 import CategorySelector from "./CategorySelector";
@@ -17,6 +17,8 @@ import { useWalletConnection } from '@/hooks/useWalletConnection';
 import { useGitcoinPassport } from '@/hooks/useGitcoinPassport';
 import { useReviewForm } from '@/hooks/useReviewForm';
 import { useToast } from '@/hooks/use-toast';
+import { useWeb3Transaction } from '@/hooks/useWeb3Transaction';
+import { useTrustScore } from '@/hooks/useTrustScore';
 
 interface WriteReviewFormProps {
   isWalletConnected: boolean;
@@ -27,8 +29,16 @@ interface WriteReviewFormProps {
 const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: WriteReviewFormProps) => {
   const { isAuthenticated } = useAuth();
   const { needsSignup, existingUser, walletAddress } = useWalletConnection();
-  const { isVerified: gitcoinVerified, passportScore, verifyPassport } = useGitcoinPassport();
+  const { 
+    isVerified: gitcoinVerified, 
+    passportScore, 
+    needsRefresh,
+    verifyPassport, 
+    refreshPassportScore 
+  } = useGitcoinPassport();
   const { toast } = useToast();
+  const { submitReviewTransaction, isTransacting } = useWeb3Transaction();
+  const { trustScoreData, updateTrustScore } = useTrustScore();
   
   const {
     formData,
@@ -76,6 +86,19 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
     }
   };
 
+  const handleRefreshGitcoin = async () => {
+    if (!walletAddress) {
+      toast({
+        title: "Wallet Required",
+        description: "Please connect your wallet first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await refreshPassportScore(walletAddress);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -100,18 +123,24 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
     try {
       setIsSubmitting(true);
       
-      // Simulate review submission
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Submit transaction to blockchain
+      const txHash = await submitReviewTransaction(formData);
       
-      toast({
-        title: "Review Submitted Successfully",
-        description: "Your review has been submitted and you've earned $NOCAP tokens!",
-      });
+      if (txHash) {
+        // Update trust score for successful review submission
+        updateTrustScore('quality', 1);
+        
+        toast({
+          title: "Review Submitted Successfully! 🎉",
+          description: "Your review has been submitted to the blockchain and you've earned $NOCAP tokens!",
+        });
 
-      // Reset form
-      resetForm();
+        // Reset form
+        resetForm();
+      }
       
     } catch (error) {
+      console.error('Review submission error:', error);
       toast({
         title: "Submission Failed",
         description: "Failed to submit your review. Please try again.",
@@ -155,6 +184,13 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
         <p className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base">
           Share your experience with the community. Your review will be verified on-chain and you'll earn $NOCAP tokens for contributing to the ecosystem.
         </p>
+        {trustScoreData && (
+          <div className="mt-4 flex justify-center">
+            <Badge variant="secondary" className="px-3 py-1">
+              Trust Score: {trustScoreData.score} ({trustScoreData.level})
+            </Badge>
+          </div>
+        )}
       </div>
 
       {/* Prerequisites Section */}
@@ -191,17 +227,44 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
                     Score: {passportScore}
                   </Badge>
                 )}
+                {needsRefresh && (
+                  <Badge variant="outline" className="ml-2 text-xs text-orange-600">
+                    Needs Refresh
+                  </Badge>
+                )}
               </div>
-              <Button 
-                size="sm" 
-                variant={gitcoinVerified ? "outline" : "default"}
-                onClick={handleVerifyGitcoin}
-                disabled={!isWalletConnected}
-              >
-                {gitcoinVerified ? "Verified" : "Verify Identity"}
-              </Button>
+              <div className="flex gap-2">
+                {needsRefresh && gitcoinVerified && (
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={handleRefreshGitcoin}
+                    disabled={!isWalletConnected}
+                  >
+                    <RefreshCw size={14} />
+                    Refresh
+                  </Button>
+                )}
+                <Button 
+                  size="sm" 
+                  variant={gitcoinVerified ? "outline" : "default"}
+                  onClick={handleVerifyGitcoin}
+                  disabled={!isWalletConnected}
+                >
+                  {gitcoinVerified ? "Verified" : "Verify Identity"}
+                </Button>
+              </div>
             </div>
           </div>
+
+          {needsRefresh && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Your Gitcoin Passport score may be outdated. Please refresh to ensure accurate scoring for your reviews.
+              </AlertDescription>
+            </Alert>
+          )}
 
           {!isWalletConnected && (
             <Alert>
@@ -279,13 +342,16 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
             </div>
 
             <div className="space-y-2">
-              <Label>Supporting Documents (Optional)</Label>
+              <Label>Supporting Documents (Required for Blockchain Submission)</Label>
               <FileUpload
                 selectedFiles={files}
                 setSelectedFiles={setFiles}
                 fileError={fileError}
                 setFileError={setFileError}
               />
+              <p className="text-xs text-muted-foreground">
+                Upload proof documents to support your review. This will be stored on IPFS and linked to your blockchain transaction.
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -294,17 +360,40 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
           <Button
             type="submit"
             size="lg"
-            disabled={!isFormValid || isSubmitting}
+            disabled={!isFormValid || isSubmitting || isTransacting}
             className="w-full sm:w-auto min-w-48"
           >
-            {isSubmitting ? 'Submitting Review...' : 'Submit Review'}
+            {isSubmitting || isTransacting ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                {isTransacting ? 'Confirming Transaction...' : 'Submitting Review...'}
+              </>
+            ) : (
+              'Submit Review to Blockchain'
+            )}
           </Button>
+          
           {!isFormValid && (
             <p className="text-sm text-muted-foreground text-center">
               Complete all requirements above to submit your review
             </p>
           )}
+          
+          {isFormValid && files.length === 0 && (
+            <p className="text-sm text-orange-600 text-center">
+              Please upload at least one proof document for blockchain submission
+            </p>
+          )}
         </div>
+        
+        {isTransacting && (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Please confirm the transaction in your MetaMask wallet. A small POL fee will be required for the Polygon Amoy network.
+            </AlertDescription>
+          </Alert>
+        )}
       </form>
     </div>
   );

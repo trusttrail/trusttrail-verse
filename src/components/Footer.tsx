@@ -1,5 +1,71 @@
-import React from 'react';
-import { Twitter, Shield, MessageSquare, ExternalLink, CheckCircle } from "lucide-react";
+
+import React, { useState } from 'react';
+import { Twitter, Shield, MessageSquare, ExternalLink, CheckCircle, Mail, Send } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+
+const ContactModal = () => {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <button className="text-foreground/70 hover:text-foreground transition-colors">
+          Contact Us
+        </button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Mail size={20} />
+            Contact TrustTrail
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <p className="text-muted-foreground">
+            Get in touch with our team through your preferred platform:
+          </p>
+          <div className="grid grid-cols-1 gap-3">
+            <Button
+              asChild
+              variant="outline"
+              className="justify-start gap-3 h-12"
+            >
+              <a
+                href="https://x.com/trusttrail69"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className="font-black text-lg">X</span>
+                <div className="text-left">
+                  <div className="font-medium">Twitter DM</div>
+                  <div className="text-sm text-muted-foreground">@trusttrail69</div>
+                </div>
+                <ExternalLink size={16} className="ml-auto" />
+              </a>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="justify-start gap-3 h-12"
+            >
+              <a
+                href="https://t.me/TrustTrail69"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Send size={18} />
+                <div className="text-left">
+                  <div className="font-medium">Telegram Group</div>
+                  <div className="text-sm text-muted-foreground">@TrustTrail69</div>
+                </div>
+                <ExternalLink size={16} className="ml-auto" />
+              </a>
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -31,10 +97,12 @@ const Footer = () => {
                 <span className="font-black text-lg text-foreground/80">X</span>
               </a>
               <a 
-                href="#" 
+                href="https://t.me/TrustTrail69" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center transition-colors hover:bg-trustpurple-500/20"
               >
-                <MessageSquare size={20} className="text-foreground/70" />
+                <Send size={20} className="text-foreground/70" />
               </a>
             </div>
           </div>
@@ -81,8 +149,9 @@ const Footer = () => {
           </div>
           
           <div>
-            <h3 className="text-lg font-bold mb-4">Legal</h3>
+            <h3 className="text-lg font-bold mb-4">Support</h3>
             <ul className="space-y-2">
+              <li><ContactModal /></li>
               <li><a href="#" className="text-foreground/70 hover:text-foreground transition-colors">Privacy Policy</a></li>
               <li><a href="#" className="text-foreground/70 hover:text-foreground transition-colors">Terms of Service</a></li>
               <li><a href="#" className="text-foreground/70 hover:text-foreground transition-colors">Cookie Policy</a></li>

@@ -111,7 +111,7 @@ const DemoActivityInjector: React.FC = () => {
         console.log('Pushing demo reward notification...');
         pushNotification({
           type: "reward",
-          message: `You earned ${amount} $TRAIL tokens 💰`,
+          message: `You earned ${amount} $NOCAP tokens 💰`,
           wallet
         });
       }, 60000); // 60 seconds

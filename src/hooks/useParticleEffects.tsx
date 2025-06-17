@@ -14,118 +14,138 @@ export const useParticleEffects = (theme: string) => {
     
     window.addEventListener('mousemove', handleMouseMove);
     
-    // Create a galaxy star particle
-    const createStar = () => {
+    // Create Coldplay Coloratura-inspired stellar particles
+    const createStellarParticle = () => {
       const particlesContainer = particlesContainerRef.current;
       if (!particlesContainer) return;
       
-      const star = document.createElement('div');
-      star.classList.add('star');
+      const particle = document.createElement('div');
+      particle.classList.add('stellar-particle');
       
-      // Random position with bias towards mouse position
-      const mouseInfluence = 0.2; // Reduced mouse influence for more natural galaxy look
+      // Random position with subtle mouse influence
+      const mouseInfluence = 0.15;
       const randomX = Math.random() * window.innerWidth;
       const randomY = Math.random() * window.innerHeight;
       
       const x = randomX * (1 - mouseInfluence) + mousePosition.current.x * mouseInfluence;
       const y = randomY * (1 - mouseInfluence) + mousePosition.current.y * mouseInfluence;
       
-      // Enhanced star properties
-      const size = Math.random() * 3 + 0.5; // Smaller stars for galaxy feel
-      const opacity = Math.random() * 0.8 + 0.2;
+      // Coloratura-inspired properties
+      const size = Math.random() * 4 + 1;
+      const opacity = Math.random() * 0.9 + 0.3;
       
-      // Color palette for stars
-      const colors = theme === 'dark' 
-        ? ['#ffffff', '#fffaea', '#e0f8ff', '#e0e8ff', '#f5e0ff'] 
-        : ['#ffffff', '#fffaea', '#e0f8ff', '#7b58f6', '#2c9fff'];
+      // Cosmic color palette inspired by Coldplay's video
+      const darkColors = [
+        '#ffffff', '#e0f8ff', '#c4b5fd', '#fbbf24', '#f59e0b', 
+        '#ec4899', '#8b5cf6', '#06b6d4', '#10b981', '#f97316'
+      ];
       
+      const lightColors = [
+        '#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981',
+        '#06b6d4', '#f97316', '#ef4444', '#84cc16', '#f43f5e'
+      ];
+      
+      const colors = theme === 'dark' ? darkColors : lightColors;
       const color = colors[Math.floor(Math.random() * colors.length)];
       
-      // Varied durations and delays
-      const duration = Math.random() * 30 + 15; // Longer animations for more drifting feel
-      const delay = Math.random() * 3; 
+      // Enhanced animation durations for cosmic feel
+      const duration = Math.random() * 40 + 20;
+      const delay = Math.random() * 5;
       
-      // Twinkle effect for some stars
-      const twinkle = Math.random() > 0.7;
-      const twinkleAnimation = twinkle ? 'twinkle 4s ease-in-out infinite' : '';
+      // Special effects for some particles
+      const isSpecial = Math.random() > 0.7;
+      const glowIntensity = isSpecial ? size * 3 : size;
       
-      // Glow effect based on size
-      const glow = size > 1.5 ? `0 0 ${size * 2}px ${color}` : '';
+      // Apply Coloratura-style animations
+      const animationType = Math.random();
+      let animation = `coloratura-float ${duration}s ease-in-out ${delay}s infinite`;
       
-      // Apply styles
-      star.style.cssText = `
+      if (animationType > 0.7) {
+        animation += `, stellar-twinkle ${Math.random() * 8 + 4}s ease-in-out infinite`;
+      } else if (animationType > 0.4 && theme === 'light') {
+        animation = `solar-flare ${duration * 0.8}s ease-in-out ${delay}s infinite`;
+      }
+      
+      // Enhanced glow effects
+      const boxShadow = isSpecial 
+        ? `0 0 ${glowIntensity}px ${color}, 0 0 ${glowIntensity * 2}px ${color}80, 0 0 ${glowIntensity * 3}px ${color}40`
+        : `0 0 ${glowIntensity}px ${color}`;
+      
+      particle.style.cssText = `
         position: absolute;
         left: ${x}px;
         top: ${y}px;
         width: ${size}px;
         height: ${size}px;
-        background-color: ${color};
+        background: radial-gradient(circle, ${color} 0%, ${color}80 70%, transparent 100%);
         opacity: ${opacity};
         border-radius: 50%;
         pointer-events: none;
         z-index: 0;
-        box-shadow: ${glow};
-        animation: float ${duration}s ease-in-out ${delay}s infinite${twinkle ? `, ${twinkleAnimation}` : ''};
+        box-shadow: ${boxShadow};
+        animation: ${animation};
         transform: translate(-50%, -50%);
       `;
       
-      particlesContainer.appendChild(star);
+      particlesContainer.appendChild(particle);
       
-      // Remove after animation
+      // Remove after animation completes
       setTimeout(() => {
-        if (star.parentNode === particlesContainer) {
-          particlesContainer.removeChild(star);
+        if (particle.parentNode === particlesContainer) {
+          particlesContainer.removeChild(particle);
         }
       }, (duration + delay) * 1000);
     };
     
-    // Create nebula effect
-    const createNebula = () => {
+    // Create cosmic nebula effects
+    const createCosmicNebula = () => {
       const particlesContainer = particlesContainerRef.current;
       if (!particlesContainer) return;
       
       const nebula = document.createElement('div');
-      nebula.classList.add('nebula');
+      nebula.classList.add('cosmic-nebula');
       
-      // Positioning
       const x = Math.random() * window.innerWidth;
       const y = Math.random() * window.innerHeight;
       
-      // Size and styling
-      const size = Math.random() * 150 + 100;
-      const opacity = Math.random() * 0.15 + 0.05; // Very subtle nebula
+      const size = Math.random() * 200 + 150;
+      const opacity = theme === 'dark' ? Math.random() * 0.2 + 0.1 : Math.random() * 0.15 + 0.05;
       
-      // Color palette for nebulae
-      const colors = theme === 'dark' 
-        ? ['#7b58f680', '#2c9fff80', '#ff9d9d80', '#ba7dff80'] 
-        : ['#7b58f640', '#2c9fff40', '#ff9d9d40', '#ba7dff40'];
+      // Cosmic nebula colors
+      const darkNebulaColors = [
+        '#7c3aed80', '#ec489980', '#f59e0b80', '#10b98180', '#06b6d480'
+      ];
       
-      const color = colors[Math.floor(Math.random() * colors.length)];
+      const lightNebulaColors = [
+        '#6366f160', '#ec489960', '#f59e0b60', '#10b98160', '#06b6d460'
+      ];
       
-      // Duration and movement
-      const duration = Math.random() * 60 + 30; // Slow moving nebulae
-      const delay = Math.random() * 5;
+      const nebulaColors = theme === 'dark' ? darkNebulaColors : lightNebulaColors;
+      const color = nebulaColors[Math.floor(Math.random() * nebulaColors.length)];
       
-      // Apply styles
+      const duration = Math.random() * 80 + 40;
+      const delay = Math.random() * 10;
+      
+      const blurAmount = Math.random() * 30 + 20;
+      
       nebula.style.cssText = `
         position: absolute;
         left: ${x}px;
         top: ${y}px;
         width: ${size}px;
         height: ${size}px;
-        background: radial-gradient(circle at center, ${color} 0%, transparent 70%);
+        background: radial-gradient(ellipse at center, ${color} 0%, ${color}60 40%, transparent 80%);
         opacity: ${opacity};
         border-radius: 50%;
         pointer-events: none;
         z-index: 0;
-        filter: blur(${Math.random() * 20 + 10}px);
-        animation: float-nebula ${duration}s ease-in-out ${delay}s infinite;
+        filter: blur(${blurAmount}px);
+        animation: ${theme === 'dark' ? 'nebula-pulse' : 'aurora-wave'} ${duration}s ease-in-out ${delay}s infinite;
         transform: translate(-50%, -50%);
       `;
       
       particlesContainer.appendChild(nebula);
       
-      // Remove after animation
       setTimeout(() => {
         if (nebula.parentNode === particlesContainer) {
           particlesContainer.removeChild(nebula);
@@ -133,54 +153,46 @@ export const useParticleEffects = (theme: string) => {
       }, (duration + delay) * 1000);
     };
     
-    // Create initial stars and nebulae
-    for (let i = 0; i < 60; i++) {
-      createStar();
+    // Initialize with more particles for richer effect
+    for (let i = 0; i < 80; i++) {
+      setTimeout(() => createStellarParticle(), i * 100);
     }
     
-    for (let i = 0; i < 8; i++) {
-      createNebula();
+    for (let i = 0; i < 12; i++) {
+      setTimeout(() => createCosmicNebula(), i * 500);
     }
     
-    // Continue creating stars and occasional nebulae
-    const starInterval = setInterval(() => {
-      createStar();
+    // Continuous particle generation
+    const stellarInterval = setInterval(() => {
+      createStellarParticle();
       
-      // Occasionally create a new nebula
-      if (Math.random() > 0.95) {
-        createNebula();
+      // Occasionally create nebula
+      if (Math.random() > 0.92) {
+        createCosmicNebula();
       }
-    }, 800);
+    }, 600);
     
-    // Handle scroll interactions for parallax effect
+    // Enhanced scroll parallax with cosmic drift
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const scrollDelta = currentScrollY - lastScrollY.current;
       
-      if (Math.abs(scrollDelta) > 10) {
-        // Create a few extra stars when scrolling
-        for (let i = 0; i < 2; i++) {
-          createStar();
+      if (Math.abs(scrollDelta) > 8) {
+        // Create burst of particles on significant scroll
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => createStellarParticle(), i * 200);
         }
         
-        // Parallax effect for existing stars and nebulae
-        const stars = document.querySelectorAll('.star');
-        const nebulae = document.querySelectorAll('.nebula');
-        
-        stars.forEach(star => {
-          const speed = Math.random() * 0.05 + 0.02;
-          // Cast to HTMLElement since Element doesn't have style property
-          const htmlStar = star as HTMLElement;
-          const currentY = parseFloat(htmlStar.style.top);
-          htmlStar.style.top = `${currentY - scrollDelta * speed}px`;
-        });
-        
-        nebulae.forEach(nebula => {
-          const speed = Math.random() * 0.02 + 0.01; // Slower parallax for nebulae
-          // Cast to HTMLElement since Element doesn't have style property
-          const htmlNebula = nebula as HTMLElement;
-          const currentY = parseFloat(htmlNebula.style.top);
-          htmlNebula.style.top = `${currentY - scrollDelta * speed}px`;
+        // Apply cosmic drift to existing particles
+        const particles = document.querySelectorAll('.stellar-particle, .cosmic-nebula');
+        particles.forEach((particle, index) => {
+          const htmlParticle = particle as HTMLElement;
+          const speed = (Math.random() * 0.08 + 0.02) * (index % 2 === 0 ? 1 : -1);
+          const currentY = parseFloat(htmlParticle.style.top);
+          htmlParticle.style.top = `${currentY - scrollDelta * speed}px`;
+          
+          // Add cosmic drift animation
+          htmlParticle.style.animation += `, cosmic-drift ${Math.random() * 20 + 10}s ease-in-out infinite`;
         });
       }
       
@@ -189,11 +201,10 @@ export const useParticleEffects = (theme: string) => {
     
     window.addEventListener('scroll', handleScroll);
     
-    // Clean up event listeners
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('scroll', handleScroll);
-      clearInterval(starInterval);
+      clearInterval(stellarInterval);
     };
   }, [theme]);
 
