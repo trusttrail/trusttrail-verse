@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Coins, Trophy, FileText, Star, Calendar, ArrowUpRight } from "lucide-react";
+import { Coins, Trophy, FileText, Star, Calendar, ArrowUpRight, XCircle } from "lucide-react";
 import { useAuth } from '@/hooks/useAuth';
 import { useWeb3 } from '@/hooks/useWeb3';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,7 +24,7 @@ interface UserReview {
 interface UserStats {
   totalReviews: number;
   verifiedReviews: number;
-  pendingReviews: number;
+  rejectedReviews: number;
   totalRewards: number;
 }
 
@@ -36,7 +36,7 @@ const UserDashboard = () => {
   const [userStats, setUserStats] = useState<UserStats>({
     totalReviews: 0,
     verifiedReviews: 0,
-    pendingReviews: 0,
+    rejectedReviews: 0,
     totalRewards: 0
   });
   const [loading, setLoading] = useState(true);
@@ -74,7 +74,7 @@ const UserDashboard = () => {
         // Calculate stats from actual database data
         const totalReviews = reviews.length;
         const verifiedReviews = reviews.filter(r => r.status === 'approved').length;
-        const pendingReviews = reviews.filter(r => r.status === 'pending').length;
+        const rejectedReviews = reviews.filter(r => r.status === 'rejected').length;
         
         // Calculate rewards: 10 $TRUST per verified review
         const totalRewards = verifiedReviews * 10;
@@ -82,7 +82,7 @@ const UserDashboard = () => {
         setUserStats({
           totalReviews,
           verifiedReviews,
-          pendingReviews,
+          rejectedReviews,
           totalRewards
         });
       }
@@ -165,7 +165,7 @@ const UserDashboard = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Verified Reviews</p>
+                <p className="text-sm font-medium text-muted-foreground">Approved Reviews</p>
                 <p className="text-2xl font-bold">{userStats.verifiedReviews}</p>
               </div>
               <div className="bg-green-100 dark:bg-green-900/20 p-2 rounded-full">
@@ -179,11 +179,11 @@ const UserDashboard = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Pending Reviews</p>
-                <p className="text-2xl font-bold">{userStats.pendingReviews}</p>
+                <p className="text-sm font-medium text-muted-foreground">Rejected Reviews</p>
+                <p className="text-2xl font-bold">{userStats.rejectedReviews}</p>
               </div>
-              <div className="bg-yellow-100 dark:bg-yellow-900/20 p-2 rounded-full">
-                <Calendar className="text-yellow-600 dark:text-yellow-400" size={16} />
+              <div className="bg-red-100 dark:bg-red-900/20 p-2 rounded-full">
+                <XCircle className="text-red-600 dark:text-red-400" size={16} />
               </div>
             </div>
           </CardContent>
@@ -266,6 +266,13 @@ const UserDashboard = () => {
                     <div className="flex items-center gap-1 text-sm text-green-600">
                       <Coins className="h-4 w-4" />
                       <span>Reward earned: 10 $TRUST</span>
+                    </div>
+                  )}
+                  
+                  {review.status === 'rejected' && (
+                    <div className="flex items-center gap-1 text-sm text-red-600">
+                      <XCircle className="h-4 w-4" />
+                      <span>Review did not meet quality standards</span>
                     </div>
                   )}
                 </div>

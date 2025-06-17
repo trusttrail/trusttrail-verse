@@ -46,19 +46,32 @@ export const useFormSubmission = ({
     setIsSubmitting(true);
 
     try {
-      console.log('🚀 Starting INSTANT review submission process...');
+      console.log('🚀 Starting comprehensive review submission process...');
       
-      // Show instant AI screening toast
+      // Show AI screening progress toast
       toast({
-        title: "⚡ Instant AI Screening",
-        description: "Ultra-fast AI analysis in progress... Decision in under 1 second!",
+        title: "🤖 AI Screening in Progress",
+        description: "Comprehensive AI analysis starting... This will take 60 seconds for thorough review.",
+        duration: 5000,
       });
+      
+      // Show 30-second progress update
+      const progressTimer = setTimeout(() => {
+        toast({
+          title: "⏳ AI Analysis Halfway",
+          description: "30 seconds remaining... AI is thoroughly analyzing your review content.",
+          duration: 5000,
+        });
+      }, 30000);
       
       const aiStartTime = Date.now();
       
-      // Submit to database with INSTANT AI screening (immediate approval/rejection)
-      console.log('💾 Submitting to database with INSTANT AI screening...');
+      // Submit to database with comprehensive AI screening (60-second minimum)
+      console.log('💾 Submitting to database with comprehensive AI screening...');
       const dbResult = await submitReviewToDatabase(formData, walletAddress);
+      
+      // Clear the progress timer
+      clearTimeout(progressTimer);
       
       const aiEndTime = Date.now();
       const aiProcessingTime = aiEndTime - aiStartTime;
@@ -72,21 +85,21 @@ export const useFormSubmission = ({
         return;
       }
 
-      console.log('✅ Database submission successful with instant decision:', dbResult);
+      console.log('✅ Database submission successful with AI decision:', dbResult);
       
-      // Show INSTANT AI screening results
+      // Show comprehensive AI screening results
       if (dbResult.aiScreeningResult?.approved) {
         toast({
-          title: "🎉 INSTANTLY APPROVED!",
-          description: `⚡ AI decision made in ${Math.round(aiProcessingTime/1000)}s! Confidence: ${dbResult.aiScreeningResult.confidence}%. Your review is now LIVE!`,
+          title: "🎉 Review APPROVED!",
+          description: `✅ AI analysis completed in ${Math.round(aiProcessingTime/1000)}s. Confidence: ${dbResult.aiScreeningResult.confidence}%. Your review is now LIVE!`,
           duration: 6000,
         });
       } else {
         toast({
-          title: "❌ Instantly Rejected",
-          description: `⚡ AI decision made in ${Math.round(aiProcessingTime/1000)}s. Reason: ${dbResult.aiScreeningResult?.reasoning || 'Content did not meet quality standards'}`,
+          title: "❌ Review Rejected",
+          description: `🔍 AI analysis completed in ${Math.round(aiProcessingTime/1000)}s. Reason: ${dbResult.aiScreeningResult?.reasoning || 'Content did not meet quality standards'}`,
           variant: "destructive",
-          duration: 6000,
+          duration: 8000,
         });
       }
 

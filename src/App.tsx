@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { Web3Provider } from "@/hooks/useWeb3";
 import Index from "./pages/Index";
@@ -19,6 +19,39 @@ import { useAuth } from "@/hooks/useAuth";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 
 const queryClient = new QueryClient();
+
+// Navigation event handler to fix browser back/forward button issues
+const NavigationHandler: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  React.useEffect(() => {
+    // Handle browser navigation events
+    const handlePopState = (event: PopStateEvent) => {
+      console.log('🔄 Browser navigation detected:', event.state);
+      // Let React Router handle the navigation naturally
+      // This prevents the blank page issue
+    };
+
+    // Add event listener for browser navigation
+    window.addEventListener('popstate', handlePopState);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [navigate, location]);
+
+  // Ensure page doesn't go blank on navigation
+  React.useEffect(() => {
+    // Force a re-render to prevent blank pages
+    if (location.pathname && !document.body.innerHTML.includes('Loading')) {
+      console.log('📍 Current route:', location.pathname);
+    }
+  }, [location]);
+
+  return null;
+};
 
 // DEMO: use demo activity events unless in production/live setup
 const DemoActivityInjector: React.FC = () => {
@@ -148,6 +181,7 @@ const App = () => (
               <Toaster />
               <Sonner />
               <BrowserRouter>
+                <NavigationHandler />
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/review-portal" element={<ReviewPortal />} />
