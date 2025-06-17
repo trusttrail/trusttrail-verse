@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Shield, ExternalLink, Award, TrendingUp, Star, Coins, BarChart3, Trophy } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
+import { useGitcoinPassport } from '@/hooks/useGitcoinPassport';
+import { useWalletConnection } from '@/hooks/useWalletConnection';
 
 interface PassportTabProps {
   isWalletConnected: boolean;
@@ -14,28 +16,48 @@ interface PassportTabProps {
 
 const PassportTab = ({ isWalletConnected, connectWallet }: PassportTabProps) => {
   const { toast } = useToast();
-  const [passportScore, setPassportScore] = useState(0);
-  const [isVerified, setIsVerified] = useState(false);
-  const [userStats]= useState({
+  const { walletAddress } = useWalletConnection();
+  const { passportData, isVerified, passportScore, verifyPassport } = useGitcoinPassport();
+  
+  const [userStats] = useState({
     reviewsGiven: 12,
     topUpvotedReview: "Amazing DeFi experience with QuickSwap",
     nocapEarned: 245.78,
     reputationScore: 8.5
   });
 
-  const handleVerifyPassport = () => {
-    window.open('https://app.passport.xyz/#/', '_blank');
-    
-    // Simulate score capture after verification
-    setTimeout(() => {
-      const simulatedScore = Math.floor(Math.random() * 50) + 50; // Score between 50-100
-      setPassportScore(simulatedScore);
-      setIsVerified(true);
+  const handleVerifyPassport = async () => {
+    if (!walletAddress) {
       toast({
-        title: "Gitcoin Passport Verified!",
-        description: `Your passport score of ${simulatedScore} has been captured.`,
+        title: "Wallet Required",
+        description: "Please connect your wallet first before verifying your passport.",
+        variant: "destructive",
       });
-    }, 5000);
+      return;
+    }
+
+    const success = await verifyPassport(walletAddress);
+    
+    if (success) {
+      toast({
+        title: "Passport Verification Started",
+        description: "Please complete verification in the opened window. Your score will be captured automatically.",
+      });
+      
+      // Show success toast after verification completes
+      setTimeout(() => {
+        toast({
+          title: "Gitcoin Passport Verified!",
+          description: `Your passport has been verified and will remain linked to your account.`,
+        });
+      }, 5500);
+    } else {
+      toast({
+        title: "Verification Failed",
+        description: "Failed to start passport verification. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (!isWalletConnected) {
@@ -81,8 +103,16 @@ const PassportTab = ({ isWalletConnected, connectWallet }: PassportTabProps) => 
               <div>
                 <p className="font-medium">Passport Status</p>
                 <p className="text-sm text-muted-foreground">
-                  {isVerified ? `Verified with score: ${passportScore}` : 'Not verified'}
+                  {isVerified 
+                    ? `Verified with score: ${passportScore} (Permanently linked to your account)` 
+                    : 'Not verified - Verification will be remembered for your account'
+                  }
                 </p>
+                {passportData && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Last verified: {new Date(passportData.timestamp).toLocaleDateString()}
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -96,7 +126,7 @@ const PassportTab = ({ isWalletConnected, connectWallet }: PassportTabProps) => 
                 variant={isVerified ? "outline" : "default"}
                 className="flex items-center gap-2"
               >
-                {isVerified ? "Re-verify" : "Verify Identity"}
+                {isVerified ? "Update Score" : "Verify Identity"}
                 <ExternalLink size={16} />
               </Button>
             </div>
@@ -110,7 +140,7 @@ const PassportTab = ({ isWalletConnected, connectWallet }: PassportTabProps) => 
               </div>
               <Progress value={passportScore} className="h-2" />
               <p className="text-xs text-muted-foreground">
-                Higher scores indicate stronger identity verification
+                Higher scores indicate stronger identity verification. Your score is permanently linked to your account.
               </p>
             </div>
           )}

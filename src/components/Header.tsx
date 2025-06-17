@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Moon, Sun, Menu, X, CheckCircle, Home } from "lucide-react";
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/hooks/useAuth';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useWalletConnection } from '@/hooks/useWalletConnection';
 import NetworkSelector from '@/components/review/NetworkSelector';
 import WalletConnect from '@/components/review/WalletConnect';
@@ -24,6 +24,7 @@ const Header = () => {
     isWalletConnecting
   } = useWalletConnection();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
@@ -47,9 +48,22 @@ const Header = () => {
   };
 
   const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+    // If we're not on the home page, navigate there first
+    if (location.pathname !== '/') {
+      navigate('/');
+      // Wait for navigation to complete, then scroll
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    } else {
+      // We're already on home page, just scroll
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
     }
     setIsMobileMenuOpen(false);
   };
@@ -67,7 +81,7 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-4">
+          <nav className="hidden md:flex items-center space-x-3">
             <Button variant="ghost" size="sm" onClick={handleHome} className="flex items-center gap-2">
               <Home size={16} />
               Home
@@ -106,7 +120,7 @@ const Header = () => {
             />
             
             {isAuthenticated && (
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
                 <span className="text-sm text-muted-foreground hidden lg:block">
                   Welcome, {user?.email?.split('@')[0]}
                 </span>

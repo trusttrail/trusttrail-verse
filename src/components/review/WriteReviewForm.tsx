@@ -8,12 +8,13 @@ import { Label } from "@/components/ui/label";
 import { AlertCircle, Shield, CheckCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import StarRating from "./StarRating";
-import CategorySelector from "./CategorySelector";
+import CategorySelector from "./Category Selector";
 import CompanySelector from "./CompanySelector";
 import FileUpload from "./FileUpload";
-import WalletConnect from "./WalletConnect";
 import { useAuth } from '@/hooks/useAuth';
 import { useWalletConnection } from '@/hooks/useWalletConnection';
+import { useGitcoinPassport } from '@/hooks/useGitcoinPassport';
+import { useReviewForm } from '@/hooks/useReviewForm';
 import { useToast } from '@/hooks/use-toast';
 
 interface WriteReviewFormProps {
@@ -24,67 +25,51 @@ interface WriteReviewFormProps {
 
 const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: WriteReviewFormProps) => {
   const { isAuthenticated } = useAuth();
-  const { needsSignup, existingUser } = useWalletConnection();
+  const { needsSignup, existingUser, walletAddress } = useWalletConnection();
+  const { isVerified: gitcoinVerified, passportScore, verifyPassport } = useGitcoinPassport();
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    company: '',
-    category: '',
-    title: '',
-    content: '',
-    rating: 0,
-    proofFiles: [] as File[],
-  });
+  
+  const {
+    formData,
+    files,
+    setFiles,
+    fileError,
+    setFileError,
+    openCompanySelect,
+    setOpenCompanySelect,
+    filteredCompanies,
+    handleInputChange,
+    handleRatingChange,
+    handleCategoryChange,
+    handleCompanyChange,
+    handleCompanySearch,
+    handleCompanySelect,
+    resetForm,
+  } = useReviewForm();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [gitcoinVerified, setGitcoinVerified] = useState(false);
-
-  // Mock companies for CompanySelector
-  const mockCompanies = [
-    { id: 1, name: "QuickSwap", category: "DeFi" },
-    { id: 2, name: "OpenSea", category: "NFT" },
-    { id: 3, name: "Uniswap", category: "DeFi" },
-    { id: 4, name: "Axie Infinity", category: "Gaming" },
-    { id: 5, name: "Binance", category: "Exchange" },
-  ];
-
-  const [filteredCompanies, setFilteredCompanies] = useState(mockCompanies);
-  const [openCompanySelect, setOpenCompanySelect] = useState(false);
-
-  const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleCompanySearch = (value: string) => {
-    const filtered = mockCompanies.filter(company =>
-      company.name.toLowerCase().includes(value.toLowerCase())
-    );
-    setFilteredCompanies(filtered);
-  };
-
-  const handleCompanySelect = (company: { id: number; name: string; category: string }) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      company: company.name,
-      category: company.category 
-    }));
-  };
 
   const handleVerifyGitcoin = async () => {
-    try {
-      // Redirect to Gitcoin Passport
-      window.open('https://app.passport.xyz/#/', '_blank');
-      
-      // For demo purposes, simulate verification after a delay
-      setTimeout(() => {
-        setGitcoinVerified(true);
-        toast({
-          title: "Gitcoin Passport Verified",
-          description: "Your identity has been verified with Gitcoin Passport.",
-        });
-      }, 3000);
-    } catch (error) {
+    if (!walletAddress) {
+      toast({
+        title: "Wallet Required",
+        description: "Please connect your wallet first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const success = await verifyPassport(walletAddress);
+    
+    if (success) {
+      toast({
+        title: "Verification Started",
+        description: "Complete verification in the opened window.",
+      });
+    } else {
       toast({
         title: "Verification Failed",
-        description: "Failed to verify with Gitcoin Passport. Please try again.",
+        description: "Failed to start verification. Please try again.",
         variant: "destructive",
       });
     }
@@ -93,15 +78,6 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication Required",
-        description: "Please connect your wallet to submit a review.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (!isWalletConnected) {
       toast({
         title: "Wallet Required",
@@ -132,15 +108,7 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
       });
 
       // Reset form
-      setFormData({
-        company: '',
-        category: '',
-        title: '',
-        content: '',
-        rating: 0,
-        proofFiles: [],
-      });
-      setGitcoinVerified(false);
+      resetForm();
       
     } catch (error) {
       toast({
@@ -175,8 +143,8 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
   
   // For form validation, consider existing users as authenticated since they're auto-signing in
   const isEffectivelyAuthenticated = isAuthenticated || (isWalletConnected && existingUser);
-  const isFormValid = formData.company && formData.category && formData.title && 
-                     formData.content && formData.rating > 0 && 
+  const isFormValid = formData.companyName && formData.category && formData.title && 
+                     formData.review && formData.rating > 0 && 
                      isEffectivelyAuthenticated && isWalletConnected && gitcoinVerified;
 
   return (
@@ -217,6 +185,11 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Gitcoin Passport</span>
                 {gitcoinVerified && <CheckCircle className="text-emerald-500" size={16} />}
+                {gitcoinVerified && passportScore > 0 && (
+                  <Badge variant="secondary" className="ml-2 text-xs">
+                    Score: {passportScore}
+                  </Badge>
+                )}
               </div>
               <Button 
                 size="sm" 
@@ -229,16 +202,11 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
             </div>
           </div>
 
-          {(!isEffectivelyAuthenticated || !isWalletConnected) && (
+          {!isWalletConnected && (
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                {!isWalletConnected 
-                  ? "Please connect your wallet to start writing your review."
-                  : !isEffectivelyAuthenticated && needsSignup
-                    ? "Please create an account to link your wallet and start writing reviews."
-                    : "Please connect your wallet to write your review."
-                }
+                Connect your wallet to start writing your review.
               </AlertDescription>
             </Alert>
           )}
@@ -256,9 +224,9 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
               <div className="space-y-2">
                 <Label htmlFor="company">Company/Project *</Label>
                 <CompanySelector
-                  companyName={formData.company}
-                  setCompanyName={(name) => handleInputChange('company', name)}
-                  setCategory={(category) => handleInputChange('category', category)}
+                  companyName={formData.companyName}
+                  setCompanyName={handleCompanyChange}
+                  setCategory={handleCategoryChange}
                   openCompanySelect={openCompanySelect}
                   setOpenCompanySelect={setOpenCompanySelect}
                   filteredCompanies={filteredCompanies}
@@ -271,7 +239,7 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
                 <Label htmlFor="category">Category *</Label>
                 <CategorySelector
                   category={formData.category}
-                  setCategory={(category) => handleInputChange('category', category)}
+                  setCategory={handleCategoryChange}
                   categories={categories.map(cat => ({ id: cat.id, name: cat.name }))}
                 />
               </div>
@@ -281,9 +249,10 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
               <Label htmlFor="title">Review Title *</Label>
               <Input
                 id="title"
+                name="title"
                 placeholder="Summarize your experience in a few words"
                 value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
+                onChange={handleInputChange}
                 className="text-sm sm:text-base"
               />
             </div>
@@ -292,17 +261,18 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
               <Label htmlFor="rating">Rating *</Label>
               <StarRating
                 rating={formData.rating}
-                setRating={(rating) => handleInputChange('rating', rating)}
+                setRating={handleRatingChange}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="content">Review Content *</Label>
               <Textarea
-                id="content"
+                id="review"
+                name="review"
                 placeholder="Share your detailed experience, what went well, what could be improved..."
-                value={formData.content}
-                onChange={(e) => handleInputChange('content', e.target.value)}
+                value={formData.review}
+                onChange={handleInputChange}
                 className="min-h-[120px] text-sm sm:text-base"
               />
             </div>
@@ -310,10 +280,10 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
             <div className="space-y-2">
               <Label>Supporting Documents (Optional)</Label>
               <FileUpload
-                selectedFiles={formData.proofFiles}
-                setSelectedFiles={(files) => handleInputChange('proofFiles', files)}
-                fileError={null}
-                setFileError={() => {}}
+                selectedFiles={files}
+                setSelectedFiles={setFiles}
+                fileError={fileError}
+                setFileError={setFileError}
               />
             </div>
           </CardContent>

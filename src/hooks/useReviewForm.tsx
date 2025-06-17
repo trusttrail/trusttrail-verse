@@ -1,4 +1,6 @@
+
 import { useState } from 'react';
+import { sampleCompanies, categories } from '@/data/companyData';
 
 export interface ReviewFormData {
   companyName: string;
@@ -25,29 +27,17 @@ export const useReviewForm = () => {
   const [fileError, setFileError] = useState<string | null>(null);
   const [openCompanySelect, setOpenCompanySelect] = useState(false);
 
-  // Stub for large company list (simulate 500+ companies)
-  const mockCompanies = [
-    { id: 1, name: "QuickSwap", category: "DeFi" },
-    { id: 2, name: "OpenSea", category: "NFT" },
-    { id: 3, name: "Uniswap", category: "DeFi" },
-    { id: 4, name: "Axie Infinity", category: "Gaming" },
-    { id: 5, name: "Binance", category: "Exchange" },
-    { id: 6, name: "Coinbase", category: "Exchange" },
-    { id: 7, name: "Polygon Labs", category: "Infrastructure" },
-    { id: 8, name: "Ethereum Foundation", category: "Infrastructure" },
-    { id: 9, name: "Coursera", category: "Education" },
-    { id: 10, name: "Udemy", category: "Education" },
-    { id: 11, name: "Chainlink", category: "Security" },
-    { id: 12, name: "CertiK", category: "Security" },
-    { id: 500, name: "Google", category: "Infrastructure" }
-  ];
+  // Use the comprehensive company list from our database
+  const mockCompanies = sampleCompanies.map(company => ({
+    id: company.id,
+    name: company.name,
+    category: company.category
+  }));
 
-  const mockCategories = [
-    { id: "defi", name: "DeFi" },
-    { id: "nft", name: "NFT Marketplaces" },
-    { id: "gaming", name: "Gaming" },
-    { id: "dao", name: "DAOs" }
-  ];
+  const mockCategories = categories.map(cat => ({
+    id: cat.id,
+    name: cat.name
+  }));
 
   const [filteredCompanies, setFilteredCompanies] = useState(mockCompanies);
 
@@ -81,9 +71,16 @@ export const useReviewForm = () => {
   };
 
   const handleCompanySearch = (value: string) => {
+    if (!value.trim()) {
+      setFilteredCompanies(mockCompanies.slice(0, 50)); // Show first 50 companies when no search
+      return;
+    }
+
     const filtered = mockCompanies.filter(company =>
-      company.name.toLowerCase().includes(value.toLowerCase())
-    );
+      company.name.toLowerCase().includes(value.toLowerCase()) ||
+      company.category.toLowerCase().includes(value.toLowerCase())
+    ).slice(0, 100); // Limit to 100 results for performance
+    
     setFilteredCompanies(filtered);
   };
 
