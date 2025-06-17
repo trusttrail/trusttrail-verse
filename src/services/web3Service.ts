@@ -120,6 +120,9 @@ export class Web3Service {
         ReviewPlatformABI,
         this.signer
       );
+      
+      console.log('🔗 Review contract initialized:', networkConfig.reviewPlatform);
+      console.log('📋 Contract ABI functions:', ReviewPlatformABI.filter(item => item.type === 'function').map(f => f.name));
     }
 
     if (networkConfig.rewardToken !== '0x0000000000000000000000000000000000000000') {
@@ -166,6 +169,18 @@ export class Web3Service {
         throw new Error(`Please switch to Polygon Amoy testnet (Chain ID: ${networkConfig.chainId})`);
       }
 
+      // Validate rating is uint8 (0-255, but we want 1-5)
+      const rating = Math.max(1, Math.min(5, Math.floor(reviewData.rating)));
+      
+      console.log('📋 Contract functions available:', Object.keys(this.reviewContract.interface.functions));
+      console.log('📊 Submitting with parameters:', {
+        companyName: reviewData.companyName,
+        category: reviewData.category,
+        ipfsHash: reviewData.ipfsHash,
+        proofIpfsHash: reviewData.proofIpfsHash,
+        rating: rating
+      });
+
       // Estimate gas first
       console.log('⛽ Estimating gas for review submission...');
       
@@ -175,11 +190,17 @@ export class Web3Service {
           reviewData.category,
           reviewData.ipfsHash,
           reviewData.proofIpfsHash,
-          reviewData.rating
+          rating
         );
         console.log('⛽ Gas estimate:', gasEstimate.toString());
       } catch (gasError: any) {
         console.error('❌ Gas estimation failed:', gasError);
+        console.error('❌ Gas error details:', {
+          reason: gasError.reason,
+          code: gasError.code,
+          method: gasError.method,
+          transaction: gasError.transaction
+        });
         
         // Check if it's a contract execution error
         if (gasError.reason) {
@@ -199,7 +220,7 @@ export class Web3Service {
         reviewData.category,
         reviewData.ipfsHash,
         reviewData.proofIpfsHash,
-        reviewData.rating,
+        rating,
         {
           gasLimit: 300000, // Set a reasonable gas limit
         }
@@ -216,12 +237,20 @@ export class Web3Service {
 
     } catch (error: any) {
       console.error('❌ Review submission failed:', error);
+      console.error('❌ Error details:', {
+        code: error.code,
+        method: error.method,
+        reason: error.reason,
+        info: error.info
+      });
       
       // Enhanced error handling
       if (error.code === 4001) {
         throw new Error('Transaction rejected by user');
       } else if (error.code === -32603) {
         throw new Error('Internal JSON-RPC error. Please try again.');
+      } else if (error.code === 'UNSUPPORTED_OPERATION') {
+        throw new Error('Smart contract function not found. Please check contract deployment.');
       } else if (error.message?.includes('insufficient funds')) {
         throw new Error('Insufficient MATIC for transaction fee. Get test MATIC from Polygon faucet.');
       } else if (error.message?.includes('execution reverted')) {
