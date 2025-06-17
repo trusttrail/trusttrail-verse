@@ -4,10 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Shield, ExternalLink, Award, TrendingUp, Star, Coins, BarChart3, Trophy } from "lucide-react";
+import { Shield, ExternalLink, Award, TrendingUp, Star, Coins, BarChart3, Trophy, RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { useGitcoinPassport } from '@/hooks/useGitcoinPassport';
 import { useWalletConnection } from '@/hooks/useWalletConnection';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface PassportTabProps {
   isWalletConnected: boolean;
@@ -17,7 +18,15 @@ interface PassportTabProps {
 const PassportTab = ({ isWalletConnected, connectWallet }: PassportTabProps) => {
   const { toast } = useToast();
   const { walletAddress } = useWalletConnection();
-  const { passportData, isVerified, passportScore, verifyPassport } = useGitcoinPassport();
+  const { 
+    passportData, 
+    isVerified, 
+    passportScore, 
+    needsRefresh,
+    isVerifying,
+    verifyPassport, 
+    refreshPassportScore 
+  } = useGitcoinPassport();
   
   const [userStats] = useState({
     reviewsGiven: 12,
@@ -36,28 +45,20 @@ const PassportTab = ({ isWalletConnected, connectWallet }: PassportTabProps) => 
       return;
     }
 
-    const success = await verifyPassport(walletAddress);
-    
-    if (success) {
+    await verifyPassport(walletAddress);
+  };
+
+  const handleRefreshPassport = async () => {
+    if (!walletAddress) {
       toast({
-        title: "Passport Verification Started",
-        description: "Please complete verification in the opened window. Your score will be captured automatically.",
-      });
-      
-      // Show success toast after verification completes
-      setTimeout(() => {
-        toast({
-          title: "Gitcoin Passport Verified!",
-          description: `Your passport has been verified and will remain linked to your account.`,
-        });
-      }, 5500);
-    } else {
-      toast({
-        title: "Verification Failed",
-        description: "Failed to start passport verification. Please try again.",
+        title: "Wallet Required",
+        description: "Please connect your wallet first before refreshing your passport.",
         variant: "destructive",
       });
+      return;
     }
+
+    await refreshPassportScore(walletAddress);
   };
 
   if (!isWalletConnected) {
@@ -97,15 +98,25 @@ const PassportTab = ({ isWalletConnected, connectWallet }: PassportTabProps) => 
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Status Indicator */}
           <div className="flex items-center justify-between p-4 border rounded-lg">
             <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full ${isVerified ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <div className={`w-3 h-3 rounded-full ${
+                isVerifying ? 'bg-yellow-500 animate-pulse' : 
+                isVerified ? 'bg-green-500' : 'bg-gray-300'
+              }`} />
               <div>
-                <p className="font-medium">Passport Status</p>
+                <p className="font-medium flex items-center gap-2">
+                  Passport Status
+                  {isVerifying && <RefreshCw className="w-4 h-4 animate-spin" />}
+                  {isVerified && <CheckCircle className="w-4 h-4 text-green-500" />}
+                </p>
                 <p className="text-sm text-muted-foreground">
-                  {isVerified 
-                    ? `Verified with score: ${passportScore} (Permanently linked to your account)` 
-                    : 'Not verified - Verification will be remembered for your account'
+                  {isVerifying 
+                    ? 'Verifying your passport...' 
+                    : isVerified 
+                      ? `Verified with score: ${passportScore} (Permanently linked to your account)` 
+                      : 'Not verified - Complete verification to write reviews'
                   }
                 </p>
                 {passportData && (
@@ -121,17 +132,43 @@ const PassportTab = ({ isWalletConnected, connectWallet }: PassportTabProps) => 
                   Score: {passportScore}
                 </Badge>
               )}
-              <Button 
-                onClick={handleVerifyPassport}
-                variant={isVerified ? "outline" : "default"}
-                className="flex items-center gap-2"
-              >
-                {isVerified ? "Update Score" : "Verify Identity"}
-                <ExternalLink size={16} />
-              </Button>
+              {needsRefresh && (
+                <Badge variant="outline" className="text-orange-600 border-orange-300">
+                  Needs Refresh
+                </Badge>
+              )}
+              {isVerified ? (
+                <Button 
+                  onClick={handleRefreshPassport}
+                  variant="outline"
+                  disabled={isVerifying}
+                  className="flex items-center gap-2"
+                >
+                  {isVerifying ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <RefreshCw size={16} />
+                  )}
+                  {isVerifying ? 'Refreshing...' : 'Refresh Score'}
+                </Button>
+              ) : (
+                <Button 
+                  onClick={handleVerifyPassport}
+                  disabled={isVerifying}
+                  className="flex items-center gap-2"
+                >
+                  {isVerifying ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ExternalLink size={16} />
+                  )}
+                  {isVerifying ? 'Verifying...' : 'Verify Identity'}
+                </Button>
+              )}
             </div>
           </div>
           
+          {/* Progress Bar */}
           {isVerified && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
@@ -143,6 +180,40 @@ const PassportTab = ({ isWalletConnected, connectWallet }: PassportTabProps) => 
                 Higher scores indicate stronger identity verification. Your score is permanently linked to your account.
               </p>
             </div>
+          )}
+
+          {/* Instructions for verification */}
+          {!isVerified && !isVerifying && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>How to verify:</strong> Click "Verify Identity" to open Gitcoin Passport. 
+                Connect your wallet, complete the stamps verification process, and return here. 
+                Your score will be automatically detected and saved to your account.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Verification in progress */}
+          {isVerifying && (
+            <Alert>
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              <AlertDescription>
+                <strong>Verification in progress:</strong> Complete your verification in the Gitcoin Passport window. 
+                We'll automatically detect your score when ready. This may take a few minutes.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Refresh needed alert */}
+          {needsRefresh && isVerified && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Score Update Available:</strong> Your Gitcoin Passport score may be outdated. 
+                Click "Refresh Score" to get the latest verification status for accurate reward calculations.
+              </AlertDescription>
+            </Alert>
           )}
         </CardContent>
       </Card>

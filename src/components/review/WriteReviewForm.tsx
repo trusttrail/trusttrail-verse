@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,6 +32,7 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
     isVerified: gitcoinVerified, 
     passportScore, 
     needsRefresh,
+    isVerifying,
     verifyPassport, 
     refreshPassportScore 
   } = useGitcoinPassport();
@@ -70,20 +70,7 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
       return;
     }
 
-    const success = await verifyPassport(walletAddress);
-    
-    if (success) {
-      toast({
-        title: "Verification Started",
-        description: "Complete verification in the opened window.",
-      });
-    } else {
-      toast({
-        title: "Verification Failed",
-        description: "Failed to start verification. Please try again.",
-        variant: "destructive",
-      });
-    }
+    await verifyPassport(walletAddress);
   };
 
   const handleRefreshGitcoin = async () => {
@@ -221,7 +208,8 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
             <div className="flex items-center justify-between p-3 border rounded-lg">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Gitcoin Passport</span>
-                {gitcoinVerified && <CheckCircle className="text-emerald-500" size={16} />}
+                {isVerifying && <RefreshCw className="w-4 h-4 animate-spin text-yellow-500" />}
+                {gitcoinVerified && !isVerifying && <CheckCircle className="text-emerald-500" size={16} />}
                 {gitcoinVerified && passportScore > 0 && (
                   <Badge variant="secondary" className="ml-2 text-xs">
                     Score: {passportScore}
@@ -239,29 +227,50 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
                     size="sm" 
                     variant="outline"
                     onClick={handleRefreshGitcoin}
-                    disabled={!isWalletConnected}
+                    disabled={!isWalletConnected || isVerifying}
                   >
-                    <RefreshCw size={14} />
-                    Refresh
+                    <RefreshCw size={14} className={isVerifying ? 'animate-spin' : ''} />
+                    {isVerifying ? 'Refreshing...' : 'Refresh'}
                   </Button>
                 )}
                 <Button 
                   size="sm" 
                   variant={gitcoinVerified ? "outline" : "default"}
                   onClick={handleVerifyGitcoin}
-                  disabled={!isWalletConnected}
+                  disabled={!isWalletConnected || isVerifying}
                 >
-                  {gitcoinVerified ? "Verified" : "Verify Identity"}
+                  {isVerifying ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin mr-1" />
+                      Verifying...
+                    </>
+                  ) : gitcoinVerified ? (
+                    "Verified"
+                  ) : (
+                    "Verify Identity"
+                  )}
                 </Button>
               </div>
             </div>
           </div>
 
-          {needsRefresh && (
+          {/* Verification Status Alerts */}
+          {isVerifying && (
+            <Alert>
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              <AlertDescription>
+                <strong>Verification in progress:</strong> Complete your verification in the Gitcoin Passport window. 
+                We'll automatically detect your score when ready. This may take a few minutes.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {needsRefresh && gitcoinVerified && (
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Your Gitcoin Passport score may be outdated. Please refresh to ensure accurate scoring for your reviews.
+                <strong>Score Update Available:</strong> Your Gitcoin Passport score may be outdated. 
+                Please refresh to ensure accurate scoring for your reviews.
               </AlertDescription>
             </Alert>
           )}
@@ -271,6 +280,16 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 Connect your wallet to start writing your review.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isWalletConnected && !gitcoinVerified && !isVerifying && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Gitcoin Passport Required:</strong> Complete identity verification to submit reviews and earn rewards. 
+                Click "Verify Identity" to open Gitcoin Passport, connect your wallet, and complete the verification process.
               </AlertDescription>
             </Alert>
           )}
@@ -360,7 +379,7 @@ const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: Write
           <Button
             type="submit"
             size="lg"
-            disabled={!isFormValid || isSubmitting || isTransacting}
+            disabled={!isFormValid || isSubmitting || isTransacting || isVerifying}
             className="w-full sm:w-auto min-w-48"
           >
             {isSubmitting || isTransacting ? (
