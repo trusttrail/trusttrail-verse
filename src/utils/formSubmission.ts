@@ -33,12 +33,12 @@ export const submitReviewToDatabase = async (
       rating: Math.max(1, Math.min(5, formData.rating)),
       wallet_address: walletAddress,
       // If there's a successful transaction hash, automatically approve the review
-      status: txHash ? 'approved' : 'pending'
+      status: txHash ? 'approved' as const : 'pending' as const
     };
 
     const { data, error } = await supabase
       .from('reviews')
-      .insert([sanitizedData])
+      .insert(sanitizedData)
       .select()
       .single();
 

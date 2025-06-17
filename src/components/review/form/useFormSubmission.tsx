@@ -22,7 +22,9 @@ export const useFormSubmission = ({
   const { submitReviewTransaction, isTransacting } = useWeb3Transaction();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (formData: ReviewFormData) => {
+  const handleSubmit = async (e: React.FormEvent, formData: ReviewFormData) => {
+    e.preventDefault();
+    
     if (!isWalletConnected || !walletAddress) {
       toast({
         title: "Wallet Not Connected",
