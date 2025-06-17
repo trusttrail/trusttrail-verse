@@ -48,16 +48,16 @@ export const useFormSubmission = ({
     try {
       console.log('🚀 Starting review submission process...');
       
-      // Show AI screening toast with more detail
+      // Show fast AI screening toast
       toast({
-        title: "🤖 AI Screening Started",
-        description: "Analyzing your review for authenticity, quality, and compliance...",
+        title: "🤖 AI Screening in Progress",
+        description: "Fast AI analysis in progress... This should take less than 1 minute.",
       });
       
       const aiStartTime = Date.now();
       
-      // Submit to database with AI screening
-      console.log('💾 Submitting to database with AI screening...');
+      // Submit to database with fast AI screening (no more pending status)
+      console.log('💾 Submitting to database with fast AI screening...');
       const dbResult = await submitReviewToDatabase(formData, walletAddress);
       
       const aiEndTime = Date.now();
@@ -74,7 +74,7 @@ export const useFormSubmission = ({
 
       console.log('✅ Database submission successful:', dbResult);
       
-      // Show detailed AI screening results
+      // Show detailed AI screening results - now with immediate approval/rejection
       if (dbResult.aiScreeningResult?.approved) {
         toast({
           title: "🎉 Review Approved!",
@@ -83,29 +83,32 @@ export const useFormSubmission = ({
         });
       } else {
         toast({
-          title: "Review Submitted",
-          description: `AI screening completed in ${Math.round(aiProcessingTime/1000)}s. Review requires additional verification before approval.`,
+          title: "❌ Review Rejected",
+          description: `AI screening completed in ${Math.round(aiProcessingTime/1000)}s. Reason: ${dbResult.aiScreeningResult?.reasoning || 'Content did not meet quality standards'}`,
+          variant: "destructive",
           duration: 5000,
         });
       }
 
-      // Then try blockchain submission
-      console.log('🔗 Attempting blockchain submission...');
-      const txHash = await submitReviewTransaction(formData, walletAddress);
-      
-      if (txHash) {
-        console.log('✅ Blockchain transaction successful:', txHash);
+      // Only try blockchain submission if review was approved
+      if (dbResult.aiScreeningResult?.approved) {
+        console.log('🔗 Attempting blockchain submission...');
+        const txHash = await submitReviewTransaction(formData, walletAddress);
         
-        toast({
-          title: "💎 Blockchain Success!",
-          description: "Review also secured on blockchain! You've earned 10 $TRUST tokens.",
-          duration: 5000,
-        });
-      } else {
-        console.log('❌ Blockchain transaction failed, but database save succeeded');
+        if (txHash) {
+          console.log('✅ Blockchain transaction successful:', txHash);
+          
+          toast({
+            title: "💎 Blockchain Success!",
+            description: "Review also secured on blockchain! You've earned 10 $TRUST tokens.",
+            duration: 5000,
+          });
+        } else {
+          console.log('❌ Blockchain transaction failed, but database save succeeded');
+        }
       }
       
-      // Reset form after successful submission
+      // Reset form after successful submission (approved or rejected)
       resetForm();
       
     } catch (error) {

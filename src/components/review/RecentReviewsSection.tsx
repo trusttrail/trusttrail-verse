@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -92,16 +91,24 @@ const RecentReviewsSection = ({ reviews }: RecentReviewsSectionProps) => {
         
         console.log('📊 Review status breakdown:', statusBreakdown);
         
+        // Only show approved reviews
         const approvedReviews = allReviews.filter(r => r.status === 'approved');
         console.log('✅ Approved reviews to display:', approvedReviews.length);
         
         setDatabaseReviews(approvedReviews);
         
-        if (forceRefresh && approvedReviews.length > 0) {
-          toast({
-            title: "Reviews Updated",
-            description: `Found ${approvedReviews.length} approved reviews.`,
-          });
+        if (forceRefresh) {
+          if (approvedReviews.length > 0) {
+            toast({
+              title: "Reviews Updated",
+              description: `Found ${approvedReviews.length} approved reviews. ${statusBreakdown.pending || 0} pending, ${statusBreakdown.rejected || 0} rejected.`,
+            });
+          } else {
+            toast({
+              title: "No Approved Reviews",
+              description: `No approved reviews found. ${statusBreakdown.pending || 0} pending, ${statusBreakdown.rejected || 0} rejected.`,
+            });
+          }
         }
       }
     } catch (error) {

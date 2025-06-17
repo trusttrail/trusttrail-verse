@@ -26,8 +26,8 @@ export const submitReviewToDatabase = async (
       txHash
     });
 
-    // Run AI screening first
-    console.log('🤖 Running AI screening...');
+    // Run AI screening first - now faster and more decisive
+    console.log('🤖 Running fast AI screening...');
     const aiResult = await screenReviewWithAI({
       companyName: formData.companyName,
       category: formData.category,
@@ -36,7 +36,7 @@ export const submitReviewToDatabase = async (
       rating: formData.rating
     });
 
-    console.log('🤖 AI screening completed:', aiResult);
+    console.log('🤖 AI screening completed in', aiResult.processingTimeMs, 'ms:', aiResult);
 
     // Sanitize all input data
     const sanitizedData = {
@@ -46,12 +46,12 @@ export const submitReviewToDatabase = async (
       content: sanitizeInput(formData.review),
       rating: Math.max(1, Math.min(5, formData.rating)),
       wallet_address: walletAddress.toLowerCase(),
-      // Auto-approve if AI screening passed OR if there's a successful blockchain transaction
-      status: (aiResult.approved || txHash) ? 'approved' as const : 'pending' as const
+      // Auto-approve if AI screening passed OR if there's a blockchain transaction
+      status: (aiResult.approved || txHash) ? 'approved' as const : 'rejected' as const // No more pending status
     };
 
     console.log('📝 Prepared data for database:', sanitizedData);
-    console.log('✅ Review will be:', sanitizedData.status === 'approved' ? 'APPROVED' : 'PENDING');
+    console.log('✅ Review will be:', sanitizedData.status === 'approved' ? 'APPROVED' : 'REJECTED');
 
     const { data, error } = await supabase
       .from('reviews')
@@ -77,16 +77,16 @@ export const submitReviewToDatabase = async (
         };
       }
 
-      const approvedMessage = sanitizedData.status === 'approved' 
-        ? 'Review submitted and automatically approved! ✅ It will appear in Recent Reviews and your Dashboard.'
-        : 'Review submitted and is pending further review.';
+      const statusMessage = sanitizedData.status === 'approved' 
+        ? 'Review submitted and automatically approved! ✅ It will appear immediately in Recent Reviews and your Dashboard.'
+        : 'Review was rejected by AI screening. Please review the content and try again.';
 
       console.log('✅ Review saved on retry:', retryData);
       return {
         success: true,
         message: txHash 
-          ? `${approvedMessage} You have earned 10 $TRUST tokens.`
-          : approvedMessage,
+          ? `${statusMessage} You have earned 10 $TRUST tokens.`
+          : statusMessage,
         reviewId: retryData?.[0]?.id,
         txHash,
         aiScreeningResult: aiResult
@@ -95,15 +95,15 @@ export const submitReviewToDatabase = async (
 
     console.log('✅ Review saved to database:', data);
 
-    const approvedMessage = sanitizedData.status === 'approved' 
-      ? 'Review submitted and automatically approved! ✅ It will appear in Recent Reviews and your Dashboard.'
-      : 'Review submitted and is pending further review.';
+    const statusMessage = sanitizedData.status === 'approved' 
+      ? 'Review submitted and automatically approved! ✅ It will appear immediately in Recent Reviews and your Dashboard.'
+      : 'Review was rejected by AI screening. Please review the content and try again.';
 
     return {
       success: true,
       message: txHash 
-        ? `${approvedMessage} You have earned 10 $TRUST tokens.`
-        : approvedMessage,
+        ? `${statusMessage} You have earned 10 $TRUST tokens.`
+        : statusMessage,
       reviewId: data.id,
       txHash,
       aiScreeningResult: aiResult
