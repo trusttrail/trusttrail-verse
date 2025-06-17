@@ -46,18 +46,18 @@ export const useFormSubmission = ({
     setIsSubmitting(true);
 
     try {
-      console.log('🚀 Starting review submission process...');
+      console.log('🚀 Starting INSTANT review submission process...');
       
-      // Show fast AI screening toast
+      // Show instant AI screening toast
       toast({
-        title: "🤖 AI Screening in Progress",
-        description: "Fast AI analysis in progress... This should take less than 1 minute.",
+        title: "⚡ Instant AI Screening",
+        description: "Ultra-fast AI analysis in progress... Decision in under 1 second!",
       });
       
       const aiStartTime = Date.now();
       
-      // Submit to database with fast AI screening (no more pending status)
-      console.log('💾 Submitting to database with fast AI screening...');
+      // Submit to database with INSTANT AI screening (immediate approval/rejection)
+      console.log('💾 Submitting to database with INSTANT AI screening...');
       const dbResult = await submitReviewToDatabase(formData, walletAddress);
       
       const aiEndTime = Date.now();
@@ -72,27 +72,27 @@ export const useFormSubmission = ({
         return;
       }
 
-      console.log('✅ Database submission successful:', dbResult);
+      console.log('✅ Database submission successful with instant decision:', dbResult);
       
-      // Show detailed AI screening results - now with immediate approval/rejection
+      // Show INSTANT AI screening results
       if (dbResult.aiScreeningResult?.approved) {
         toast({
-          title: "🎉 Review Approved!",
-          description: `AI screening completed in ${Math.round(aiProcessingTime/1000)}s. Confidence: ${dbResult.aiScreeningResult.confidence}%. Your review is now live!`,
-          duration: 5000,
+          title: "🎉 INSTANTLY APPROVED!",
+          description: `⚡ AI decision made in ${Math.round(aiProcessingTime/1000)}s! Confidence: ${dbResult.aiScreeningResult.confidence}%. Your review is now LIVE!`,
+          duration: 6000,
         });
       } else {
         toast({
-          title: "❌ Review Rejected",
-          description: `AI screening completed in ${Math.round(aiProcessingTime/1000)}s. Reason: ${dbResult.aiScreeningResult?.reasoning || 'Content did not meet quality standards'}`,
+          title: "❌ Instantly Rejected",
+          description: `⚡ AI decision made in ${Math.round(aiProcessingTime/1000)}s. Reason: ${dbResult.aiScreeningResult?.reasoning || 'Content did not meet quality standards'}`,
           variant: "destructive",
-          duration: 5000,
+          duration: 6000,
         });
       }
 
       // Only try blockchain submission if review was approved
       if (dbResult.aiScreeningResult?.approved) {
-        console.log('🔗 Attempting blockchain submission...');
+        console.log('🔗 Attempting blockchain submission for approved review...');
         const txHash = await submitReviewTransaction(formData, walletAddress);
         
         if (txHash) {

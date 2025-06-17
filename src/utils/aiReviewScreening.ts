@@ -15,80 +15,74 @@ export const screenReviewWithAI = async (reviewData: {
   rating: number;
 }): Promise<AIScreeningResult> => {
   const startTime = Date.now();
-  console.log('🤖 Starting AI review screening for:', reviewData.companyName);
+  console.log('🤖 Starting INSTANT AI review screening for:', reviewData.companyName);
 
-  // Fast AI/ML screening logic - maximum 30 seconds processing
+  // Ultra-fast AI screening - maximum 10 seconds processing, most will be under 3 seconds
   const { companyName, title, content, rating } = reviewData;
   
   let riskFactors: string[] = [];
-  let confidence = 85; // Start with high confidence for faster approval
+  let confidence = 90; // Start with very high confidence for faster approval
   
-  // Quick content quality checks
-  if (content.length < 20) {
-    riskFactors.push('Very short content');
-    confidence -= 15;
+  // Only check for extreme violations to ensure speed
+  if (content.length < 10) {
+    riskFactors.push('Extremely short content');
+    confidence -= 25;
   }
   
-  if (content.length > 2000) {
-    riskFactors.push('Very long content');
-    confidence -= 5;
-  }
-  
-  // Fast spam detection - only check for extreme cases
-  const spamPatterns = [
-    /\b(buy now|click here|limited time|act fast)\b/gi,
-    /!{10,}|\.{10,}|\?{10,}/g, // Only excessive punctuation (10+ chars)
+  // Very lenient spam detection - only catch obvious spam
+  const extremeSpamPatterns = [
+    /\b(viagra|casino|lottery|winner|congratulations.*prize)\b/gi,
+    /!{20,}|\?{20,}/g, // Only extremely excessive punctuation
+    /[A-Z]{50,}/g, // Only very long all-caps text
   ];
   
-  spamPatterns.forEach((pattern) => {
-    const matches = content.match(pattern);
-    if (matches && matches.length > 1) {
-      riskFactors.push('Potential spam detected');
-      confidence -= 20;
+  extremeSpamPatterns.forEach((pattern) => {
+    if (content.match(pattern)) {
+      riskFactors.push('Obvious spam detected');
+      confidence -= 30;
     }
   });
   
-  // Quick rating consistency check
-  const positiveWords = content.match(/good|great|excellent|amazing|love|recommend|satisfied|happy|perfect/gi);
-  const negativeWords = content.match(/bad|terrible|awful|horrible|hate|disappointed|poor|worst/gi);
+  // Boost confidence significantly for known companies
+  const reputableCompanies = [
+    'coinbase', 'binance', 'kraken', 'metamask', 'uniswap', 'opensea', 
+    'compound', 'aave', 'sushiswap', 'pancakeswap', 'quickswap',
+    'polygon', 'avalanche', 'chainlink', 'ethereum', 'bitcoin'
+  ];
   
-  // Only flag extreme mismatches
-  if (rating >= 4 && negativeWords && negativeWords.length > (positiveWords?.length || 0) + 3) {
-    riskFactors.push('Extreme rating mismatch');
-    confidence -= 20;
-  }
-  
-  if (rating <= 2 && positiveWords && positiveWords.length > (negativeWords?.length || 0) + 3) {
-    riskFactors.push('Extreme rating mismatch');
-    confidence -= 20;
-  }
-  
-  // Boost confidence for known reputable companies
-  const knownCompanies = ['coinbase', 'binance', 'kraken', 'metamask', 'uniswap', 'opensea', 'compound'];
-  if (knownCompanies.some(company => 
+  const isReputableCompany = reputableCompanies.some(company => 
     companyName.toLowerCase().includes(company.toLowerCase())
-  )) {
-    confidence += 15;
-    console.log('🏢 Known reputable company detected, confidence boosted to', confidence);
+  );
+  
+  if (isReputableCompany) {
+    confidence += 25;
+    console.log('🏢 Reputable company detected, confidence boosted to', confidence);
   }
   
-  // Quality indicators boost confidence
+  // Quality indicators massively boost confidence
   const qualityIndicators = [
     /\$\d+/, // Price mentions
     /\d+\s*(days?|weeks?|months?|years?)/, // Time periods
-    /customer|support|service|experience|interface|feature/, // Service terms
+    /customer|support|service|experience|interface|feature|trading|wallet|exchange/, // Service terms
+    /good|great|excellent|bad|terrible|poor|amazing|awful/gi, // Opinion words
   ];
   
   const qualityMatches = qualityIndicators.filter(pattern => content.match(pattern));
   if (qualityMatches.length >= 1) {
+    confidence += 15;
+    console.log('✅ Quality indicators found:', qualityMatches.length);
+  }
+  
+  // Length bonus for substantive content
+  if (content.length > 50) {
     confidence += 10;
   }
   
   // Ensure confidence stays within bounds
-  confidence = Math.max(0, Math.min(100, confidence));
+  confidence = Math.max(20, Math.min(100, confidence));
   
-  // More lenient approval threshold - approve unless clearly problematic
-  const approved = confidence >= 60 && riskFactors.length <= 2;
+  // VERY lenient approval threshold - approve almost everything unless obviously spam
+  const approved = confidence >= 50 && riskFactors.length <= 1;
   
   const processingTimeMs = Date.now() - startTime;
   
@@ -97,18 +91,21 @@ export const screenReviewWithAI = async (reviewData: {
     confidence,
     riskFactors,
     reasoning: approved 
-      ? `Review approved with ${confidence}% confidence. ${qualityMatches.length > 0 ? 'Contains quality indicators and' : ''} appears authentic.`
-      : `Review requires manual review. Confidence: ${confidence}%. Risk factors: ${riskFactors.join(', ')}`,
+      ? `✅ Review APPROVED with ${confidence}% confidence. ${isReputableCompany ? 'Reputable company + ' : ''}${qualityMatches.length > 0 ? 'Quality content detected.' : 'Looks authentic.'}`
+      : `❌ Review REJECTED. Confidence: ${confidence}%. Issues: ${riskFactors.join(', ')}`,
     processingTimeMs
   };
   
-  console.log('🤖 AI screening result:', result);
-  console.log(`⏱️ Processing completed in ${processingTimeMs}ms`);
+  console.log('🤖 INSTANT AI screening result:', result);
+  console.log(`⚡ Ultra-fast processing completed in ${processingTimeMs}ms`);
   
-  // Simulate realistic but fast processing time (500ms-1000ms max)
-  const targetProcessingTime = Math.random() * 500 + 500; // 500-1000ms
+  // Simulate realistic but very fast processing time (200ms-800ms max)
+  const targetProcessingTime = Math.random() * 600 + 200; // 200-800ms
   const remainingTime = Math.max(0, targetProcessingTime - processingTimeMs);
-  await new Promise(resolve => setTimeout(resolve, remainingTime));
+  
+  if (remainingTime > 0) {
+    await new Promise(resolve => setTimeout(resolve, remainingTime));
+  }
   
   return result;
 };
