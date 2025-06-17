@@ -31,23 +31,29 @@ export const handlePassportVerification = async (
     
     // First, check if user already has a score
     const existingScore = await fetchGitcoinScore(walletAddress);
+    console.log('Existing score check result:', existingScore);
     
     if (existingScore !== null && existingScore > 0) {
-      // User already has a passport, just save the score
+      // User already has a positive passport score, just save it
       const data = savePassportData(walletAddress, existingScore);
-      onSuccess(data, `Your existing passport score (${existingScore.toFixed(2)}) has been successfully linked to your account.`);
+      onSuccess(data, `Your existing passport score (${existingScore.toFixed(2)}) has been successfully synced to your account.`);
       return true;
     }
     
-    // Open Gitcoin Passport in new window for verification
+    // Open Gitcoin Passport in new window for verification or to view current status
     const passportWindow = openGitcoinPassportWindow();
     onOpenWindow();
     
-    // Poll for score updates with improved detection
+    // Poll for score updates - this will capture any score including 0
     await pollForPassportScore(
       walletAddress,
       passportWindow,
-      (data) => onSuccess(data, `Your passport score (${data.score.toFixed(2)}) has been successfully verified and linked to your account.`),
+      (data) => {
+        const scoreMessage = data.score > 0 
+          ? `Your passport score (${data.score.toFixed(2)}) has been successfully synced to your account.`
+          : `Your passport has been synced to your account with a score of ${data.score.toFixed(2)}. You can improve your score by adding more stamps in Gitcoin Passport.`;
+        onSuccess(data, scoreMessage);
+      },
       onError,
       savePassportData
     );

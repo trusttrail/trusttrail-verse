@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,10 +47,10 @@ const PassportStatusCard = ({
               </p>
               <p className="text-sm text-muted-foreground">
                 {isVerifying 
-                  ? 'Verifying your passport - complete stamps in the Gitcoin window...' 
+                  ? 'Syncing passport data - you can close the Gitcoin window at any time...' 
                   : isVerified 
-                    ? `Verified with score: ${passportScore.toFixed(2)} (Synced from Gitcoin Passport)` 
-                    : 'Not verified - Connect to Gitcoin Passport to write reviews'
+                    ? `Synced with score: ${passportScore.toFixed(2)} ${passportScore === 0 ? '(You can improve this by adding stamps in Gitcoin Passport)' : ''}` 
+                    : 'Not synced - Connect to view and sync your current Gitcoin Passport score'
                 }
               </p>
               {passportData && (
@@ -63,7 +62,7 @@ const PassportStatusCard = ({
           </div>
           <div className="flex items-center gap-2">
             {isVerified && (
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
+              <Badge variant="secondary" className={`${passportScore === 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
                 Score: {passportScore.toFixed(2)}
               </Badge>
             )}
@@ -97,7 +96,7 @@ const PassportStatusCard = ({
                 ) : (
                   <ExternalLink size={16} />
                 )}
-                {isVerifying ? 'Verifying...' : 'Verify Identity'}
+                {isVerifying ? 'Syncing...' : 'Sync Passport'}
               </Button>
             )}
           </div>
@@ -108,13 +107,12 @@ const PassportStatusCard = ({
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
             <AlertCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
             <div className="text-sm text-blue-700">
-              <p className="font-medium mb-1">How to get verified:</p>
+              <p className="font-medium mb-1">How to sync your passport:</p>
               <ol className="list-decimal list-inside space-y-1 text-xs">
-                <li>Click "Verify Identity" to open Gitcoin Passport dashboard</li>
+                <li>Click "Sync Passport" to open Gitcoin Passport dashboard</li>
                 <li><strong>Connect the same wallet address</strong> you're using here</li>
-                <li>Add stamps by connecting your social accounts (Twitter, Google, etc.)</li>
-                <li>Wait for your score to build up in Gitcoin Passport</li>
-                <li>Return here - your score will automatically sync</li>
+                <li>View your current score or add more stamps to improve it</li>
+                <li>Close the window - your current score will automatically sync to TrustTrail</li>
               </ol>
             </div>
           </div>
@@ -125,10 +123,10 @@ const PassportStatusCard = ({
           <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
             <RefreshCw className="h-4 w-4 text-yellow-500 animate-spin mt-0.5" />
             <div className="text-sm text-yellow-700">
-              <p className="font-medium">Verification in progress</p>
+              <p className="font-medium">Syncing your passport data</p>
               <p className="text-xs mt-1">
-                Complete your verification in Gitcoin Passport: connect your wallet, add stamps, and wait for your score to appear. 
-                We'll automatically sync your score once it's ready.
+                We're checking your current Gitcoin Passport score. You can close the Gitcoin window at any time - 
+                we'll automatically sync whatever score you currently have (including 0 if you haven't added stamps yet).
               </p>
             </div>
           </div>

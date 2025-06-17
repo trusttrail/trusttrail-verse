@@ -18,21 +18,28 @@ export const fetchGitcoinScore = async (walletAddress: string): Promise<number |
       const data = await response.json();
       console.log('Gitcoin API response:', data);
       
-      // Parse the score from the API response
-      const score = parseFloat(data.score) || 0;
+      // Parse the score from the API response - handle both string and number formats
+      let score = 0;
+      if (typeof data.score === 'string') {
+        score = parseFloat(data.score) || 0;
+      } else if (typeof data.score === 'number') {
+        score = data.score;
+      }
+      
       console.log('Parsed score:', score);
       
-      return score > 0 ? score : null;
+      // Return the score even if it's 0 - null only if no passport exists
+      return score;
     } else if (response.status === 404) {
       console.log('No passport found for this address');
-      return null;
+      return 0; // Return 0 instead of null for addresses without passports
     } else {
       console.warn('Gitcoin API returned status:', response.status);
-      return null;
+      return 0; // Return 0 for other errors to allow syncing
     }
   } catch (error) {
     console.error('Error fetching Gitcoin score:', error);
-    return null;
+    return 0; // Return 0 instead of null to allow syncing even on errors
   }
 };
 
