@@ -1,5 +1,15 @@
-
-import { Edit, Grid3X3, Building, Award, Home, Zap, Coins, ShoppingBag, Droplets, Building2, Image, Shield, BarChart3 } from "lucide-react";
+import { 
+  Home, 
+  PenTool, 
+  Grid3X3, 
+  Building2, 
+  Store, 
+  Droplets, 
+  Coins, 
+  Shield, 
+  BarChart3,
+  User
+} from "lucide-react";
 
 // Export lucide tab icons as references, not JSX
 export const categories = [
@@ -31,12 +41,13 @@ export const recentReviews = [
 // Removed deployment tab from the portal tabs
 export const portalTabs = [
   { id: "home", label: "Home", icon: Home },
-  { id: "write-review", label: "Write Review", icon: Edit },
+  { id: "write-review", label: "Write Review", icon: PenTool },
+  { id: "my-dashboard", label: "My Dashboard", icon: User },
   { id: "categories", label: "Categories", icon: Grid3X3 },
   { id: "businesses", label: "Businesses", icon: Building2 },
-  { id: "nft-marketplace", label: "NFT Market", icon: Image },
+  { id: "nft-marketplace", label: "NFT Marketplace", icon: Store },
   { id: "liquidity", label: "Liquidity", icon: Droplets },
   { id: "staking", label: "Staking", icon: Coins },
   { id: "passport", label: "Passport", icon: Shield },
-  { id: "analytics", label: "Analytics", icon: BarChart3 }
+  { id: "analytics", label: "Analytics", icon: BarChart3 },
 ];

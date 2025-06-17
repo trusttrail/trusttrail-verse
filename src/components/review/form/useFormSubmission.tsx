@@ -2,12 +2,12 @@
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useWeb3Transaction } from '@/hooks/useWeb3Transaction';
-import { useTrustScore } from '@/hooks/useTrustScore';
+import { submitReviewToDatabase } from '@/utils/formSubmission';
 import { ReviewFormData } from '@/hooks/useReviewForm';
 
 interface UseFormSubmissionProps {
   isWalletConnected: boolean;
-  walletAddress: string; // Add wallet address prop
+  walletAddress: string;
   gitcoinVerified: boolean;
   resetForm: () => void;
 }
@@ -20,16 +20,13 @@ export const useFormSubmission = ({
 }: UseFormSubmissionProps) => {
   const { toast } = useToast();
   const { submitReviewTransaction, isTransacting } = useWeb3Transaction();
-  const { updateTrustScore } = useTrustScore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent, formData: ReviewFormData) => {
-    e.preventDefault();
-    
+  const handleSubmit = async (formData: ReviewFormData) => {
     if (!isWalletConnected || !walletAddress) {
       toast({
-        title: "Wallet Required",
-        description: "Please connect your wallet to submit a review.",
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet first.",
         variant: "destructive",
       });
       return;
@@ -37,39 +34,68 @@ export const useFormSubmission = ({
 
     if (!gitcoinVerified) {
       toast({
-        title: "Verification Required",
-        description: "Please verify your identity with Gitcoin Passport first.",
+        title: "Gitcoin Verification Required",
+        description: "Please verify your Gitcoin passport before submitting a review.",
         variant: "destructive",
       });
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
-      setIsSubmitting(true);
+      console.log('🚀 Starting review submission process...');
       
-      console.log('🚀 Starting form submission with wallet:', walletAddress);
-      
-      // Submit transaction to blockchain with wallet address
+      // Submit to blockchain first
       const txHash = await submitReviewTransaction(formData, walletAddress);
       
       if (txHash) {
-        // Update trust score for successful review submission
-        updateTrustScore('quality', 1);
+        console.log('✅ Blockchain transaction successful:', txHash);
         
-        toast({
-          title: "Review Submitted Successfully! 🎉",
-          description: "Your review has been submitted to the blockchain and you've earned $NOCAP tokens!",
-        });
-
-        // Reset form
-        resetForm();
+        // Submit to database with transaction hash
+        const dbResult = await submitReviewToDatabase(formData, walletAddress, txHash);
+        
+        if (dbResult.success) {
+          toast({
+            title: "Success! 🎉",
+            description: dbResult.message,
+          });
+          
+          // Reset form after successful submission
+          resetForm();
+        } else {
+          toast({
+            title: "Partial Success",
+            description: "Blockchain transaction successful, but database save failed. Your review is recorded on-chain.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        // If blockchain submission failed, still save to database as pending
+        console.log('❌ Blockchain transaction failed, saving to database as pending...');
+        
+        const dbResult = await submitReviewToDatabase(formData, walletAddress);
+        
+        if (dbResult.success) {
+          toast({
+            title: "Review Saved",
+            description: "Review saved for manual approval. Blockchain verification failed.",
+          });
+          resetForm();
+        } else {
+          toast({
+            title: "Submission Failed",
+            description: "Both blockchain and database submission failed. Please try again.",
+            variant: "destructive",
+          });
+        }
       }
       
     } catch (error) {
-      console.error('Review submission error:', error);
+      console.error('❌ Form submission error:', error);
       toast({
         title: "Submission Failed",
-        description: "Failed to submit your review. Please try again.",
+        description: "An error occurred during submission. Please try again.",
         variant: "destructive",
       });
     } finally {

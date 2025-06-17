@@ -1,0 +1,271 @@
+
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Coins, Trophy, FileText, Star, Calendar, ArrowUpRight } from "lucide-react";
+import { useAuth } from '@/hooks/useAuth';
+import { useWeb3 } from '@/hooks/useWeb3';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+interface UserReview {
+  id: string;
+  company_name: string;
+  category: string;
+  title: string;
+  rating: number;
+  status: string;
+  created_at: string;
+  wallet_address: string;
+}
+
+interface UserStats {
+  totalReviews: number;
+  verifiedReviews: number;
+  pendingReviews: number;
+  totalRewards: string;
+}
+
+const UserDashboard = () => {
+  const { user } = useAuth();
+  const { tokenBalance, address } = useWeb3();
+  const { toast } = useToast();
+  const [userReviews, setUserReviews] = useState<UserReview[]>([]);
+  const [userStats, setUserStats] = useState<UserStats>({
+    totalReviews: 0,
+    verifiedReviews: 0,
+    pendingReviews: 0,
+    totalRewards: '0'
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user && address) {
+      fetchUserData();
+    }
+  }, [user, address]);
+
+  const fetchUserData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch user reviews from Supabase
+      const { data: reviews, error } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('wallet_address', address)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching user reviews:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch your reviews. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (reviews) {
+        setUserReviews(reviews);
+        
+        // Calculate stats
+        const totalReviews = reviews.length;
+        const verifiedReviews = reviews.filter(r => r.status === 'approved').length;
+        const pendingReviews = reviews.filter(r => r.status === 'pending').length;
+        
+        setUserStats({
+          totalReviews,
+          verifiedReviews,
+          pendingReviews,
+          totalRewards: tokenBalance || '0'
+        });
+      }
+    } catch (error) {
+      console.error('Error in fetchUserData:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard data.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'rejected':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  if (!user || !address) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">Please connect your wallet to view your dashboard.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold">My Dashboard</h2>
+          <p className="text-muted-foreground">Track your reviews and rewards</p>
+        </div>
+        <Button onClick={fetchUserData} variant="outline" size="sm">
+          <ArrowUpRight className="h-4 w-4" />
+          Refresh
+        </Button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Reviews</p>
+                <p className="text-2xl font-bold">{userStats.totalReviews}</p>
+              </div>
+              <div className="bg-blue-100 dark:bg-blue-900/20 p-2 rounded-full">
+                <FileText className="text-blue-600 dark:text-blue-400" size={16} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Verified Reviews</p>
+                <p className="text-2xl font-bold">{userStats.verifiedReviews}</p>
+              </div>
+              <div className="bg-green-100 dark:bg-green-900/20 p-2 rounded-full">
+                <Trophy className="text-green-600 dark:text-green-400" size={16} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Pending Reviews</p>
+                <p className="text-2xl font-bold">{userStats.pendingReviews}</p>
+              </div>
+              <div className="bg-yellow-100 dark:bg-yellow-900/20 p-2 rounded-full">
+                <Calendar className="text-yellow-600 dark:text-yellow-400" size={16} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">$NOCAP Earned</p>
+                <p className="text-2xl font-bold">{parseFloat(userStats.totalRewards).toFixed(2)}</p>
+              </div>
+              <div className="bg-purple-100 dark:bg-purple-900/20 p-2 rounded-full">
+                <Coins className="text-purple-600 dark:text-purple-400" size={16} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Reviews List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>My Reviews</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="text-center py-4">
+              <p className="text-muted-foreground">Loading your reviews...</p>
+            </div>
+          ) : userReviews.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">You haven't submitted any reviews yet.</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Start by writing your first review to earn $NOCAP rewards!
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {userReviews.map((review) => (
+                <div key={review.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold">{review.company_name}</h3>
+                      <Badge variant="outline" className="text-xs">
+                        {review.category}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className={getStatusColor(review.status)}>
+                        {review.status}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {formatDate(review.created_at)}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <p className="text-sm font-medium mb-2">{review.title}</p>
+                  
+                  <div className="flex items-center gap-1 mb-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-4 w-4 ${
+                          i < review.rating
+                            ? 'text-yellow-400 fill-current'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                    <span className="text-sm text-muted-foreground ml-1">
+                      {review.rating}/5
+                    </span>
+                  </div>
+                  
+                  {review.status === 'approved' && (
+                    <div className="flex items-center gap-1 text-sm text-green-600">
+                      <Coins className="h-4 w-4" />
+                      <span>Reward earned: 10 $NOCAP</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default UserDashboard;

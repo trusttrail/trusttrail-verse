@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import HomeTab from "@/components/review/portal/HomeTab";
 import WriteReviewTab from "@/components/review/portal/WriteReviewTab";
+import UserDashboard from "@/components/review/portal/UserDashboard";
 import CategoriesTab from "@/components/review/portal/CategoriesTab";
 import BusinessesTab from "@/components/review/portal/BusinessesTab";
 import NFTMarketplaceTab from "@/components/review/portal/NFTMarketplaceTab";
@@ -59,7 +60,7 @@ export const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connect
                   </TabsTrigger>
                 ))}
               </TabsList>
-              <TabsList className="w-full grid grid-cols-4 md:hidden min-w-max">
+              <TabsList className="w-full grid grid-cols-5 md:hidden min-w-max">
                 {portalTabs.slice(5).map(({ id, label, icon }) => (
                   <TabsTrigger key={id} value={id} className="flex flex-col items-center gap-1 p-2 min-w-16">
                     {typeof icon === "string"
@@ -86,6 +87,9 @@ export const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connect
           </TabsContent>
           <TabsContent value="write-review">
             <WriteReviewTab isWalletConnected={isWalletConnected} connectWallet={connectWallet} categories={categories} />
+          </TabsContent>
+          <TabsContent value="my-dashboard">
+            <UserDashboard />
           </TabsContent>
           <TabsContent value="categories">
             <CategoriesTab categories={categories} />
