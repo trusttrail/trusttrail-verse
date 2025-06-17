@@ -1,8 +1,9 @@
+
 import { ethers } from 'ethers';
 import { ReviewPlatformABI } from '../contracts/abis/ReviewPlatform';
 import { RewardTokenABI } from '../contracts/abis/RewardToken';
 
-// Contract addresses (will be updated after deployment)
+// Contract addresses (updated with your deployed contracts)
 export const CONTRACTS = {
   polygon: {
     reviewPlatform: '0x0000000000000000000000000000000000000000', // To be updated
@@ -19,8 +20,8 @@ export const CONTRACTS = {
     explorerUrl: 'https://mumbai.polygonscan.com/'
   },
   amoy: {
-    reviewPlatform: '0x0000000000000000000000000000000000000000', // To be updated
-    rewardToken: '0x0000000000000000000000000000000000000000', // To be updated
+    reviewPlatform: '0xf99ebeb5087ff43c44a1ce86d66cd367d3c5ecab', // Your deployed ReviewPlatform
+    rewardToken: '0x186389f359713852366b4eA1eb9BC947f68F74ca', // Your deployed RewardToken
     chainId: 80002, // Polygon Amoy Testnet
     rpcUrl: 'https://rpc-amoy.polygon.technology/',
     explorerUrl: 'https://amoy.polygonscan.com/'
