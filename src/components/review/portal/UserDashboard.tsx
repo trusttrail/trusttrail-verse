@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Coins, Trophy, FileText, Star, Calendar, ArrowUpRight } from "lucide-react";
+import { Coins, Trophy, FileText, Star, Calendar, ArrowUpRight, ExternalLink } from "lucide-react";
 import { useAuth } from '@/hooks/useAuth';
 import { useWeb3 } from '@/hooks/useWeb3';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,6 +18,7 @@ interface UserReview {
   status: string;
   created_at: string;
   wallet_address: string;
+  content: string;
 }
 
 interface UserStats {
@@ -42,6 +43,7 @@ const UserDashboard = () => {
 
   useEffect(() => {
     if (address) {
+      console.log('🔍 Fetching user data for address:', address);
       fetchUserData();
     }
   }, [address]);
@@ -50,15 +52,17 @@ const UserDashboard = () => {
     try {
       setLoading(true);
       
-      // Fetch user reviews from Supabase using wallet address
+      console.log('📊 Querying reviews for wallet address:', address);
+      
+      // Fetch user reviews from Supabase using wallet address (case-insensitive)
       const { data: reviews, error } = await supabase
         .from('reviews')
         .select('*')
-        .eq('wallet_address', address)
+        .ilike('wallet_address', address) // Case-insensitive match
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching user reviews:', error);
+        console.error('❌ Error fetching user reviews:', error);
         toast({
           title: "Error",
           description: "Failed to fetch your reviews. Please try again.",
@@ -67,6 +71,8 @@ const UserDashboard = () => {
         return;
       }
 
+      console.log('📋 Found reviews for user:', reviews?.length || 0, reviews);
+
       if (reviews) {
         setUserReviews(reviews);
         
@@ -74,9 +80,18 @@ const UserDashboard = () => {
         const totalReviews = reviews.length;
         const verifiedReviews = reviews.filter(r => r.status === 'approved').length;
         const pendingReviews = reviews.filter(r => r.status === 'pending').length;
+        const rejectedReviews = reviews.filter(r => r.status === 'rejected').length;
         
         // Calculate rewards: 10 $NOCAP per verified review
         const totalRewards = verifiedReviews * 10;
+        
+        console.log('📊 User stats calculated:', {
+          totalReviews,
+          verifiedReviews,
+          pendingReviews,
+          rejectedReviews,
+          totalRewards
+        });
         
         setUserStats({
           totalReviews,
@@ -86,7 +101,7 @@ const UserDashboard = () => {
         });
       }
     } catch (error) {
-      console.error('Error in fetchUserData:', error);
+      console.error('❌ Error in fetchUserData:', error);
       toast({
         title: "Error",
         description: "Failed to load dashboard data.",
@@ -118,6 +133,21 @@ const UserDashboard = () => {
     });
   };
 
+  const navigateToAllReviews = () => {
+    // Scroll to Recent Reviews section
+    const recentReviewsSection = document.querySelector('h3:contains("Recent Reviews")') || 
+                                document.querySelector('[data-testid="recent-reviews"]') ||
+                                document.querySelector('section');
+    if (recentReviewsSection) {
+      recentReviewsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    toast({
+      title: "Navigating",
+      description: "Scrolling to Recent Reviews section to view all reviews.",
+    });
+  };
+
   if (!address) {
     return (
       <div className="text-center py-8">
@@ -132,11 +162,20 @@ const UserDashboard = () => {
         <div>
           <h2 className="text-2xl font-bold">My Dashboard</h2>
           <p className="text-muted-foreground">Track your reviews and rewards</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Connected: {address.substring(0, 6)}...{address.substring(address.length - 4)}
+          </p>
         </div>
-        <Button onClick={fetchUserData} variant="outline" size="sm" disabled={loading}>
-          <ArrowUpRight className="h-4 w-4" />
-          {loading ? 'Loading...' : 'Refresh'}
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={fetchUserData} variant="outline" size="sm" disabled={loading}>
+            <ArrowUpRight className="h-4 w-4" />
+            {loading ? 'Loading...' : 'Refresh'}
+          </Button>
+          <Button onClick={navigateToAllReviews} variant="outline" size="sm">
+            <ExternalLink className="h-4 w-4" />
+            View All Reviews
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -238,6 +277,7 @@ const UserDashboard = () => {
                   </div>
                   
                   <p className="text-sm font-medium mb-2">{review.title}</p>
+                  <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{review.content}</p>
                   
                   <div className="flex items-center gap-1 mb-2">
                     {[...Array(5)].map((_, i) => (

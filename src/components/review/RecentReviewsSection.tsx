@@ -56,6 +56,8 @@ const RecentReviewsSection = ({ reviews }: RecentReviewsSectionProps) => {
   const fetchRecentReviews = async () => {
     try {
       setLoading(true);
+      console.log('🔍 Fetching all approved reviews from database...');
+      
       const { data, error } = await supabase
         .from('reviews')
         .select('*')
@@ -63,7 +65,7 @@ const RecentReviewsSection = ({ reviews }: RecentReviewsSectionProps) => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching recent reviews:', error);
+        console.error('❌ Error fetching recent reviews:', error);
         toast({
           title: "Error",
           description: "Failed to load reviews. Please try again.",
@@ -73,11 +75,11 @@ const RecentReviewsSection = ({ reviews }: RecentReviewsSectionProps) => {
       }
 
       if (data) {
-        console.log('✅ Fetched approved reviews from database:', data.length);
+        console.log('✅ Fetched approved reviews from database:', data.length, data);
         setDatabaseReviews(data);
       }
     } catch (error) {
-      console.error('Error in fetchRecentReviews:', error);
+      console.error('❌ Error in fetchRecentReviews:', error);
       toast({
         title: "Error",
         description: "Failed to load reviews.",
@@ -181,7 +183,7 @@ const RecentReviewsSection = ({ reviews }: RecentReviewsSectionProps) => {
   const displayedReviews = showAll ? allReviews : allReviews.slice(0, 10);
 
   return (
-    <section className="px-4 sm:px-6">
+    <section className="px-4 sm:px-6" data-testid="recent-reviews">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
         <div>
           <h3 className="text-xl sm:text-2xl font-bold">Recent Reviews</h3>
@@ -193,7 +195,7 @@ const RecentReviewsSection = ({ reviews }: RecentReviewsSectionProps) => {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={fetchReviewsInBackground}
+            onClick={fetchRecentReviews}
             disabled={loading}
           >
             <ExternalLink className="h-4 w-4 mr-1" />
@@ -243,10 +245,6 @@ const RecentReviewsSection = ({ reviews }: RecentReviewsSectionProps) => {
       )}
     </section>
   );
-
-  async function fetchReviewsInBackground() {
-    await fetchRecentReviews();
-  }
 };
 
 export default RecentReviewsSection;
