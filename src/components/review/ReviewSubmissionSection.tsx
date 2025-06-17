@@ -29,7 +29,6 @@ const ReviewSubmissionSection = ({
           size="lg"
           disabled={!isFormValid || isSubmitting || isTransacting || isVerifying}
           className="w-full sm:w-auto min-w-48"
-          onClick={onSubmit}
         >
           {isSubmitting || isTransacting ? (
             <>
