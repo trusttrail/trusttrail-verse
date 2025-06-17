@@ -11,6 +11,7 @@ interface TrustScoreMetrics {
   reviewQuality: number;
   communityFeedback: number;
   timeActive: number;
+  gitcoinScore: number;
 }
 
 interface TrustScoreData {
@@ -21,12 +22,12 @@ interface TrustScoreData {
 }
 
 const TRUST_LEVELS = [
-  { min: 0, max: 99, name: 'Newcomer', multiplier: 1.0 },
-  { min: 100, max: 299, name: 'Contributor', multiplier: 1.1 },
-  { min: 300, max: 599, name: 'Trusted', multiplier: 1.2 },
-  { min: 600, max: 999, name: 'Expert', multiplier: 1.3 },
-  { min: 1000, max: 1999, name: 'Authority', multiplier: 1.4 },
-  { min: 2000, max: Infinity, name: 'Legend', multiplier: 1.5 }
+  { min: 0, max: 19, name: 'Newcomer', multiplier: 1.0 },
+  { min: 20, max: 39, name: 'Contributor', multiplier: 1.1 },
+  { min: 40, max: 59, name: 'Trusted', multiplier: 1.2 },
+  { min: 60, max: 79, name: 'Expert', multiplier: 1.3 },
+  { min: 80, max: 94, name: 'Authority', multiplier: 1.4 },
+  { min: 95, max: 100, name: 'Legend', multiplier: 1.5 }
 ];
 
 export const useTrustScore = () => {
@@ -34,32 +35,42 @@ export const useTrustScore = () => {
   const [trustScoreData, setTrustScoreData] = useState<TrustScoreData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Calculate trust score based on various metrics (hidden algorithm)
+  // Enhanced trust score calculation (Reddit-style karma system, 0-100 scale)
   const calculateTrustScore = (metrics: TrustScoreMetrics): number => {
-    // Hidden scoring algorithm - users won't see these exact calculations
-    const upvoteScore = metrics.upvotes * 5;
-    const downvotePenalty = metrics.downvotes * -3;
-    const commentBonus = metrics.comments * 2;
-    const engagementBonus = metrics.engagements * 1.5;
-    const shareBonus = metrics.shares * 3;
-    const qualityBonus = metrics.reviewQuality * 10;
-    const communityBonus = metrics.communityFeedback * 7;
-    const timeBonus = Math.min(metrics.timeActive * 0.5, 50); // Cap at 50 points
+    // Vote-based score (Reddit algorithm approach)
+    const totalVotes = metrics.upvotes + metrics.downvotes;
+    let voteScore = 0;
     
-    // Apply diminishing returns for very high values
-    const rawScore = Math.max(0, 
-      upvoteScore + 
-      downvotePenalty + 
-      commentBonus + 
-      engagementBonus + 
-      shareBonus + 
-      qualityBonus + 
-      communityBonus + 
-      timeBonus
-    );
+    if (totalVotes > 0) {
+      const ratio = metrics.upvotes / totalVotes;
+      const confidence = Math.min(totalVotes / 50, 1); // Confidence builds with more votes
+      voteScore = (ratio * 2 - 1) * confidence * 30; // -30 to +30 range
+    }
     
-    // Apply logarithmic scaling to prevent extreme scores
-    return Math.floor(rawScore * Math.log(rawScore + 10) / Math.log(100));
+    // Engagement and quality bonuses
+    const commentBonus = Math.log(metrics.comments + 1) * 8; // Logarithmic scaling
+    const engagementBonus = Math.log(metrics.engagements + 1) * 5;
+    const shareBonus = Math.log(metrics.shares + 1) * 6;
+    const qualityBonus = Math.min(metrics.reviewQuality * 0.8, 15);
+    const communityBonus = Math.min(metrics.communityFeedback * 0.6, 12);
+    
+    // Time active bonus (experience)
+    const timeBonus = Math.min(Math.log(metrics.timeActive + 1) * 3, 10);
+    
+    // Gitcoin verification bonus
+    const gitcoinBonus = Math.min(metrics.gitcoinScore * 0.15, 15);
+    
+    // Base score for participation
+    const baseScore = 25;
+    
+    // Calculate raw score
+    const rawScore = baseScore + voteScore + commentBonus + engagementBonus + 
+                    shareBonus + qualityBonus + communityBonus + timeBonus + gitcoinBonus;
+    
+    // Apply sigmoid-like curve to prevent extreme scores and ensure 0-100 range
+    const normalizedScore = 100 / (1 + Math.exp(-(rawScore - 50) / 15));
+    
+    return Math.max(0, Math.min(100, Math.round(normalizedScore)));
   };
 
   const getTrustLevel = (score: number) => {
@@ -92,6 +103,9 @@ export const useTrustScore = () => {
         break;
       case 'community':
         updatedMetrics.communityFeedback += value;
+        break;
+      case 'gitcoin_update':
+        updatedMetrics.gitcoinScore = value;
         break;
     }
 
@@ -141,12 +155,13 @@ export const useTrustScore = () => {
           shares: 0,
           reviewQuality: 0,
           communityFeedback: 0,
-          timeActive: 1 // Start with 1 day
+          timeActive: 1, // Start with 1 day
+          gitcoinScore: 0 // Will be updated when passport is verified
         };
         
         const initialData: TrustScoreData = {
           score: calculateTrustScore(initialMetrics),
-          level: getTrustLevel(0).name,
+          level: getTrustLevel(calculateTrustScore(initialMetrics)).name,
           metrics: initialMetrics,
           lastUpdated: Date.now()
         };

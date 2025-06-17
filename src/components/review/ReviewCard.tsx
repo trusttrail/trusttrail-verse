@@ -219,17 +219,17 @@ const ReviewCard = ({ review }: ReviewProps) => {
         <div className="flex flex-col sm:flex-row sm:items-center mb-3 gap-2">
           <span className="text-sm text-trustpurple-400 font-medium">{review.companyName}</span>
           <div className="flex items-center gap-2 flex-wrap">
-            {review.verified && (
+            {review.verified && review.gitcoinScore !== undefined && (
               <div className="flex items-center text-xs text-emerald-600">
                 <CheckCircle size={12} className="mr-1" />
                 <span className="hidden sm:inline">Verified Review</span>
                 <span className="sm:hidden">Verified</span>
               </div>
             )}
-            {review.gitcoinScore && (
+            {review.gitcoinScore !== undefined && (
               <div className="flex items-center text-xs text-blue-600">
                 <Shield size={12} className="mr-1" />
-                <span>Gitcoin: {review.gitcoinScore}/100</span>
+                <span>Gitcoin: {review.gitcoinScore.toFixed(1)}/100</span>
               </div>
             )}
           </div>
@@ -339,9 +339,9 @@ const ReviewCard = ({ review }: ReviewProps) => {
       <CardFooter className="pt-2 pb-4 px-3 sm:px-6 border-t flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-xs text-muted-foreground">
         <div className="flex items-center gap-2">
           <span>by {formatAddress(review.reviewerAddress)}</span>
-          {review.trustScore && (
+          {review.trustScore !== undefined && (
             <span className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 px-2 py-1 rounded-full">
-              Trust: {review.trustScore}/10
+              Trust: {review.trustScore}/100
             </span>
           )}
         </div>
