@@ -1,9 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Share2, ExternalLink, Eye, RefreshCw } from "lucide-react";
-import ReviewCard from "@/components/review/ReviewCard";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import ReviewsHeader from './ReviewsHeader';
+import ReviewsList from './ReviewsList';
 
 interface DatabaseReview {
   id: string;
@@ -67,7 +67,6 @@ const RecentReviewsSection = ({ reviews }: RecentReviewsSectionProps) => {
       
       console.log('🔍 Fetching reviews from database...');
       
-      // First, let's check all reviews to see their status
       const { data: allReviews, error: allError } = await supabase
         .from('reviews')
         .select('*')
@@ -86,7 +85,6 @@ const RecentReviewsSection = ({ reviews }: RecentReviewsSectionProps) => {
       if (allReviews) {
         console.log('✅ Fetched all reviews from database:', allReviews.length, allReviews);
         
-        // Log status breakdown for debugging
         const statusBreakdown = allReviews.reduce((acc, review) => {
           acc[review.status] = (acc[review.status] || 0) + 1;
           return acc;
@@ -94,7 +92,6 @@ const RecentReviewsSection = ({ reviews }: RecentReviewsSectionProps) => {
         
         console.log('📊 Review status breakdown:', statusBreakdown);
         
-        // Show only approved reviews in Recent Reviews
         const approvedReviews = allReviews.filter(r => r.status === 'approved');
         console.log('✅ Approved reviews to display:', approvedReviews.length);
         
@@ -156,7 +153,7 @@ const RecentReviewsSection = ({ reviews }: RecentReviewsSectionProps) => {
     title: dbReview.title,
     content: dbReview.content,
     date: dbReview.created_at,
-    verified: true, // All approved reviews are verified
+    verified: true,
     upvotes: Math.floor(Math.random() * 50) + 5,
     downvotes: Math.floor(Math.random() * 10) + 1,
     gitcoinScore: Math.floor(Math.random() * 40) + 60,
@@ -200,65 +197,20 @@ const RecentReviewsSection = ({ reviews }: RecentReviewsSectionProps) => {
 
   return (
     <section className="px-4 sm:px-6" data-testid="recent-reviews">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
-        <div>
-          <h3 className="text-xl sm:text-2xl font-bold">Recent Reviews</h3>
-          <p className="text-muted-foreground text-sm mt-1 hidden sm:block">
-            Latest AI-approved reviews from our community ({allReviews.length} total)
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => fetchRecentReviews(true)}
-            disabled={loading || refreshing}
-          >
-            <RefreshCw className={`h-4 w-4 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
-            {refreshing ? 'Refreshing...' : 'Refresh Status'}
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setShowAll(!showAll)}
-            className="flex items-center gap-1"
-          >
-            <Eye className="h-4 w-4" />
-            {showAll ? 'Show Recent Only' : `View All Reviews (${allReviews.length})`}
-          </Button>
-        </div>
-      </div>
-      <p className="text-muted-foreground mb-6 text-sm sm:hidden">
-        Latest AI-approved reviews from our community ({allReviews.length} total)
-      </p>
+      <ReviewsHeader
+        totalReviews={allReviews.length}
+        showAll={showAll}
+        loading={loading}
+        refreshing={refreshing}
+        onRefresh={() => fetchRecentReviews(true)}
+        onToggleShowAll={() => setShowAll(!showAll)}
+      />
       
-      {loading ? (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">Loading recent reviews...</p>
-        </div>
-      ) : allReviews.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">No approved reviews found. Submit a review to get started!</p>
-        </div>
-      ) : (
-        <div className="space-y-4 sm:space-y-6">
-          {displayedReviews.map(review => (
-            <div key={review.id} className="relative group">
-              <ReviewCard review={review} />
-              <div className="absolute top-4 right-4">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => shareReview(review)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Share2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <ReviewsList
+        reviews={displayedReviews}
+        loading={loading}
+        onShareReview={shareReview}
+      />
     </section>
   );
 };
