@@ -26,6 +26,7 @@ export const useReviewForm = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
   const [openCompanySelect, setOpenCompanySelect] = useState(false);
+  const [gitcoinVerified, setGitcoinVerified] = useState(false);
 
   // Use the comprehensive company list from our database
   const mockCompanies = sampleCompanies.map(company => ({
@@ -92,6 +93,17 @@ export const useReviewForm = () => {
     }));
   };
 
+  const updateFormData = (field: keyof ReviewFormData, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const updateFiles = (newFiles: File[]) => {
+    setFiles(newFiles);
+  };
+
   const resetForm = () => {
     setFormData({
       companyName: '',
@@ -103,6 +115,7 @@ export const useReviewForm = () => {
       cons: '',
     });
     setFiles([]);
+    setGitcoinVerified(false);
   };
 
   return {
@@ -116,12 +129,16 @@ export const useReviewForm = () => {
     mockCompanies,
     mockCategories,
     filteredCompanies,
+    gitcoinVerified,
+    setGitcoinVerified,
     handleInputChange,
     handleRatingChange,
     handleCategoryChange,
     handleCompanyChange,
     handleCompanySearch,
     handleCompanySelect,
+    updateFormData,
+    updateFiles,
     resetForm,
   };
 };

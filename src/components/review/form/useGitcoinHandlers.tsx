@@ -1,18 +1,20 @@
 
+import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useGitcoinPassport } from '@/hooks/useGitcoinPassport';
 
 interface UseGitcoinHandlersProps {
   walletAddress: string | null;
-  verifyPassport: (walletAddress: string) => Promise<boolean>;
-  refreshPassportScore: (walletAddress: string) => Promise<boolean>;
+  setGitcoinVerified: (verified: boolean) => void;
 }
 
 export const useGitcoinHandlers = ({
   walletAddress,
-  verifyPassport,
-  refreshPassportScore,
+  setGitcoinVerified,
 }: UseGitcoinHandlersProps) => {
   const { toast } = useToast();
+  const { verifyPassport, refreshPassportScore } = useGitcoinPassport();
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const handleVerifyGitcoin = async () => {
     if (!walletAddress) {
@@ -24,10 +26,20 @@ export const useGitcoinHandlers = ({
       return;
     }
 
-    await verifyPassport(walletAddress);
+    setIsVerifying(true);
+    try {
+      const success = await verifyPassport(walletAddress);
+      if (success) {
+        setGitcoinVerified(true);
+      }
+    } catch (error) {
+      console.error('Gitcoin verification error:', error);
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
-  const handleRefreshGitcoin = async () => {
+  const handleCheckVerification = async () => {
     if (!walletAddress) {
       toast({
         title: "Wallet Required",
@@ -37,11 +49,22 @@ export const useGitcoinHandlers = ({
       return;
     }
 
-    await refreshPassportScore(walletAddress);
+    setIsVerifying(true);
+    try {
+      const success = await refreshPassportScore(walletAddress);
+      if (success) {
+        setGitcoinVerified(true);
+      }
+    } catch (error) {
+      console.error('Gitcoin refresh error:', error);
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   return {
     handleVerifyGitcoin,
-    handleRefreshGitcoin,
+    handleCheckVerification,
+    isVerifying,
   };
 };

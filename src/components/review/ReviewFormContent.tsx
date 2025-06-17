@@ -20,12 +20,24 @@ interface ReviewFormContentProps {
   setOpenCompanySelect: (open: boolean) => void;
   filteredCompanies: Array<{ id: number; name: string; category: string }>;
   categories: Array<{ id: string; name: string; icon?: string }>;
+  gitcoinVerified: boolean;
+  isFormValid: boolean;
+  isSubmitting: boolean;
+  isTransacting: boolean;
+  isVerifying: boolean;
+  isWalletConnected: boolean;
+  walletAddress: string;
+  needsSignup: boolean;
+  existingUser: boolean | null;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleRatingChange: (rating: number) => void;
   handleCategoryChange: (category: string) => void;
   handleCompanyChange: (company: string) => void;
   handleCompanySearch: (value: string) => void;
   handleCompanySelect: (company: { id: number; name: string; category: string }) => void;
+  onFormSubmit: (e: React.FormEvent) => void;
+  handleVerifyGitcoin: () => Promise<void>;
+  handleCheckVerification: () => Promise<void>;
 }
 
 const ReviewFormContent = ({
