@@ -172,7 +172,7 @@ export class Web3Service {
       // Validate rating is uint8 (0-255, but we want 1-5)
       const rating = Math.max(1, Math.min(5, Math.floor(reviewData.rating)));
       
-      console.log('📋 Contract functions available:', Object.keys(this.reviewContract.interface.functions));
+      console.log('📋 Contract fragments available:', this.reviewContract.interface.fragments.map(f => f.name));
       console.log('📊 Submitting with parameters:', {
         companyName: reviewData.companyName,
         category: reviewData.category,
