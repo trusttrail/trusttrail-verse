@@ -26,7 +26,10 @@ const ReviewsHeader = ({
         <div>
           <h3 className="text-xl sm:text-2xl font-bold">Recent Reviews</h3>
           <p className="text-muted-foreground text-sm mt-1 hidden sm:block">
-            Latest AI-approved reviews from our community ({totalReviews} total)
+            {showAll 
+              ? `All AI-approved reviews from our community (${totalReviews} total)`
+              : `Latest 5 AI-approved reviews from our community (${totalReviews} total)`
+            }
           </p>
         </div>
         <div className="flex gap-2">
@@ -46,12 +49,15 @@ const ReviewsHeader = ({
             className="flex items-center gap-1"
           >
             <Eye className="h-4 w-4" />
-            {showAll ? 'Show Recent Only' : `View All Reviews (${totalReviews})`}
+            {showAll ? 'Show Recent 5' : `View All Reviews (${totalReviews})`}
           </Button>
         </div>
       </div>
       <p className="text-muted-foreground mb-6 text-sm sm:hidden">
-        Latest AI-approved reviews from our community ({totalReviews} total)
+        {showAll 
+          ? `All AI-approved reviews from our community (${totalReviews} total)`
+          : `Latest 5 AI-approved reviews from our community (${totalReviews} total)`
+        }
       </p>
     </>
   );

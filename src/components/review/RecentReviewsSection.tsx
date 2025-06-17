@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -200,7 +201,8 @@ const RecentReviewsSection = ({ reviews }: RecentReviewsSectionProps) => {
   const allReviews = [...convertedDatabaseReviews, ...enhancedReviews]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  const displayedReviews = showAll ? allReviews : allReviews.slice(0, 10);
+  // Cap to 5 recent reviews by default, show all when showAll is true
+  const displayedReviews = showAll ? allReviews : allReviews.slice(0, 5);
 
   return (
     <section className="px-4 sm:px-6" data-testid="recent-reviews">
