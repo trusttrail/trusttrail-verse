@@ -75,49 +75,44 @@ const ReviewPrerequisites = ({
 
           <div className="flex items-center justify-between p-3 border rounded-lg">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Gitcoin Passport</span>
+              <span className="text-sm font-medium">Identity Verified</span>
               {isVerifying && <RefreshCw className="w-4 h-4 animate-spin text-yellow-500" />}
               {gitcoinVerified && !isVerifying && <CheckCircle className="text-emerald-500" size={16} />}
-              {gitcoinVerified && passportScore > 0 && (
+              {gitcoinVerified && passportScore >= 0 && (
                 <Badge variant="secondary" className="ml-2 text-xs">
-                  Score: {passportScore}
-                </Badge>
-              )}
-              {needsRefresh && (
-                <Badge variant="outline" className="ml-2 text-xs text-orange-600">
-                  Needs Refresh
+                  Score: {passportScore.toFixed(1)}
                 </Badge>
               )}
             </div>
             <div className="flex gap-2">
-              {needsRefresh && gitcoinVerified && (
+              {gitcoinVerified ? (
                 <Button 
                   size="sm" 
                   variant="outline"
                   onClick={handleRefreshGitcoin}
                   disabled={!isWalletConnected || isVerifying}
+                  title="Refresh your Gitcoin Passport score"
                 >
                   <RefreshCw size={14} className={isVerifying ? 'animate-spin' : ''} />
-                  {isVerifying ? 'Refreshing...' : 'Refresh'}
+                  {isVerifying ? 'Refreshing...' : 'Refresh Score'}
+                </Button>
+              ) : (
+                <Button 
+                  size="sm" 
+                  variant="default"
+                  onClick={handleVerifyGitcoin}
+                  disabled={!isWalletConnected || isVerifying}
+                >
+                  {isVerifying ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin mr-1" />
+                      Verifying...
+                    </>
+                  ) : (
+                    "Verify Identity"
+                  )}
                 </Button>
               )}
-              <Button 
-                size="sm" 
-                variant={gitcoinVerified ? "outline" : "default"}
-                onClick={handleVerifyGitcoin}
-                disabled={!isWalletConnected || isVerifying}
-              >
-                {isVerifying ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin mr-1" />
-                    Verifying...
-                  </>
-                ) : gitcoinVerified ? (
-                  "Verified"
-                ) : (
-                  "Verify Identity"
-                )}
-              </Button>
             </div>
           </div>
         </div>
@@ -133,12 +128,12 @@ const ReviewPrerequisites = ({
           </Alert>
         )}
 
-        {needsRefresh && gitcoinVerified && (
+        {gitcoinVerified && (
           <Alert>
-            <AlertCircle className="h-4 w-4" />
+            <CheckCircle className="h-4 w-4 text-green-500" />
             <AlertDescription>
-              <strong>Score Update Available:</strong> Your Gitcoin Passport score may be outdated. 
-              Please refresh to ensure accurate scoring for your reviews.
+              <strong>Identity Verified:</strong> You're all set! Your Gitcoin Passport score of {passportScore.toFixed(1)} 
+              will be used for review verification. Use "Refresh Score" if you've added new stamps to update your score.
             </AlertDescription>
           </Alert>
         )}
@@ -156,7 +151,7 @@ const ReviewPrerequisites = ({
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              <strong>Gitcoin Passport Required:</strong> Complete identity verification to submit reviews and earn rewards. 
+              <strong>Identity Verification Required:</strong> Complete identity verification to submit reviews and earn rewards. 
               Click "Verify Identity" to open Gitcoin Passport, connect your wallet, and complete the verification process.
             </AlertDescription>
           </Alert>

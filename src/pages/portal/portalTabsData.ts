@@ -1,3 +1,4 @@
+
 import { 
   Home, 
   PenTool, 
@@ -6,7 +7,6 @@ import {
   Store, 
   Droplets, 
   Coins, 
-  Shield, 
   BarChart3,
   User
 } from "lucide-react";
@@ -38,7 +38,7 @@ export const recentReviews = [
   { id: 3, companyName: "OpenSea", reviewerAddress: "0xabcd...ef12", rating: 3, title: "Good but needs improvements", content: "OpenSea has a good selection of NFTs, but the user interface could use some improvements.", date: "2025-05-13", verified: true }
 ];
 
-// Removed deployment tab from the portal tabs
+// Removed Gitcoin Passport tab from the portal tabs
 export const portalTabs = [
   { id: "home", label: "Home", icon: Home },
   { id: "write-review", label: "Write Review", icon: PenTool },
@@ -48,6 +48,5 @@ export const portalTabs = [
   { id: "nft-marketplace", label: "NFT Marketplace", icon: Store },
   { id: "liquidity", label: "Liquidity", icon: Droplets },
   { id: "staking", label: "Staking", icon: Coins },
-  { id: "passport", label: "Passport", icon: Shield },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
 ];

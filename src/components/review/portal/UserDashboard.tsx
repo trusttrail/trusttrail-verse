@@ -2,11 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useWalletConnection } from '@/hooks/useWalletConnection';
+import { useGitcoinPassport } from '@/hooks/useGitcoinPassport';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import UserDashboardHeader from './dashboard/UserDashboardHeader';
 import UserStatsCards from './dashboard/UserStatsCards';
 import UserReviewsList from './dashboard/UserReviewsList';
+import UserActivity from './passport/UserActivity';
 
 interface UserReview {
   id: string;
@@ -30,6 +32,7 @@ interface UserStats {
 const UserDashboard = () => {
   const { user } = useAuth();
   const { isWalletConnected, walletAddress } = useWalletConnection();
+  const { isVerified } = useGitcoinPassport();
   const { toast } = useToast();
   const [userReviews, setUserReviews] = useState<UserReview[]>([]);
   const [userStats, setUserStats] = useState<UserStats>({
@@ -39,6 +42,14 @@ const UserDashboard = () => {
     totalRewards: 0
   });
   const [loading, setLoading] = useState(true);
+
+  // Mock user activity stats for the new components
+  const [activityStats] = useState({
+    reviewsGiven: 12,
+    topUpvotedReview: "Amazing DeFi experience with QuickSwap",
+    nocapEarned: 245.78,
+    reputationScore: 8.5
+  });
 
   useEffect(() => {
     if (walletAddress) {
@@ -116,6 +127,12 @@ const UserDashboard = () => {
       <UserStatsCards userStats={userStats} />
 
       <UserReviewsList reviews={userReviews} loading={loading} />
+
+      {/* Include activity overview from passport tab */}
+      <UserActivity 
+        userStats={activityStats}
+        isVerified={isVerified}
+      />
     </div>
   );
 };

@@ -12,7 +12,6 @@ import NFTMarketplaceTab from "@/components/review/portal/NFTMarketplaceTab";
 import LiquidityTab from "@/components/review/portal/LiquidityTab";
 import StakingTab from "@/components/review/portal/StakingTab";
 import AnalyticsTab from "@/components/review/portal/AnalyticsTab";
-import PassportTab from "@/components/review/portal/PassportTab";
 import { portalTabs, categories, topCompanies, recentReviews } from "./portalTabsData";
 
 interface PortalTabsProps {
@@ -60,7 +59,7 @@ export const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connect
                   </TabsTrigger>
                 ))}
               </TabsList>
-              <TabsList className="w-full grid grid-cols-5 md:hidden min-w-max">
+              <TabsList className="w-full grid grid-cols-4 md:hidden min-w-max">
                 {portalTabs.slice(5).map(({ id, label, icon }) => (
                   <TabsTrigger key={id} value={id} className="flex flex-col items-center gap-1 p-2 min-w-16">
                     {typeof icon === "string"
@@ -105,9 +104,6 @@ export const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connect
           </TabsContent>
           <TabsContent value="staking">
             <StakingTab isWalletConnected={isWalletConnected} connectWallet={connectWallet} />
-          </TabsContent>
-          <TabsContent value="passport">
-            <PassportTab isWalletConnected={isWalletConnected} connectWallet={connectWallet} />
           </TabsContent>
           <TabsContent value="analytics">
             <AnalyticsTab />
