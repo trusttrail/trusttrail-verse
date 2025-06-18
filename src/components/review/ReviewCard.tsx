@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -225,7 +226,7 @@ const ReviewCard = ({ review }: ReviewProps) => {
                 <span className="sm:hidden">Verified</span>
               </div>
             )}
-            {review.gitcoinScore !== undefined && (
+            {review.gitcoinScore !== undefined && review.gitcoinScore !== null && (
               <div className="flex items-center text-xs text-blue-600">
                 <Shield size={12} className="mr-1" />
                 <span>Gitcoin: {review.gitcoinScore.toFixed(1)}/100</span>
