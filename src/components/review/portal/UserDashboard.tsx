@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useWeb3 } from '@/hooks/useWeb3';
+import { useWalletConnection } from '@/hooks/useWalletConnection';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import UserDashboardHeader from './dashboard/UserDashboardHeader';
@@ -29,7 +29,7 @@ interface UserStats {
 
 const UserDashboard = () => {
   const { user } = useAuth();
-  const { tokenBalance, address } = useWeb3();
+  const { isWalletConnected, walletAddress } = useWalletConnection();
   const { toast } = useToast();
   const [userReviews, setUserReviews] = useState<UserReview[]>([]);
   const [userStats, setUserStats] = useState<UserStats>({
@@ -41,10 +41,10 @@ const UserDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (address) {
+    if (walletAddress) {
       fetchUserData();
     }
-  }, [address]);
+  }, [walletAddress]);
 
   const fetchUserData = async () => {
     try {
@@ -54,7 +54,7 @@ const UserDashboard = () => {
       const { data: reviews, error } = await supabase
         .from('reviews')
         .select('*')
-        .ilike('wallet_address', address)
+        .ilike('wallet_address', walletAddress)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -97,7 +97,7 @@ const UserDashboard = () => {
     }
   };
 
-  if (!address) {
+  if (!isWalletConnected || !walletAddress) {
     return (
       <div className="text-center py-8">
         <p className="text-muted-foreground">Please connect your wallet to view your dashboard.</p>
@@ -108,7 +108,7 @@ const UserDashboard = () => {
   return (
     <div className="space-y-6">
       <UserDashboardHeader 
-        address={address}
+        address={walletAddress}
         onRefresh={fetchUserData}
         loading={loading}
       />

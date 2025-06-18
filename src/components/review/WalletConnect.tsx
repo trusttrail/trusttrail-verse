@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { web3Service } from '@/services/web3Service';
 
 interface WalletConnectProps {
   isConnected: boolean;
@@ -74,6 +75,13 @@ const WalletConnect = ({
     }
   };
 
+  // Get the correct explorer URL for current network
+  const getExplorerUrl = () => {
+    const currentNetwork = web3Service.getCurrentNetwork();
+    const contracts = web3Service.getContractAddresses();
+    return `${contracts.explorerUrl}address/${address}`;
+  };
+
   return isConnected ? (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
@@ -108,7 +116,7 @@ const WalletConnect = ({
               size="sm"
               asChild
             >
-              <a href={`https://polygonscan.com/address/${address}`} target="_blank" rel="noopener noreferrer">
+              <a href={getExplorerUrl()} target="_blank" rel="noopener noreferrer">
                 View on Explorer
                 <ExternalLink size={14} />
               </a>
