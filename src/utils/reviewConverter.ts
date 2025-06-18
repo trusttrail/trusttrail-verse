@@ -134,7 +134,7 @@ export const convertDatabaseReviews = (
       title: dbReview.title,
       content: dbReview.content,
       date: dbReview.created_at,
-      verified: actualGitcoinScore !== null, // Only verified if we have actual score
+      verified: true, // All reviews are now considered verified by default
       upvotes,
       downvotes,
       gitcoinScore: actualGitcoinScore, // Use actual score or undefined
@@ -187,7 +187,7 @@ export const enhanceReviews = (
       downvotes,
       gitcoinScore: actualGitcoinScore, // Use actual score or undefined
       trustScore,
-      verified: actualGitcoinScore !== null, // Only verified if we have actual score
+      verified: true, // All reviews are now considered verified by default
       comments: review.comments || [],
       shareReview: () => shareReviewHandler(review)
     };

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -219,7 +218,7 @@ const ReviewCard = ({ review }: ReviewProps) => {
         <div className="flex flex-col sm:flex-row sm:items-center mb-3 gap-2">
           <span className="text-sm text-trustpurple-400 font-medium">{review.companyName}</span>
           <div className="flex items-center gap-2 flex-wrap">
-            {review.verified && review.gitcoinScore !== undefined && (
+            {review.verified && (
               <div className="flex items-center text-xs text-emerald-600">
                 <CheckCircle size={12} className="mr-1" />
                 <span className="hidden sm:inline">Verified Review</span>
