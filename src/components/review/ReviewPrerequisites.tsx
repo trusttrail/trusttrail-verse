@@ -79,11 +79,8 @@ const ReviewPrerequisites = ({
   const handleRefresh = async () => {
     if (!walletAddress) return;
     
-    if (handleRefreshGitcoin) {
-      handleRefreshGitcoin();
-    } else {
-      await refreshPassportScore(walletAddress);
-    }
+    // Always use the hook's refresh method to ensure proper window opening
+    await refreshPassportScore(walletAddress);
   };
 
   return (

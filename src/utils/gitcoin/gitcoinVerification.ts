@@ -76,3 +76,49 @@ export const handlePassportVerification = async (
     return false;
   }
 };
+
+// New function specifically for refreshing passport score
+export const handlePassportRefresh = async (
+  walletAddress: string,
+  savePassportData: (address: string, score: number) => GitcoinPassportData,
+  onSuccess: (data: GitcoinPassportData, message: string) => void,
+  onError: (message: string) => void,
+  onOpenWindow: () => void
+): Promise<boolean> => {
+  try {
+    console.log('Refreshing Gitcoin Passport score for:', walletAddress);
+    
+    // Always open the Gitcoin Passport window for refresh
+    const passportWindow = openGitcoinPassportWindow();
+    onOpenWindow();
+    
+    // Poll for updated score
+    await pollForPassportScore(
+      walletAddress,
+      passportWindow,
+      (data) => {
+        const scoreMessage = `Your passport score has been updated to ${data.score.toFixed(2)}.`;
+        onSuccess(data, scoreMessage);
+      },
+      onError,
+      savePassportData
+    );
+    
+    return true;
+    
+  } catch (error) {
+    console.error('Failed to refresh Gitcoin Passport:', error);
+    let errorMessage = "Failed to refresh passport score.";
+    
+    if (error instanceof Error) {
+      if (error.message.includes('popup')) {
+        errorMessage = "Popup blocked. Please enable popups for this site and try again.";
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
+    onError(errorMessage);
+    return false;
+  }
+};

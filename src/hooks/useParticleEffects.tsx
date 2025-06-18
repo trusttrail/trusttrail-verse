@@ -19,36 +19,62 @@ export const useParticleEffects = (theme: string) => {
     
     window.addEventListener('mousemove', handleMouseMove);
     
-    // Particle creation intervals
+    // Enhanced particle creation with better intervals for more density
     const stellarInterval = setInterval(() => {
       createStellarParticle(particlesContainerRef.current, mousePosition.current, theme);
-    }, Math.random() * 400 + 200);
+    }, Math.random() * 300 + 150); // More frequent stellar particles
+
+    // Create multiple stellar particles on initial load
+    setTimeout(() => {
+      for (let i = 0; i < 20; i++) {
+        setTimeout(() => {
+          createStellarParticle(particlesContainerRef.current, mousePosition.current, theme);
+        }, i * 100);
+      }
+    }, 500);
 
     const nebulaInterval = setInterval(() => {
       createCosmicNebula(particlesContainerRef.current, theme);
-    }, Math.random() * 8000 + 5000);
+    }, Math.random() * 6000 + 4000); // More frequent nebula
 
     const shootingStarInterval = setInterval(() => {
       createShootingStar(particlesContainerRef.current, theme);
-    }, Math.random() * 15000 + 10000);
+    }, Math.random() * 12000 + 8000); // More frequent shooting stars
 
     const dustInterval = setInterval(() => {
       createMilkyWayDust(particlesContainerRef.current, theme);
-    }, Math.random() * 6000 + 4000);
+    }, Math.random() * 4000 + 2000); // More frequent dust
 
     const cometInterval = setInterval(() => {
       createCometTrail(particlesContainerRef.current, theme);
-    }, Math.random() * 20000 + 15000);
+    }, Math.random() * 15000 + 10000); // More frequent comets
 
-    // Handle scroll effects
+    // Create initial background particles for immediate effect
+    setTimeout(() => {
+      for (let i = 0; i < 8; i++) {
+        setTimeout(() => {
+          createMilkyWayDust(particlesContainerRef.current, theme);
+        }, i * 200);
+      }
+      for (let i = 0; i < 4; i++) {
+        setTimeout(() => {
+          createCosmicNebula(particlesContainerRef.current, theme);
+        }, i * 500);
+      }
+    }, 1000);
+
+    // Handle scroll effects with more particles
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const scrollDelta = currentScrollY - lastScrollY.current;
       
-      if (Math.abs(scrollDelta) > 50) {
+      if (Math.abs(scrollDelta) > 30) {  // Lower threshold for more responsiveness
         // Create additional particles on scroll
-        if (Math.random() > 0.7) {
+        if (Math.random() > 0.5) { // Higher chance
           createStellarParticle(particlesContainerRef.current, mousePosition.current, theme);
+        }
+        if (Math.random() > 0.8) {
+          createMilkyWayDust(particlesContainerRef.current, theme);
         }
       }
       

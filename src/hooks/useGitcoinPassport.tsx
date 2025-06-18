@@ -11,7 +11,7 @@ import {
   checkIfDataIsStale 
 } from '@/utils/gitcoin/gitcoinStorage';
 import { fetchGitcoinScore } from '@/utils/gitcoin/gitcoinApi';
-import { handlePassportVerification } from '@/utils/gitcoin/gitcoinVerification';
+import { handlePassportVerification, handlePassportRefresh } from '@/utils/gitcoin/gitcoinVerification';
 
 export const useGitcoinPassport = (): GitcoinPassportHook => {
   const { user, isAuthenticated } = useAuth();
@@ -76,40 +76,45 @@ export const useGitcoinPassport = (): GitcoinPassportHook => {
   };
 
   const refreshPassportScore = async (walletAddress: string): Promise<boolean> => {
-    try {
-      setIsVerifying(true);
-      console.log('Refreshing Gitcoin Passport score...');
-      
-      const score = await fetchGitcoinScore(walletAddress);
-      
-      if (score !== null) {
-        savePassportData(walletAddress, score);
-        
-        toast({
-          title: "Passport Score Refreshed",
-          description: `Updated score: ${score}. This will apply to all future reviews.`,
-        });
-        
-        return true;
-      } else {
-        toast({
-          title: "No Passport Found",
-          description: "Please create a Gitcoin Passport first by visiting the verification link.",
-          variant: "destructive",
-        });
-        return false;
-      }
-    } catch (error) {
-      console.error('Failed to refresh Gitcoin Passport score:', error);
+    // Check if we have a valid user identifier (either authenticated user or wallet)
+    const userId = getUserId();
+    if (!userId) {
       toast({
-        title: "Refresh Failed",
-        description: "Failed to refresh Gitcoin Passport score. Please try again.",
+        title: "Connection Required",
+        description: "Please connect your wallet or sign in to refresh your passport.",
         variant: "destructive",
       });
       return false;
-    } finally {
-      setIsVerifying(false);
     }
+
+    setIsVerifying(true);
+    console.log('Starting passport refresh for wallet:', walletAddress, 'userId:', userId);
+    
+    return handlePassportRefresh(
+      walletAddress,
+      savePassportData,
+      (data, message) => {
+        toast({
+          title: "Gitcoin Passport Refreshed!",
+          description: message,
+        });
+        setIsVerifying(false);
+      },
+      (message) => {
+        toast({
+          title: "Refresh Failed",
+          description: message,
+          variant: "destructive",
+        });
+        setIsVerifying(false);
+      },
+      () => {
+        toast({
+          title: "Gitcoin Passport Opened",
+          description: "Update your stamps in the new window. Connect the same wallet address and complete your stamps. The page will automatically detect your updated score when ready.",
+        });
+      }
+    );
   };
 
   const clearPassportData = (): void => {
