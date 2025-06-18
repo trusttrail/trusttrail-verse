@@ -1,10 +1,12 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Shield, CheckCircle, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useGitcoinPassport } from '@/hooks/useGitcoinPassport';
+import { useWalletConnection } from '@/hooks/useWalletConnection';
 
 interface ReviewPrerequisitesProps {
   isWalletConnected: boolean;
@@ -24,13 +26,29 @@ const ReviewPrerequisites = ({
   connectWallet,
   isAuthenticated,
   existingUser,
-  gitcoinVerified,
-  passportScore,
-  needsRefresh,
-  isVerifying,
+  gitcoinVerified: propGitcoinVerified,
+  passportScore: propPassportScore,
+  needsRefresh: propNeedsRefresh,
+  isVerifying: propIsVerifying,
   handleVerifyGitcoin,
   handleRefreshGitcoin,
 }: ReviewPrerequisitesProps) => {
+  const { walletAddress } = useWalletConnection();
+  const { 
+    isVerified, 
+    passportScore, 
+    needsRefresh, 
+    isVerifying,
+    verifyPassport,
+    refreshPassportScore 
+  } = useGitcoinPassport();
+
+  // Use the hook's state if available, otherwise fall back to props
+  const gitcoinVerified = isVerified || propGitcoinVerified;
+  const currentScore = passportScore || propPassportScore;
+  const shouldRefresh = needsRefresh || propNeedsRefresh;
+  const verifying = isVerifying || propIsVerifying;
+
   // Determine authentication status display based on wallet connection state
   const getAuthStatus = () => {
     if (isAuthenticated) {
@@ -47,6 +65,26 @@ const ReviewPrerequisites = ({
   };
 
   const authStatus = getAuthStatus();
+
+  const handleVerify = async () => {
+    if (!walletAddress) return;
+    
+    if (handleVerifyGitcoin) {
+      handleVerifyGitcoin();
+    } else {
+      await verifyPassport(walletAddress);
+    }
+  };
+
+  const handleRefresh = async () => {
+    if (!walletAddress) return;
+    
+    if (handleRefreshGitcoin) {
+      handleRefreshGitcoin();
+    } else {
+      await refreshPassportScore(walletAddress);
+    }
+  };
 
   return (
     <Card>
@@ -76,11 +114,11 @@ const ReviewPrerequisites = ({
           <div className="flex items-center justify-between p-3 border rounded-lg">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Identity Verified</span>
-              {isVerifying && <RefreshCw className="w-4 h-4 animate-spin text-yellow-500" />}
-              {gitcoinVerified && !isVerifying && <CheckCircle className="text-emerald-500" size={16} />}
-              {gitcoinVerified && passportScore >= 0 && (
+              {verifying && <RefreshCw className="w-4 h-4 animate-spin text-yellow-500" />}
+              {gitcoinVerified && !verifying && <CheckCircle className="text-emerald-500" size={16} />}
+              {gitcoinVerified && currentScore >= 0 && (
                 <Badge variant="secondary" className="ml-2 text-xs">
-                  Score: {passportScore.toFixed(1)}
+                  Score: {currentScore.toFixed(1)}
                 </Badge>
               )}
             </div>
@@ -89,21 +127,21 @@ const ReviewPrerequisites = ({
                 <Button 
                   size="sm" 
                   variant="outline"
-                  onClick={handleRefreshGitcoin}
-                  disabled={!isWalletConnected || isVerifying}
+                  onClick={handleRefresh}
+                  disabled={!isWalletConnected || verifying}
                   title="Refresh your Gitcoin Passport score"
                 >
-                  <RefreshCw size={14} className={isVerifying ? 'animate-spin' : ''} />
-                  {isVerifying ? 'Refreshing...' : 'Refresh Score'}
+                  <RefreshCw size={14} className={verifying ? 'animate-spin' : ''} />
+                  {verifying ? 'Refreshing...' : 'Refresh Score'}
                 </Button>
               ) : (
                 <Button 
                   size="sm" 
                   variant="default"
-                  onClick={handleVerifyGitcoin}
-                  disabled={!isWalletConnected || isVerifying}
+                  onClick={handleVerify}
+                  disabled={!isWalletConnected || verifying}
                 >
-                  {isVerifying ? (
+                  {verifying ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin mr-1" />
                       Verifying...
@@ -118,7 +156,7 @@ const ReviewPrerequisites = ({
         </div>
 
         {/* Verification Status Alerts */}
-        {isVerifying && (
+        {verifying && (
           <Alert>
             <RefreshCw className="h-4 w-4 animate-spin" />
             <AlertDescription>
@@ -132,8 +170,18 @@ const ReviewPrerequisites = ({
           <Alert>
             <CheckCircle className="h-4 w-4 text-green-500" />
             <AlertDescription>
-              <strong>Identity Verified:</strong> You're all set! Your Gitcoin Passport score of {passportScore.toFixed(1)} 
+              <strong>Identity Verified:</strong> You're all set! Your Gitcoin Passport score of {currentScore.toFixed(1)} 
               will be used for review verification. Use "Refresh Score" if you've added new stamps to update your score.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {shouldRefresh && gitcoinVerified && (
+          <Alert>
+            <AlertCircle className="h-4 w-4 text-orange-500" />
+            <AlertDescription>
+              <strong>Score Update Available:</strong> Your Gitcoin Passport score may be outdated. 
+              Click "Refresh Score" to get the latest verification status.
             </AlertDescription>
           </Alert>
         )}
@@ -147,7 +195,7 @@ const ReviewPrerequisites = ({
           </Alert>
         )}
 
-        {isWalletConnected && !gitcoinVerified && !isVerifying && (
+        {isWalletConnected && !gitcoinVerified && !verifying && (
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
