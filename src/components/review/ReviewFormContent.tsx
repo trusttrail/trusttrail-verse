@@ -157,16 +157,12 @@ const ReviewFormContent = ({
             </div>
 
             <div className="space-y-2">
-              <Label>Supporting Documents (Required for Blockchain Submission)</Label>
               <FileUpload
                 selectedFiles={files}
                 setSelectedFiles={setFiles}
                 fileError={fileError}
                 setFileError={setFileError}
               />
-              <p className="text-xs text-muted-foreground">
-                Upload proof documents to support your review. This will be stored on IPFS and linked to your blockchain transaction.
-              </p>
             </div>
           </CardContent>
         </Card>

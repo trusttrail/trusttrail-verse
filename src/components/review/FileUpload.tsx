@@ -71,10 +71,6 @@ const FileUpload = ({
       {fileError && <FileErrorDisplay error={fileError} />}
 
       <FileList files={selectedFiles} onRemoveFile={removeFile} />
-
-      <p className="text-xs text-muted-foreground mt-2">
-        Upload proof documents to support your review. This will be stored on IPFS and linked to your blockchain transaction.
-      </p>
     </div>
   );
 };

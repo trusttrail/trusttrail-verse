@@ -1,7 +1,5 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { Share2 } from "lucide-react";
 import ReviewCard from "@/components/review/ReviewCard";
 
 interface Review {
@@ -15,6 +13,13 @@ interface Review {
   verified: boolean;
   upvotes?: number;
   downvotes?: number;
+  attachments?: Array<{
+    id: string;
+    filename: string;
+    fileType: string;
+    fileSize: number;
+    url?: string;
+  }>;
   comments?: Array<{
     id: number;
     author: string;
@@ -54,19 +59,7 @@ const ReviewsList = ({ reviews, loading, onShareReview }: ReviewsListProps) => {
   return (
     <div className="space-y-4 sm:space-y-6">
       {reviews.map(review => (
-        <div key={review.id} className="relative group">
-          <ReviewCard review={review} />
-          <div className="absolute top-4 right-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onShareReview(review)}
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <Share2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <ReviewCard key={review.id} review={review} />
       ))}
     </div>
   );

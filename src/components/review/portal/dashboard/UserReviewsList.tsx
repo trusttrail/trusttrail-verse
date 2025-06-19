@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, FileText, Coins, XCircle } from "lucide-react";
+import { Star, FileText, Coins, XCircle, Paperclip } from "lucide-react";
 
 interface UserReview {
   id: string;
@@ -14,6 +14,12 @@ interface UserReview {
   created_at: string;
   wallet_address: string;
   content: string;
+  attachments?: Array<{
+    id: string;
+    filename: string;
+    fileType: string;
+    fileSize: number;
+  }>;
 }
 
 interface UserReviewsListProps {
@@ -121,6 +127,14 @@ const UserReviewsList = ({ reviews, loading }: UserReviewsListProps) => {
                   {review.rating}/5
                 </span>
               </div>
+
+              {/* Show attachments if available */}
+              {review.attachments && review.attachments.length > 0 && (
+                <div className="flex items-center gap-1 mb-2 text-sm text-muted-foreground">
+                  <Paperclip className="h-4 w-4" />
+                  <span>{review.attachments.length} attachment(s)</span>
+                </div>
+              )}
               
               {review.status === 'approved' && (
                 <div className="flex items-center gap-1 text-sm text-green-600">

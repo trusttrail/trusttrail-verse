@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Star, CheckCircle, ThumbsUp, ThumbsDown, MessageCircle, Flag, Shield, Share2 } from "lucide-react";
+import { Star, CheckCircle, ThumbsUp, ThumbsDown, MessageCircle, Flag, Shield, Share2, Paperclip, Download } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import { useWeb3 } from '@/hooks/useWeb3';
@@ -21,6 +20,13 @@ interface ReviewProps {
     verified: boolean;
     upvotes?: number;
     downvotes?: number;
+    attachments?: Array<{
+      id: string;
+      filename: string;
+      fileType: string;
+      fileSize: number;
+      url?: string;
+    }>;
     comments?: Array<{
       id: number;
       author: string;
@@ -40,6 +46,7 @@ const ReviewCard = ({ review }: ReviewProps) => {
   const { address } = useWeb3();
   const { toast } = useToast();
   const [showComments, setShowComments] = useState(false);
+  const [showAttachments, setShowAttachments] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [localUpvotes, setLocalUpvotes] = useState(review.upvotes || 0);
@@ -51,6 +58,14 @@ const ReviewCard = ({ review }: ReviewProps) => {
   const formatAddress = (address: string) => {
     if (address.includes('...')) return address;
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const requireWalletConnection = (action: string) => {
@@ -188,6 +203,18 @@ const ReviewCard = ({ review }: ReviewProps) => {
     }
   };
 
+  const handleDownloadAttachment = (attachment: any) => {
+    if (attachment.url) {
+      window.open(attachment.url, '_blank');
+    } else {
+      toast({
+        title: "Download Unavailable",
+        description: "This file is not available for download.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Card className="hover:border-trustpurple-500/30 transition-colors group">
       <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
@@ -236,6 +263,45 @@ const ReviewCard = ({ review }: ReviewProps) => {
         </div>
         
         <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{review.content}</p>
+
+        {/* Attachments Section */}
+        {review.attachments && review.attachments.length > 0 && (
+          <div className="mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAttachments(!showAttachments)}
+              className="flex items-center gap-1 mb-2"
+            >
+              <Paperclip size={14} />
+              <span>Attachments ({review.attachments.length})</span>
+            </Button>
+            
+            {showAttachments && (
+              <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+                {review.attachments.map((attachment) => (
+                  <div key={attachment.id} className="flex items-center justify-between bg-background rounded p-2">
+                    <div className="flex items-center gap-2 flex-1">
+                      <Paperclip size={12} className="text-muted-foreground" />
+                      <span className="text-sm truncate">{attachment.filename}</span>
+                      <span className="text-xs text-muted-foreground">
+                        ({formatFileSize(attachment.fileSize)})
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDownloadAttachment(attachment)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <Download className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Voting and Actions - Only for wallet-connected users */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
