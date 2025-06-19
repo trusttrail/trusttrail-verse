@@ -2,7 +2,8 @@
 import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRecentActivity } from "@/hooks/useRecentActivity";
-import { Sparkles, Gift } from "lucide-react";
+import { Sparkles, Gift, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const typeConfig = {
   review: {
@@ -22,7 +23,7 @@ const typeConfig = {
 };
 
 const RecentActivityOverlay: React.FC = () => {
-  const { notifications } = useRecentActivity();
+  const { notifications, dismissNotification } = useRecentActivity();
 
   return (
     <div className="fixed z-50 top-20 right-4 w-80 max-w-[calc(100vw-2rem)] space-y-3 pointer-events-none select-none">
@@ -41,8 +42,7 @@ const RecentActivityOverlay: React.FC = () => {
                 stiffness: 100,
                 damping: 15
               }}
-              className={`rounded-lg border px-4 py-3 flex items-center gap-3 ${type.bg} ${type.border} backdrop-blur-sm shadow-lg`}
-              style={{ pointerEvents: "none" }}
+              className={`rounded-lg border px-4 py-3 flex items-center gap-3 ${type.bg} ${type.border} backdrop-blur-sm shadow-lg pointer-events-auto`}
             >
               <div className="flex-shrink-0">{type.icon}</div>
               <div className="flex-1 min-w-0">
@@ -53,6 +53,14 @@ const RecentActivityOverlay: React.FC = () => {
                   {notif.wallet}
                 </div>
               </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 hover:bg-black/10 dark:hover:bg-white/10"
+                onClick={() => dismissNotification(notif.id)}
+              >
+                <X size={14} />
+              </Button>
             </motion.div>
           );
         })}

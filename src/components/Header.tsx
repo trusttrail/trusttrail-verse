@@ -35,11 +35,19 @@ const Header = () => {
   const handleHome = () => {
     navigate('/');
     setIsMobileMenuOpen(false);
+    // Scroll to top after navigation
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
   };
 
   const handleReviewPortal = () => {
     navigate('/review-portal');
     setIsMobileMenuOpen(false);
+    // Scroll to top after navigation
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
   };
 
   const handleTestnet = () => {
@@ -73,12 +81,15 @@ const Header = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
+          <button 
+            onClick={handleHome}
+            className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+          >
             <div className="h-8 w-8 rounded-full bg-gradient-to-br from-trustpurple-500 to-trustblue-500 flex items-center justify-center">
               <CheckCircle size={18} className="text-white" />
             </div>
             <span className="font-bold text-lg bg-gradient-to-r from-trustpurple-300 to-trustblue-400 bg-clip-text text-transparent hidden sm:block">TrustTrail</span>
-          </Link>
+          </button>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-3">

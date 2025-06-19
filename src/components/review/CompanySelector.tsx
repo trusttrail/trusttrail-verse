@@ -7,6 +7,7 @@ interface Company {
   id: number;
   name: string;
   category: string;
+  logo?: string;
 }
 
 interface CompanySelectorProps {
@@ -116,9 +117,21 @@ const CompanySelector = ({
                   onClick={() => handleCompanyClick(company)}
                   className="px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
                 >
-                  <div className="flex flex-col">
-                    <span className="font-medium text-sm">{company.name}</span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{company.category}</span>
+                  <div className="flex items-center gap-3">
+                    {company.logo && (
+                      <img 
+                        src={company.logo} 
+                        alt={`${company.name} logo`}
+                        className="w-8 h-8 rounded-full object-contain"
+                        onError={(e) => {
+                          e.currentTarget.src = `https://via.placeholder.com/32x32/7c3aed/ffffff?text=${company.name.charAt(0)}`;
+                        }}
+                      />
+                    )}
+                    <div className="flex flex-col">
+                      <span className="font-medium text-sm">{company.name}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{company.category}</span>
+                    </div>
                   </div>
                 </div>
               ))}
