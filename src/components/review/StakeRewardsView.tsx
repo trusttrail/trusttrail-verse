@@ -23,7 +23,7 @@ const StakeRewardsView = ({ isWalletConnected, connectWallet }: StakeRewardsView
     if (!isWalletConnected) {
       toast({
         title: "Wallet Connection Required",
-        description: "Please connect your wallet to stake $NOCAP tokens.",
+        description: "Please connect your wallet to stake $TRUST tokens.",
         variant: "destructive",
       });
       return;
@@ -44,7 +44,7 @@ const StakeRewardsView = ({ isWalletConnected, connectWallet }: StakeRewardsView
     setTimeout(() => {
       toast({
         title: "Staking Successful",
-        description: `You have staked ${stakeAmount} $NOCAP tokens.`,
+        description: `You have staked ${stakeAmount} $TRUST tokens.`,
       });
       
       setStakeAmount("");
@@ -54,15 +54,15 @@ const StakeRewardsView = ({ isWalletConnected, connectWallet }: StakeRewardsView
   
   return (
     <div>
-      <h2 className="text-2xl md:text-3xl font-bold mb-2">Stake $NOCAP for Rewards</h2>
-      <p className="text-muted-foreground mb-8">Earn rewards by staking your $NOCAP tokens and supporting the TrustTrail ecosystem</p>
+      <h2 className="text-2xl md:text-3xl font-bold mb-2">Stake $TRUST for Rewards</h2>
+      <p className="text-muted-foreground mb-8">Earn rewards by staking your $TRUST tokens and supporting the TrustTrail ecosystem</p>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
               <CardTitle>Staking Benefits</CardTitle>
-              <CardDescription>Earn rewards and gain privileges by staking $NOCAP tokens</CardDescription>
+              <CardDescription>Earn rewards and gain privileges by staking $TRUST tokens</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -72,7 +72,7 @@ const StakeRewardsView = ({ isWalletConnected, connectWallet }: StakeRewardsView
                   </div>
                   <div>
                     <h4 className="font-semibold">Earn APY</h4>
-                    <p className="text-sm text-muted-foreground">Earn up to 15% APY on your staked $NOCAP tokens</p>
+                    <p className="text-sm text-muted-foreground">Earn up to 15% APY on your staked $TRUST tokens</p>
                   </div>
                 </div>
                 
@@ -115,7 +115,7 @@ const StakeRewardsView = ({ isWalletConnected, connectWallet }: StakeRewardsView
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
                   <div>
                     <p className="text-sm text-muted-foreground">Total Staked</p>
-                    <p className="font-semibold text-lg">4,253,689 $NOCAP</p>
+                    <p className="font-semibold text-lg">4,253,689 $TRUST</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Current APY</p>
@@ -134,7 +134,7 @@ const StakeRewardsView = ({ isWalletConnected, connectWallet }: StakeRewardsView
         <div>
           <Card>
             <CardHeader>
-              <CardTitle>Stake $NOCAP</CardTitle>
+              <CardTitle>Stake $TRUST</CardTitle>
               <CardDescription>Stake your tokens to earn rewards</CardDescription>
             </CardHeader>
             <CardContent>
@@ -160,14 +160,14 @@ const StakeRewardsView = ({ isWalletConnected, connectWallet }: StakeRewardsView
                         className="pr-16"
                       />
                       <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <span className="text-sm text-muted-foreground">$NOCAP</span>
+                        <span className="text-sm text-muted-foreground">$TRUST</span>
                       </div>
                     </div>
                   </div>
                   
                   <div className="flex justify-between text-sm text-muted-foreground mb-2">
                     <span>Balance:</span>
-                    <span>1,000 $NOCAP</span>
+                    <span>1,000 $TRUST</span>
                   </div>
                   
                   <div className="flex items-center justify-between mb-2">

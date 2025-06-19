@@ -43,11 +43,11 @@ const UserDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  // Mock user activity stats for the new components
+  // Mock user activity stats for the new components with $TRUST
   const [activityStats] = useState({
     reviewsGiven: 12,
     topUpvotedReview: "Amazing DeFi experience with QuickSwap",
-    nocapEarned: 245.78,
+    trustEarned: 245.78,
     reputationScore: 8.5
   });
 

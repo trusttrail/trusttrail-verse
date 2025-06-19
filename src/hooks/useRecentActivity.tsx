@@ -81,7 +81,7 @@ export const RecentActivityProvider = ({ children }: { children: ReactNode }) =>
         return {
           id,
           type,
-          message: `You earned ${amount} $NOCAP tokens 💰`,
+          message: `You earned ${amount} $TRUST tokens 💰`,
           wallet,
         };
       }

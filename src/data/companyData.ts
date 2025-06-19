@@ -1,39 +1,23 @@
-
 // Comprehensive companies database for crypto/web3 ecosystem (500+ companies)
 
 export const sampleCompanies = [
   // Centralized Exchanges (Major)
-  { id: 1, name: "Binance", category: "Exchange" },
-  { id: 2, name: "Coinbase", category: "Exchange" },
-  { id: 3, name: "Kraken", category: "Exchange" },
-  { id: 4, name: "OKX", category: "Exchange" },
-  { id: 5, name: "KuCoin", category: "Exchange" },
-  { id: 6, name: "Bybit", category: "Exchange" },
-  { id: 7, name: "Gate.io", category: "Exchange" },
-  { id: 8, name: "Huobi", category: "Exchange" },
-  { id: 9, name: "Bitfinex", category: "Exchange" },
-  { id: 10, name: "Crypto.com", category: "Exchange" },
-  { id: 11, name: "Gemini", category: "Exchange" },
-  { id: 12, name: "Bittrex", category: "Exchange" },
-  { id: 13, name: "Bitstamp", category: "Exchange" },
-  { id: 14, name: "FTX", category: "Exchange" },
+  { id: 1, name: "Binance", category: "Exchange", logo: "https://pbs.twimg.com/profile_images/1693064813336530946/TQq2TrGd_400x400.jpg" },
+  { id: 2, name: "Coinbase", category: "Exchange", logo: "https://pbs.twimg.com/profile_images/1756745150838685696/dPjrNRp3_400x400.jpg" },
+  { id: 3, name: "Kraken", category: "Exchange", logo: "https://pbs.twimg.com/profile_images/1726332924568674304/SHm3uBBN_400x400.jpg" },
+  { id: 4, name: "OKX", category: "Exchange", logo: "https://pbs.twimg.com/profile_images/1756653495966744576/zE-wGCXs_400x400.jpg" },
+  { id: 5, name: "KuCoin", category: "Exchange", logo: "https://pbs.twimg.com/profile_images/1576173827631816704/ZPJQd9W-_400x400.jpg" },
+  { id: 6, name: "Bybit", category: "Exchange", logo: "https://pbs.twimg.com/profile_images/1621844799847354368/D9nGFTNp_400x400.jpg" },
+  { id: 7, name: "Gate.io", category: "Exchange", logo: "https://pbs.twimg.com/profile_images/1534154598976561152/yCGJWKKv_400x400.jpg" },
+  { id: 8, name: "Huobi", category: "Exchange", logo: "https://pbs.twimg.com/profile_images/1658407725316718593/tn2QK2_I_400x400.jpg" },
+  { id: 9, name: "Bitfinex", category: "Exchange", logo: "https://pbs.twimg.com/profile_images/1580538158726299648/z9F0mF8N_400x400.jpg" },
+  { id: 10, name: "Crypto.com", category: "Exchange", logo: "https://pbs.twimg.com/profile_images/1756655838853443584/JnkF6STY_400x400.jpg" },
   
   // DEXs (Decentralized Exchanges)
-  { id: 15, name: "Uniswap", category: "DEX" },
-  { id: 16, name: "PancakeSwap", category: "DEX" },
-  { id: 17, name: "SushiSwap", category: "DEX" },
-  { id: 18, name: "QuickSwap", category: "DEX" },
-  { id: 19, name: "Curve Finance", category: "DEX" },
-  { id: 20, name: "Balancer", category: "DEX" },
-  { id: 21, name: "1inch", category: "DEX" },
-  { id: 22, name: "dYdX", category: "DEX" },
-  { id: 23, name: "Bancor", category: "DEX" },
-  { id: 24, name: "Jupiter", category: "DEX" },
-  { id: 25, name: "Raydium", category: "DEX" },
-  { id: 26, name: "Maverick", category: "DEX" },
-  { id: 27, name: "Trader Joe", category: "DEX" },
-  { id: 28, name: "SpookySwap", category: "DEX" },
-  { id: 29, name: "Osmosis", category: "DEX" },
+  { id: 15, name: "Uniswap", category: "DEX", logo: "https://pbs.twimg.com/profile_images/1692919071088746496/fWpUdRws_400x400.jpg" },
+  { id: 16, name: "PancakeSwap", category: "DEX", logo: "https://pbs.twimg.com/profile_images/1677928725626437633/XHOxBFRD_400x400.jpg" },
+  { id: 17, name: "SushiSwap", category: "DEX", logo: "https://pbs.twimg.com/profile_images/1756351012000231424/7hsDLRm3_400x400.jpg" },
+  { id: 18, name: "QuickSwap", category: "DEX", logo: "https://pbs.twimg.com/profile_images/1673628171051331584/5Wf5ZMcF_400x400.jpg" },
   
   // Layer 1 Blockchains
   { id: 30, name: "Ethereum", category: "L1 Blockchain" },
@@ -93,7 +77,7 @@ export const sampleCompanies = [
   { id: 76, name: "Swell", category: "Restaking" },
   
   // NFT Marketplaces
-  { id: 77, name: "OpenSea", category: "NFT Marketplace" },
+  { id: 77, name: "OpenSea", category: "NFT Marketplace", logo: "https://pbs.twimg.com/profile_images/1560719020905521152/8KHPoIV-_400x400.jpg" },
   { id: 78, name: "Blur", category: "NFT Marketplace" },
   { id: 79, name: "Magic Eden", category: "NFT Marketplace" },
   { id: 80, name: "Tensor", category: "NFT Marketplace" },
@@ -104,7 +88,7 @@ export const sampleCompanies = [
   { id: 85, name: "X2Y2", category: "NFT Marketplace" },
   
   // Gaming & Metaverse
-  { id: 86, name: "Axie Infinity", category: "Gaming" },
+  { id: 86, name: "Axie Infinity", category: "Gaming", logo: "https://pbs.twimg.com/profile_images/1598680199088066560/9J0QZQFX_400x400.png" },
   { id: 87, name: "The Sandbox", category: "Gaming" },
   { id: 88, name: "Decentraland", category: "Gaming" },
   { id: 89, name: "Gala Games", category: "Gaming" },

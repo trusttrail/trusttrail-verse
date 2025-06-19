@@ -5,7 +5,7 @@ import { Star, Coins, Trophy, Shield } from "lucide-react";
 
 interface UserStats {
   reviewsGiven: number;
-  nocapEarned: number;
+  trustEarned: number;
   reputationScore: number;
 }
 
@@ -38,8 +38,8 @@ const UserDashboard = ({ userStats, passportScore, isVerified }: UserDashboardPr
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">$NOCAP Earned</p>
-              <p className="text-2xl font-bold">{userStats.nocapEarned}</p>
+              <p className="text-sm font-medium text-muted-foreground">$TRUST Earned</p>
+              <p className="text-2xl font-bold">{userStats.trustEarned}</p>
             </div>
             <div className="bg-green-100 dark:bg-green-900/20 p-3 rounded-full">
               <Coins className="text-green-600 dark:text-green-400" size={20} />
