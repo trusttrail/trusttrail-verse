@@ -159,10 +159,7 @@ const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connectWallet 
       </TabsContent>
 
       <TabsContent value="deployment">
-        <DeploymentTab 
-          isWalletConnected={isWalletConnected}
-          connectWallet={connectWallet}
-        />
+        <DeploymentTab />
       </TabsContent>
     </Tabs>
   );
