@@ -130,10 +130,7 @@ const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connectWallet 
       </TabsContent>
 
       <TabsContent value="dashboard">
-        <UserDashboard 
-          isWalletConnected={isWalletConnected}
-          connectWallet={connectWallet}
-        />
+        <UserDashboard />
       </TabsContent>
 
       <TabsContent value="analytics">
