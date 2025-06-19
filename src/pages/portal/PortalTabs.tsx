@@ -32,6 +32,11 @@ const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connectWallet 
     }
   }, [searchParams, setActiveTab]);
 
+  // Scroll to top when tab changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTab]);
+
   const handleWriteReviewClick = () => {
     setActiveTab("write-review");
   };
@@ -105,11 +110,12 @@ const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connectWallet 
         <WriteReviewTab 
           isWalletConnected={isWalletConnected}
           connectWallet={connectWallet}
+          categories={sampleCategories}
         />
       </TabsContent>
 
       <TabsContent value="categories">
-        <CategoriesTab />
+        <CategoriesTab categories={sampleCategories} />
       </TabsContent>
 
       <TabsContent value="businesses">

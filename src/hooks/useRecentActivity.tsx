@@ -11,6 +11,7 @@ interface ActivityNotification {
 interface RecentActivityContextType {
   notifications: ActivityNotification[];
   pushNotification: (notification: Omit<ActivityNotification, 'id'>) => void;
+  dismissNotification: (id: string) => void;
   clearNotifications: () => void;
 }
 
@@ -38,6 +39,10 @@ export const RecentActivityProvider = ({ children }: { children: ReactNode }) =>
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id));
     }, 4000);
+  }, []);
+
+  const dismissNotification = useCallback((id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
   }, []);
 
   const clearNotifications = useCallback(() => {
@@ -115,6 +120,7 @@ export const RecentActivityProvider = ({ children }: { children: ReactNode }) =>
   const contextValue: RecentActivityContextType = {
     notifications,
     pushNotification,
+    dismissNotification,
     clearNotifications,
   };
 

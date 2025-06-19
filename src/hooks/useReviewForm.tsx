@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { sampleCompanies, categories } from '@/data/companyData';
+import { sampleCompanies, sampleCategories } from '@/data/companyData';
 
 export interface ReviewFormData {
   companyName: string;
@@ -32,10 +32,11 @@ export const useReviewForm = () => {
   const mockCompanies = sampleCompanies.map(company => ({
     id: company.id,
     name: company.name,
-    category: company.category
+    category: company.category,
+    logo: company.logo
   }));
 
-  const mockCategories = categories.map(cat => ({
+  const mockCategories = sampleCategories.map(cat => ({
     id: cat.id,
     name: cat.name
   }));
@@ -85,7 +86,7 @@ export const useReviewForm = () => {
     setFilteredCompanies(filtered);
   };
 
-  const handleCompanySelect = (company: { id: number; name: string; category: string }) => {
+  const handleCompanySelect = (company: { id: number; name: string; category: string; logo?: string }) => {
     setFormData(prev => ({
       ...prev,
       companyName: company.name,
