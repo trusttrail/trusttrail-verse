@@ -6,7 +6,7 @@ import { Award, BarChart3, Star, TrendingUp } from "lucide-react";
 interface UserStats {
   reviewsGiven: number;
   topUpvotedReview: string;
-  nocapEarned: number;
+  trustEarned: number;
   reputationScore: number;
 }
 

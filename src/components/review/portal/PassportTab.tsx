@@ -31,7 +31,7 @@ const PassportTab = ({ isWalletConnected, connectWallet }: PassportTabProps) => 
   const [userStats] = useState({
     reviewsGiven: 12,
     topUpvotedReview: "Amazing DeFi experience with QuickSwap",
-    nocapEarned: 245.78,
+    trustEarned: 245.78,
     reputationScore: 8.5
   });
 
