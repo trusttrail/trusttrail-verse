@@ -12,7 +12,7 @@ import SignUpPrompt from '@/components/review/SignUpPrompt';
 const ReviewPortal = () => {
   const { theme } = useTheme();
   const { isAuthenticated } = useAuth();
-  const [activeTab, setActiveTab] = useState<string>("home");
+  const [activeTab, setActiveTab] = useState<string>("summary");
   const { isWalletConnected, connectWallet, needsSignup, existingUser } = useWalletConnection();
   
   return (

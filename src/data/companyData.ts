@@ -37,7 +37,7 @@ export const sampleCompanies = [
     reviewCount: 892,
     category: 'DeFi Lending',
     description: 'Decentralized lending and borrowing protocol',
-    hasPendingReviews: true,
+    hasPendingReviews: false,
   },
   {
     id: 3,
@@ -77,7 +77,7 @@ export const sampleCompanies = [
     reviewCount: 789,
     category: 'DeFi Lending',
     description: 'Decentralized autonomous organization',
-    hasPendingReviews: true,
+    hasPendingReviews: false,
   },
   {
     id: 7,
@@ -137,7 +137,7 @@ export const sampleCompanies = [
     reviewCount: 1123,
     category: 'Layer 2',
     description: 'Ethereum scaling and infrastructure',
-    hasPendingReviews: true,
+    hasPendingReviews: false,
   }
 ];
 

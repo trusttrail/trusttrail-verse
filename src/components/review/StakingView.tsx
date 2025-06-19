@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,7 +52,8 @@ const StakingView = ({ isWalletConnected, connectWallet }: StakingViewProps) => 
     }
   ];
 
-  const userStakes = [
+  // Only show user stakes if wallet is connected
+  const userStakes = isWalletConnected ? [
     {
       id: 1,
       pool: "Standard Pool",
@@ -72,7 +72,7 @@ const StakingView = ({ isWalletConnected, connectWallet }: StakingViewProps) => 
       endDate: "2025-07-15",
       status: "Active"
     }
-  ];
+  ] : [];
 
   const selectedPoolData = stakingPools.find(pool => pool.id === selectedPool);
   
@@ -303,30 +303,44 @@ const StakingView = ({ isWalletConnected, connectWallet }: StakingViewProps) => 
                 <CardDescription>Manage your active stakes</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {userStakes.map((stake) => (
-                  <div key={stake.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-semibold">{stake.pool}</h4>
-                      <Badge variant={stake.status === 'Active' ? 'default' : 'secondary'}>
-                        {stake.status}
-                      </Badge>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-muted-foreground">Staked</p>
-                        <p className="font-medium">{stake.amount} $NOCAP</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Rewards</p>
-                        <p className="font-medium text-green-500">{stake.rewards} $NOCAP</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">End Date</p>
-                        <p className="font-medium">{stake.endDate}</p>
-                      </div>
-                    </div>
+                {!isWalletConnected ? (
+                  <div className="text-center py-6">
+                    <p className="mb-4 text-muted-foreground">Connect your wallet to view your stakes</p>
+                    <Button onClick={connectWallet} className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500">
+                      <Wallet className="mr-2" size={18} />
+                      Connect Wallet
+                    </Button>
                   </div>
-                ))}
+                ) : userStakes.length > 0 ? (
+                  userStakes.map((stake) => (
+                    <div key={stake.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-semibold">{stake.pool}</h4>
+                        <Badge variant={stake.status === 'Active' ? 'default' : 'secondary'}>
+                          {stake.status}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Staked</p>
+                          <p className="font-medium">{stake.amount} $NOCAP</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Rewards</p>
+                          <p className="font-medium text-green-500">{stake.rewards} $NOCAP</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">End Date</p>
+                          <p className="font-medium">{stake.endDate}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-6">
+                    <p className="text-muted-foreground">No active stakes found</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -398,17 +412,27 @@ const StakingView = ({ isWalletConnected, connectWallet }: StakingViewProps) => 
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-4">
-                  <p className="text-3xl font-bold text-green-500">58.23</p>
-                  <p className="text-muted-foreground">$NOCAP</p>
-                  <Button 
-                    onClick={handleClaimRewards}
-                    disabled={isClaiming}
-                    className="mt-4 bg-gradient-to-r from-green-500 to-green-600"
-                  >
-                    {isClaiming ? "Claiming..." : "Claim Rewards"}
-                  </Button>
-                </div>
+                {!isWalletConnected ? (
+                  <div className="text-center py-6">
+                    <p className="mb-4 text-muted-foreground">Connect your wallet to view rewards</p>
+                    <Button onClick={connectWallet} className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500">
+                      <Wallet className="mr-2" size={18} />
+                      Connect Wallet
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-3xl font-bold text-green-500">58.23</p>
+                    <p className="text-muted-foreground">$NOCAP</p>
+                    <Button 
+                      onClick={handleClaimRewards}
+                      disabled={isClaiming}
+                      className="mt-4 bg-gradient-to-r from-green-500 to-green-600"
+                    >
+                      {isClaiming ? "Claiming..." : "Claim Rewards"}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -417,20 +441,26 @@ const StakingView = ({ isWalletConnected, connectWallet }: StakingViewProps) => 
                 <CardTitle>Rewards Breakdown</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {userStakes.map((stake) => (
-                    <div key={stake.id} className="flex justify-between items-center p-3 bg-muted/40 rounded-lg">
-                      <div>
-                        <p className="font-medium">{stake.pool}</p>
-                        <p className="text-sm text-muted-foreground">{stake.amount} $NOCAP staked</p>
+                {!isWalletConnected ? (
+                  <div className="text-center py-6">
+                    <p className="text-muted-foreground">Connect your wallet to view rewards breakdown</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {userStakes.map((stake) => (
+                      <div key={stake.id} className="flex justify-between items-center p-3 bg-muted/40 rounded-lg">
+                        <div>
+                          <p className="font-medium">{stake.pool}</p>
+                          <p className="text-sm text-muted-foreground">{stake.amount} $NOCAP staked</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-green-500">+{stake.rewards} $NOCAP</p>
+                          <p className="text-xs text-muted-foreground">Since {stake.startDate}</p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-green-500">+{stake.rewards} $NOCAP</p>
-                        <p className="text-xs text-muted-foreground">Since {stake.startDate}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -445,37 +475,47 @@ const StakingView = ({ isWalletConnected, connectWallet }: StakingViewProps) => 
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {[
-                  { type: "Stake", amount: "500", pool: "Standard Pool", date: "2025-05-01", status: "Completed" },
-                  { type: "Stake", amount: "1,200", pool: "Premium Pool", date: "2025-04-15", status: "Completed" },
-                  { type: "Claim", amount: "15.67", pool: "Standard Pool", date: "2025-04-30", status: "Completed" },
-                  { type: "Unstake", amount: "200", pool: "Standard Pool", date: "2025-04-20", status: "Completed" },
-                ].map((transaction, index) => (
-                  <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full ${
-                        transaction.type === 'Stake' ? 'bg-green-500' : 
-                        transaction.type === 'Unstake' ? 'bg-red-500' : 'bg-blue-500'
-                      }`} />
-                      <div>
-                        <p className="font-medium">{transaction.type} - {transaction.pool}</p>
-                        <p className="text-sm text-muted-foreground">{transaction.date}</p>
+              {!isWalletConnected ? (
+                <div className="text-center py-6">
+                  <p className="mb-4 text-muted-foreground">Connect your wallet to view transaction history</p>
+                  <Button onClick={connectWallet} className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500">
+                    <Wallet className="mr-2" size={18} />
+                    Connect Wallet
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {[
+                    { type: "Stake", amount: "500", pool: "Standard Pool", date: "2025-05-01", status: "Completed" },
+                    { type: "Stake", amount: "1,200", pool: "Premium Pool", date: "2025-04-15", status: "Completed" },
+                    { type: "Claim", amount: "15.67", pool: "Standard Pool", date: "2025-04-30", status: "Completed" },
+                    { type: "Unstake", amount: "200", pool: "Standard Pool", date: "2025-04-20", status: "Completed" },
+                  ].map((transaction, index) => (
+                    <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${
+                          transaction.type === 'Stake' ? 'bg-green-500' : 
+                          transaction.type === 'Unstake' ? 'bg-red-500' : 'bg-blue-500'
+                        }`} />
+                        <div>
+                          <p className="font-medium">{transaction.type} - {transaction.pool}</p>
+                          <p className="text-sm text-muted-foreground">{transaction.date}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-semibold ${
+                          transaction.type === 'Unstake' ? 'text-red-500' : 'text-green-500'
+                        }`}>
+                          {transaction.type === 'Unstake' ? '-' : '+'}{transaction.amount} $NOCAP
+                        </p>
+                        <Badge variant="secondary" className="text-xs">
+                          {transaction.status}
+                        </Badge>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className={`font-semibold ${
-                        transaction.type === 'Unstake' ? 'text-red-500' : 'text-green-500'
-                      }`}>
-                        {transaction.type === 'Unstake' ? '-' : '+'}{transaction.amount} $NOCAP
-                      </p>
-                      <Badge variant="secondary" className="text-xs">
-                        {transaction.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
