@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Star } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 
 interface CompanyCardProps {
@@ -18,14 +18,10 @@ interface CompanyCardProps {
 }
 
 const CompanyCard = ({ company }: CompanyCardProps) => {
-  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleCardClick = () => {
-    // In a real app, this would navigate to the company detail page
-    toast({
-      title: `${company.name}`,
-      description: `Viewing details for ${company.name}. This would navigate to a company detail page showing all reviews.`,
-    });
+    navigate(`/company/${company.id}/reviews`);
   };
 
   return (
@@ -38,7 +34,10 @@ const CompanyCard = ({ company }: CompanyCardProps) => {
           <img 
             src={company.logo} 
             alt={company.name} 
-            className="h-16 w-16 object-contain"
+            className="h-16 w-16 object-contain rounded-full"
+            onError={(e) => {
+              e.currentTarget.src = `https://via.placeholder.com/64x64/7c3aed/ffffff?text=${company.name.charAt(0)}`;
+            }}
           />
         </div>
         <div className="flex items-center justify-center gap-2 mb-2">
