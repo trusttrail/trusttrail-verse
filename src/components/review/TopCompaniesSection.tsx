@@ -12,14 +12,19 @@ interface TopCompaniesSectionProps {
     reviewCount: number;
     category: string;
   }[];
+  onViewAll?: () => void;
 }
 
-const TopCompaniesSection = ({ companies }: TopCompaniesSectionProps) => {
+const TopCompaniesSection = ({ companies, onViewAll }: TopCompaniesSectionProps) => {
   return (
     <section className="mb-10">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-2xl font-bold">Top Rated Companies</h3>
-        <Button variant="link" className="text-trustpurple-400">
+        <Button 
+          variant="link" 
+          className="text-trustpurple-400 hover:text-trustpurple-500"
+          onClick={onViewAll}
+        >
           View All
         </Button>
       </div>

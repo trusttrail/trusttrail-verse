@@ -70,6 +70,18 @@ const ContactModal = () => {
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      // If we're not on the homepage, navigate to it first
+      if (window.location.pathname !== '/') {
+        window.location.href = `/#${sectionId}`;
+      }
+    }
+  };
+
   return (
     <footer className="bg-trustpurple-950/30 border-t border-white/10 pt-16 pb-8">
       <div className="container mx-auto px-4">
@@ -110,11 +122,46 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-bold mb-4">Quick Links</h3>
             <ul className="space-y-2">
-              <li><a href="#features" className="text-foreground/70 hover:text-foreground transition-colors">Features</a></li>
-              <li><a href="#how-it-works" className="text-foreground/70 hover:text-foreground transition-colors">How It Works</a></li>
-              <li><a href="#tokenomics" className="text-foreground/70 hover:text-foreground transition-colors">Tokenomics</a></li>
-              <li><a href="#dex-details" className="text-foreground/70 hover:text-foreground transition-colors">DEX Details</a></li>
-              <li><a href="#faq" className="text-foreground/70 hover:text-foreground transition-colors">FAQ</a></li>
+              <li>
+                <button 
+                  onClick={() => scrollToSection('features')} 
+                  className="text-foreground/70 hover:text-foreground transition-colors cursor-pointer"
+                >
+                  Features
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => scrollToSection('how-it-works')} 
+                  className="text-foreground/70 hover:text-foreground transition-colors cursor-pointer"
+                >
+                  How It Works
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => scrollToSection('tokenomics')} 
+                  className="text-foreground/70 hover:text-foreground transition-colors cursor-pointer"
+                >
+                  Tokenomics
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => scrollToSection('dex-details')} 
+                  className="text-foreground/70 hover:text-foreground transition-colors cursor-pointer"
+                >
+                  DEX Details
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => scrollToSection('faq')} 
+                  className="text-foreground/70 hover:text-foreground transition-colors cursor-pointer"
+                >
+                  FAQ
+                </button>
+              </li>
             </ul>
           </div>
           

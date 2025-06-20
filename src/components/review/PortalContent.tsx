@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import PortalHero from "@/components/review/PortalHero";
 import SearchBar from "@/components/review/SearchBar";
 import CategoriesSection from "@/components/review/CategoriesSection";
 import TopCompaniesSection from "@/components/review/TopCompaniesSection";
 import RecentReviewsSection from "@/components/review/RecentReviewsSection";
+import AllCompaniesView from "@/components/review/AllCompaniesView";
 
 interface PortalContentProps {
   categories: any[];
@@ -21,6 +22,8 @@ const PortalContent = ({
   onWriteReviewClick,
   onExploreClick
 }: PortalContentProps) => {
+  const [showAllCompanies, setShowAllCompanies] = useState(false);
+  
   // Extract the data needed for search suggestions
   const searchCompanies = topCompanies.map(company => ({
     id: company.id,
@@ -32,6 +35,10 @@ const PortalContent = ({
     id: category.id,
     name: category.name
   }));
+
+  if (showAllCompanies) {
+    return <AllCompaniesView onBack={() => setShowAllCompanies(false)} />;
+  }
 
   return (
     <div className="space-y-10">
@@ -45,7 +52,10 @@ const PortalContent = ({
         recentReviews={recentReviews}
       />
       <CategoriesSection categories={categories} />
-      <TopCompaniesSection companies={topCompanies} />
+      <TopCompaniesSection 
+        companies={topCompanies} 
+        onViewAll={() => setShowAllCompanies(true)}
+      />
       <RecentReviewsSection reviews={recentReviews} />
     </div>
   );

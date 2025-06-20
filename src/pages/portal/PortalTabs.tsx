@@ -6,7 +6,6 @@ import HomeTab from "@/components/review/portal/HomeTab";
 import WriteReviewTab from "@/components/review/portal/WriteReviewTab";
 import CategoriesTab from "@/components/review/portal/CategoriesTab";
 import BusinessesTab from "@/components/review/portal/BusinessesTab";
-import PassportTab from "@/components/review/portal/PassportTab";
 import UserDashboard from "@/components/review/portal/UserDashboard";
 import AnalyticsTab from "@/components/review/portal/AnalyticsTab";
 import SwapTab from "@/components/review/portal/SwapTab";
@@ -82,12 +81,11 @@ const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connectWallet 
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-5 lg:grid-cols-11 mb-8">
+      <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 mb-8">
         <TabsTrigger value="summary">Summary</TabsTrigger>
         <TabsTrigger value="write-review">Write Review</TabsTrigger>
         <TabsTrigger value="categories">Categories</TabsTrigger>
         <TabsTrigger value="businesses">Companies</TabsTrigger>
-        <TabsTrigger value="passport">Passport</TabsTrigger>
         <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
         <TabsTrigger value="analytics">Analytics</TabsTrigger>
         <TabsTrigger value="swap">Swap</TabsTrigger>
@@ -120,13 +118,6 @@ const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connectWallet 
 
       <TabsContent value="businesses">
         <BusinessesTab />
-      </TabsContent>
-
-      <TabsContent value="passport">
-        <PassportTab 
-          isWalletConnected={isWalletConnected}
-          connectWallet={connectWallet}
-        />
       </TabsContent>
 
       <TabsContent value="dashboard">
