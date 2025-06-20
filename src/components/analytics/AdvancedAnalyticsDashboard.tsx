@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -108,7 +107,7 @@ const AdvancedAnalyticsDashboard = () => {
       gaming: Math.floor(Math.random() * 8) + 1
     }));
 
-    // New Category Trust Score Analysis
+    // New Category Trust Score Analysis with proper type definition
     const categoryTrustData = sampleCompanies.reduce((acc, company) => {
       const existing = acc.find(item => item.category === company.category);
       if (existing) {
@@ -122,11 +121,20 @@ const AdvancedAnalyticsDashboard = () => {
           count: 1,
           totalReviews: company.reviewCount,
           avgRating: 0,
-          trustScore: 0
+          trustScore: 0,
+          color: ""
         });
       }
       return acc;
-    }, [] as Array<{ category: string; totalRating: number; count: number; totalReviews: number; avgRating: number; trustScore: number }>);
+    }, [] as Array<{ 
+      category: string; 
+      totalRating: number; 
+      count: number; 
+      totalReviews: number; 
+      avgRating: number; 
+      trustScore: number; 
+      color: string; 
+    }>);
 
     // Calculate averages and trust scores
     categoryTrustData.forEach((item, index) => {
