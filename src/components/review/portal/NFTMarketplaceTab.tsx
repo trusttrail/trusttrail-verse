@@ -172,7 +172,6 @@ const NFTMarketplaceTab = ({ isWalletConnected, connectWallet }: NFTMarketplaceT
             likedNFTs={likedNFTs}
             onLike={handleLike}
             onBuy={handleBuy}
-            isValidNetwork={isValidNetwork}
           />
         </TabsContent>
         

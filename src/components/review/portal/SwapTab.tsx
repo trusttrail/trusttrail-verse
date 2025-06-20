@@ -1,13 +1,12 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Wallet, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpDown, Wallet, RefreshCw, Info, AlertTriangle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { useWeb3 } from '@/hooks/useWeb3';
+import SwapForm from './swap/SwapForm';
+import TokenBalanceCard from './swap/TokenBalanceCard';
+import SwapInfoCard from './swap/SwapInfoCard';
 
 interface SwapTabProps {
   isWalletConnected: boolean;
@@ -15,127 +14,7 @@ interface SwapTabProps {
 }
 
 const SwapTab = ({ isWalletConnected, connectWallet }: SwapTabProps) => {
-  const { toast } = useToast();
-  const { web3Service, currentNetwork, tokenBalances, refreshBalances, tokens } = useWeb3();
-  const [fromToken, setFromToken] = useState("MATIC");
-  const [toToken, setToToken] = useState("TRUST");
-  const [fromAmount, setFromAmount] = useState("");
-  const [toAmount, setToAmount] = useState("");
-  const [isSwapping, setIsSwapping] = useState(false);
-  const [exchangeRate, setExchangeRate] = useState(0);
-  const [slippage, setSlippage] = useState("0.5");
-
-  // Calculate exchange rate and to amount
-  useEffect(() => {
-    if (fromAmount && fromToken && toToken) {
-      const calculateEstimate = async () => {
-        try {
-          const estimate = await web3Service.estimateSwap(fromToken, toToken, fromAmount);
-          setToAmount(estimate);
-          setExchangeRate(parseFloat(estimate) / parseFloat(fromAmount));
-        } catch (error) {
-          console.error('Failed to estimate swap:', error);
-          setToAmount("");
-          setExchangeRate(0);
-        }
-      };
-      
-      calculateEstimate();
-    } else {
-      setToAmount("");
-      setExchangeRate(0);
-    }
-  }, [fromAmount, fromToken, toToken, web3Service]);
-
-  const handleSwapTokens = () => {
-    const tempToken = fromToken;
-    const tempAmount = fromAmount;
-    
-    setFromToken(toToken);
-    setToToken(tempToken);
-    setFromAmount(toAmount);
-    setToAmount(tempAmount);
-  };
-
-  const handleSwap = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!isWalletConnected) {
-      toast({
-        title: "Wallet Connection Required",
-        description: "Please connect your MetaMask wallet to perform swaps.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (currentNetwork !== "amoy") {
-      toast({
-        title: "Wrong Network",
-        description: "Please switch to Polygon Amoy testnet to perform swaps.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!fromAmount || !toAmount) {
-      toast({
-        title: "Invalid Amounts",
-        description: "Please enter valid amounts for both tokens.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Check if user has sufficient balance
-    const userBalance = parseFloat(tokenBalances[fromToken] || "0");
-    const requestedAmount = parseFloat(fromAmount);
-    
-    if (requestedAmount > userBalance) {
-      toast({
-        title: "Insufficient Balance",
-        description: `You don't have enough ${fromToken}. Available: ${userBalance.toFixed(6)}`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSwapping(true);
-    
-    try {
-      toast({
-        title: "Preparing Swap",
-        description: "Please confirm the transaction in your MetaMask wallet...",
-      });
-
-      // Simulate Web3 swap transaction
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Mock transaction hash
-      const txHash = `0x${Math.random().toString(16).substr(2, 64)}`;
-      
-      toast({
-        title: "Swap Successful! 🎉",
-        description: `Swapped ${fromAmount} ${fromToken} for ${toAmount} ${toToken}. Transaction: ${txHash.substring(0, 10)}...`,
-      });
-
-      // Reset form and refresh balances
-      setFromAmount("");
-      setToAmount("");
-      await refreshBalances();
-      
-    } catch (error: any) {
-      console.error('Swap failed:', error);
-      toast({
-        title: "Swap Failed",
-        description: error.message || "Swap transaction failed. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSwapping(false);
-    }
-  };
-
+  const { currentNetwork, tokenBalances, refreshBalances, tokens } = useWeb3();
   const isValidNetwork = currentNetwork === "amoy";
 
   return (
@@ -146,249 +25,39 @@ const SwapTab = ({ isWalletConnected, connectWallet }: SwapTabProps) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Swap Interface */}
         <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Swap Tokens</CardTitle>
-              <CardDescription>Exchange tokens at the best available rates</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!isWalletConnected ? (
-                <div className="text-center py-6">
-                  <p className="mb-4 text-muted-foreground">Connect your wallet to start swapping</p>
-                  <Button onClick={connectWallet} className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500">
-                    <Wallet className="mr-2" size={18} />
-                    Connect Wallet
-                  </Button>
-                </div>
-              ) : !isValidNetwork ? (
-                <div className="text-center py-6">
-                  <AlertTriangle className="mx-auto text-yellow-500 mb-4" size={48} />
-                  <p className="mb-4 text-muted-foreground">Please switch to Polygon Amoy testnet</p>
-                  <Badge variant="destructive">Wrong Network</Badge>
-                </div>
-              ) : (
-                <form onSubmit={handleSwap} className="space-y-6">
-                  {/* From Token */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">From</label>
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <Input
-                          type="number"
-                          placeholder="0.00"
-                          value={fromAmount}
-                          onChange={(e) => setFromAmount(e.target.value)}
-                          className="text-lg"
-                          step="0.000001"
-                        />
-                      </div>
-                      <Select value={fromToken} onValueChange={setFromToken}>
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {tokens.map((token) => (
-                            <SelectItem key={token.symbol} value={token.symbol}>
-                              <div className="flex items-center gap-2">
-                                <span>{token.icon}</span>
-                                <span>{token.symbol}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Balance: {parseFloat(tokenBalances[fromToken] || "0").toFixed(6)} {fromToken}
-                    </p>
-                  </div>
-
-                  {/* Swap Direction Button */}
-                  <div className="flex justify-center">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleSwapTokens}
-                      className="rounded-full p-2"
-                    >
-                      <ArrowUpDown size={16} />
-                    </Button>
-                  </div>
-
-                  {/* To Token */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">To</label>
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <Input
-                          type="number"
-                          placeholder="0.00"
-                          value={toAmount}
-                          readOnly
-                          className="text-lg bg-muted/40"
-                        />
-                      </div>
-                      <Select value={toToken} onValueChange={setToToken}>
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {tokens.filter(t => t.symbol !== fromToken).map((token) => (
-                            <SelectItem key={token.symbol} value={token.symbol}>
-                              <div className="flex items-center gap-2">
-                                <span>{token.icon}</span>
-                                <span>{token.symbol}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Balance: {parseFloat(tokenBalances[toToken] || "0").toFixed(6)} {toToken}
-                    </p>
-                  </div>
-
-                  {/* Exchange Rate Info */}
-                  {exchangeRate > 0 && (
-                    <div className="bg-muted/40 p-3 rounded-lg space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Exchange Rate:</span>
-                        <span>1 {fromToken} = {exchangeRate.toFixed(6)} {toToken}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Slippage Tolerance:</span>
-                        <span>{slippage}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Network Fee:</span>
-                        <span>~0.001 MATIC</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Slippage Settings */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Slippage Tolerance (%)</label>
-                    <div className="flex gap-2">
-                      {["0.1", "0.5", "1.0"].map((value) => (
-                        <Button
-                          key={value}
-                          type="button"
-                          variant={slippage === value ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setSlippage(value)}
-                        >
-                          {value}%
-                        </Button>
-                      ))}
-                      <Input
-                        type="number"
-                        placeholder="Custom"
-                        value={slippage}
-                        onChange={(e) => setSlippage(e.target.value)}
-                        className="w-20 text-sm"
-                        step="0.1"
-                        min="0.1"
-                        max="50"
-                      />
-                    </div>
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 w-full"
-                    disabled={isSwapping || !fromAmount || !toAmount}
-                  >
-                    {isSwapping ? (
-                      <>
-                        <RefreshCw className="mr-2 animate-spin" size={18} />
-                        Swapping...
-                      </>
-                    ) : (
-                      `Swap ${fromToken} for ${toToken}`
-                    )}
-                  </Button>
-                </form>
-              )}
-            </CardContent>
-          </Card>
+          {!isWalletConnected ? (
+            <div className="text-center py-6">
+              <p className="mb-4 text-muted-foreground">Connect your wallet to start swapping</p>
+              <Button onClick={connectWallet} className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500">
+                <Wallet className="mr-2" size={18} />
+                Connect Wallet
+              </Button>
+            </div>
+          ) : !isValidNetwork ? (
+            <div className="text-center py-6">
+              <AlertTriangle className="mx-auto text-yellow-500 mb-4" size={48} />
+              <p className="mb-4 text-muted-foreground">Please switch to Polygon Amoy testnet</p>
+              <Badge variant="destructive">Wrong Network</Badge>
+            </div>
+          ) : (
+            <SwapForm 
+              tokens={tokens}
+              tokenBalances={tokenBalances}
+              refreshBalances={refreshBalances}
+            />
+          )}
         </div>
 
         {/* Token Balances & Info */}
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                Token Balances
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={refreshBalances}
-                  disabled={!isWalletConnected}
-                >
-                  <RefreshCw size={16} />
-                </Button>
-              </CardTitle>
-              <CardDescription>Your current token holdings on Polygon Amoy</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!isWalletConnected ? (
-                <div className="text-center py-6">
-                  <p className="text-muted-foreground">Connect wallet to view balances</p>
-                </div>
-              ) : !isValidNetwork ? (
-                <div className="text-center py-6">
-                  <p className="text-muted-foreground">Switch to Polygon Amoy to view balances</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {tokens.map((token) => (
-                    <div key={token.symbol} className="flex items-center justify-between p-3 bg-muted/40 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{token.icon}</span>
-                        <div>
-                          <p className="font-medium">{token.symbol}</p>
-                          <p className="text-sm text-muted-foreground">{token.name}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">{parseFloat(tokenBalances[token.symbol] || "0").toFixed(6)}</p>
-                        <p className="text-sm text-muted-foreground">{token.symbol}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Info size={20} />
-                Swap Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div>
-                <h4 className="font-medium mb-1">How it works:</h4>
-                <p className="text-muted-foreground">Swaps are executed through automated market makers (AMMs) on Polygon Amoy testnet.</p>
-              </div>
-              <div>
-                <h4 className="font-medium mb-1">Fees:</h4>
-                <p className="text-muted-foreground">Small network fees apply for each transaction, payable in MATIC tokens.</p>
-              </div>
-              <div>
-                <h4 className="font-medium mb-1">Slippage:</h4>
-                <p className="text-muted-foreground">Price difference between when you submit and when the transaction is confirmed.</p>
-              </div>
-              <Badge variant="outline" className="w-fit">
-                Testnet Only - Use Test Tokens
-              </Badge>
-            </CardContent>
-          </Card>
+          <TokenBalanceCard
+            tokens={tokens}
+            tokenBalances={tokenBalances}
+            refreshBalances={refreshBalances}
+            isWalletConnected={isWalletConnected}
+            isValidNetwork={isValidNetwork}
+          />
+          <SwapInfoCard />
         </div>
       </div>
     </div>

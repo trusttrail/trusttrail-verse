@@ -28,23 +28,23 @@ export class Web3Service {
       decimals: 18,
       icon: '🔷'
     },
-    WETH: {
-      symbol: 'WETH',
-      name: 'Wrapped Ethereum',
+    ETH: {
+      symbol: 'ETH',
+      name: 'Ethereum',
       address: '0x360ad4f9a9A8EFe9A8DCB5f461c4Cc1047E1Dcf9',
       decimals: 18,
       icon: '⟠'
     },
-    WBTC: {
-      symbol: 'WBTC',
-      name: 'Wrapped Bitcoin',
+    BTC: {
+      symbol: 'BTC',
+      name: 'Bitcoin',
       address: '0x85E44420b6137bbc75a85CAB5c9A3371af976FdE',
       decimals: 8,
       icon: '₿'
     },
     USDT: {
       symbol: 'USDT',
-      name: 'Tether USD',
+      name: 'Tether',
       address: '0x2c852e740B62308c46DD29B982FBb650D063Bd07',
       decimals: 6,
       icon: '💚'
@@ -142,6 +142,35 @@ export class Web3Service {
     };
   }
 
+  getExplorerUrl(txHash: string): string {
+    return `https://amoy.polygonscan.com/tx/${txHash}`;
+  }
+
+  isContractsDeployed(): boolean {
+    // Mock implementation - in production this would check if contracts are deployed
+    return true;
+  }
+
+  async submitReview(reviewData: any): Promise<string> {
+    if (!this.provider || !this.signer) {
+      throw new Error('Wallet not connected');
+    }
+
+    try {
+      // Mock transaction for review submission
+      const tx = await this.signer.sendTransaction({
+        to: '0x186389f359713852366b4eA1eb9BC947f68F74ca', // TRUST token contract
+        value: ethers.parseEther('0'), // No ETH sent
+        data: '0x' // Mock data
+      });
+
+      return tx.hash;
+    } catch (error) {
+      console.error('Failed to submit review:', error);
+      throw error;
+    }
+  }
+
   getTokens(): TokenInfo[] {
     return Object.values(this.TOKENS);
   }
@@ -191,12 +220,12 @@ export class Web3Service {
   async estimateSwap(fromToken: string, toToken: string, amount: string): Promise<string> {
     // Mock exchange rates for demo - in production, this would call a DEX API
     const rates: Record<string, Record<string, number>> = {
-      MATIC: { WETH: 0.0015, WBTC: 0.000025, USDT: 0.85, USDC: 0.85, TRUST: 1200 },
-      WETH: { MATIC: 650, WBTC: 0.065, USDT: 2500, USDC: 2500, TRUST: 1800000 },
-      WBTC: { MATIC: 40000, WETH: 15.4, USDT: 95000, USDC: 95000, TRUST: 28000000 },
-      USDT: { MATIC: 1.18, WETH: 0.0004, WBTC: 0.00001, USDC: 1.0, TRUST: 1400 },
-      USDC: { MATIC: 1.18, WETH: 0.0004, WBTC: 0.00001, USDT: 1.0, TRUST: 1400 },
-      TRUST: { MATIC: 0.00083, WETH: 0.00000056, WBTC: 0.000000036, USDT: 0.00071, USDC: 0.00071 }
+      MATIC: { ETH: 0.0015, BTC: 0.000025, USDT: 0.85, USDC: 0.85, TRUST: 1200 },
+      ETH: { MATIC: 650, BTC: 0.065, USDT: 2500, USDC: 2500, TRUST: 1800000 },
+      BTC: { MATIC: 40000, ETH: 15.4, USDT: 95000, USDC: 95000, TRUST: 28000000 },
+      USDT: { MATIC: 1.18, ETH: 0.0004, BTC: 0.00001, USDC: 1.0, TRUST: 1400 },
+      USDC: { MATIC: 1.18, ETH: 0.0004, BTC: 0.00001, USDT: 1.0, TRUST: 1400 },
+      TRUST: { MATIC: 0.00083, ETH: 0.00000056, BTC: 0.000000036, USDT: 0.00071, USDC: 0.00071 }
     };
 
     const rate = rates[fromToken]?.[toToken] || 1;
