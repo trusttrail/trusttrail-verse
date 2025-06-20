@@ -23,6 +23,9 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
+  ComposedChart,
+  Tooltip,
+  Legend,
 } from "recharts";
 import {
   TrendingUp,
@@ -33,7 +36,6 @@ import {
   Eye,
   MessageSquare,
   ThumbsUp,
-  Download,
 } from "lucide-react";
 
 const InteractiveAnalyticsDashboard = () => {
@@ -77,6 +79,22 @@ const InteractiveAnalyticsDashboard = () => {
       label: "Avg Rating",
       color: "#2c9fff",
     },
+  };
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
+          <p className="font-medium">{new Date(label).toLocaleDateString()}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} className="text-sm" style={{ color: entry.color }}>
+              {entry.name}: {entry.value}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -166,10 +184,6 @@ const InteractiveAnalyticsDashboard = () => {
             >
               30 Days
             </Button>
-            <Button variant="outline" size="sm" className="text-xs">
-              <Download className="h-3 w-3 mr-1" />
-              Export
-            </Button>
           </div>
         </div>
 
@@ -184,7 +198,7 @@ const InteractiveAnalyticsDashboard = () => {
             <CardContent>
               <ChartContainer config={chartConfig} className="h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={mockData.reviewsOverTime} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <ComposedChart data={mockData.reviewsOverTime} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
                     <XAxis 
                       dataKey="date" 
@@ -203,8 +217,8 @@ const InteractiveAnalyticsDashboard = () => {
                       className="text-xs fill-muted-foreground"
                       tick={{ fontSize: 12 }}
                     />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <ChartLegend content={<ChartLegendContent />} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
                     <Bar yAxisId="left" dataKey="reviews" fill="var(--color-reviews)" name="Reviews" radius={[4, 4, 0, 0]} />
                     <Line 
                       yAxisId="right" 
@@ -215,7 +229,7 @@ const InteractiveAnalyticsDashboard = () => {
                       dot={{ fill: "var(--color-rating)", r: 4 }}
                       name="Avg Rating"
                     />
-                  </LineChart>
+                  </ComposedChart>
                 </ResponsiveContainer>
               </ChartContainer>
             </CardContent>
@@ -246,7 +260,8 @@ const InteractiveAnalyticsDashboard = () => {
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Tooltip />
+                      <Legend />
                     </PieChart>
                   </ResponsiveContainer>
                 </ChartContainer>

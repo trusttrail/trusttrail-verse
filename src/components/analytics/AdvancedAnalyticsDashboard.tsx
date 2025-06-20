@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Download, TrendingUp, Users, Star, Activity } from "lucide-react";
+import { Search, Filter, TrendingUp, Users, Star, Activity } from "lucide-react";
 import ScatterPlotChart from "./charts/ScatterPlotChart";
 import DonutChart from "./charts/DonutChart";
 import CustomLineChart from "./charts/LineChart";
@@ -17,6 +17,7 @@ import { sampleCompanies } from "@/data/companyData";
 const AdvancedAnalyticsDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [isQueryActive, setIsQueryActive] = useState(false);
 
   // Generate analytics data from existing company data
   const analyticsData = useMemo(() => {
@@ -102,6 +103,57 @@ const AdvancedAnalyticsDashboard = () => {
     };
   }, []);
 
+  // Filter data based on search query
+  const filteredAnalyticsData = useMemo(() => {
+    if (!isQueryActive || !searchQuery.trim()) {
+      return analyticsData;
+    }
+
+    const query = searchQuery.toLowerCase();
+    
+    // Simple query processing
+    if (query.includes("defi") || query.includes("decentralized finance")) {
+      const defiData = analyticsData.scatterData.filter(item => 
+        item.category.toLowerCase().includes("defi") || 
+        item.category.toLowerCase().includes("dex") ||
+        item.category.toLowerCase().includes("lending")
+      );
+      return {
+        ...analyticsData,
+        scatterData: defiData,
+        categoryData: analyticsData.categoryData.filter(item => 
+          item.name.toLowerCase().includes("defi") ||
+          item.name.toLowerCase().includes("dex") ||
+          item.name.toLowerCase().includes("lending")
+        )
+      };
+    }
+
+    if (query.includes("rating") && query.includes("4.5")) {
+      const highRatedData = analyticsData.scatterData.filter(item => item.rating >= 4.5);
+      return {
+        ...analyticsData,
+        scatterData: highRatedData,
+        topCompaniesData: analyticsData.topCompaniesData.filter((_, index) => index < 5)
+      };
+    }
+
+    if (query.includes("gaming")) {
+      const gamingData = analyticsData.scatterData.filter(item => 
+        item.category.toLowerCase().includes("gaming")
+      );
+      return {
+        ...analyticsData,
+        scatterData: gamingData,
+        categoryData: analyticsData.categoryData.filter(item => 
+          item.name.toLowerCase().includes("gaming")
+        )
+      };
+    }
+
+    return analyticsData;
+  }, [analyticsData, searchQuery, isQueryActive]);
+
   const kpiData = useMemo(() => {
     const totalReviews = sampleCompanies.reduce((sum, company) => sum + company.reviewCount, 0);
     const avgRating = sampleCompanies.reduce((sum, company) => sum + company.rating, 0) / sampleCompanies.length;
@@ -115,6 +167,20 @@ const AdvancedAnalyticsDashboard = () => {
       activeCategories
     };
   }, []);
+
+  const handleSearch = () => {
+    setIsQueryActive(true);
+  };
+
+  const handlePresetQuery = (query: string) => {
+    setSearchQuery(query);
+    setIsQueryActive(true);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery("");
+    setIsQueryActive(false);
+  };
 
   return (
     <div className="space-y-8">
@@ -135,30 +201,53 @@ const AdvancedAnalyticsDashboard = () => {
               placeholder="e.g., 'Show me DeFi projects with rating above 4.5' or 'Which categories have the most reviews?'"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               className="flex-1"
             />
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={clearSearch}>
                 <Filter className="h-4 w-4 mr-1" />
-                Filter
+                Clear
               </Button>
-              <Button size="sm">
+              <Button size="sm" onClick={handleSearch}>
                 <Search className="h-4 w-4 mr-1" />
                 Analyze
               </Button>
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Badge variant="secondary" className="cursor-pointer hover:bg-trustpurple-500/20">
-              Top rated DEX platforms
+            <Badge 
+              variant="secondary" 
+              className="cursor-pointer hover:bg-trustpurple-500/20"
+              onClick={() => handlePresetQuery("Show me DeFi projects with rating above 4.5")}
+            >
+              Top rated DeFi platforms
             </Badge>
-            <Badge variant="secondary" className="cursor-pointer hover:bg-trustpurple-500/20">
+            <Badge 
+              variant="secondary" 
+              className="cursor-pointer hover:bg-trustpurple-500/20"
+              onClick={() => handlePresetQuery("Gaming projects by review count")}
+            >
               Gaming projects by review count
             </Badge>
-            <Badge variant="secondary" className="cursor-pointer hover:bg-trustpurple-500/20">
+            <Badge 
+              variant="secondary" 
+              className="cursor-pointer hover:bg-trustpurple-500/20"
+              onClick={() => handlePresetQuery("Rating trends over time")}
+            >
               Rating trends over time
             </Badge>
           </div>
+          {isQueryActive && (
+            <div className="mt-4 p-3 bg-muted/30 rounded-lg border border-border/50">
+              <p className="text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">Active Query:</span> "{searchQuery}"
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Showing filtered results based on your query. Click "Clear" to see all data.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -231,28 +320,23 @@ const AdvancedAnalyticsDashboard = () => {
             <TabsTrigger value="performance">Performance</TabsTrigger>
             <TabsTrigger value="insights">Insights</TabsTrigger>
           </TabsList>
-          
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-1" />
-            Export Dashboard
-          </Button>
         </div>
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ScatterPlotChart
-              data={analyticsData.scatterData}
+              data={filteredAnalyticsData.scatterData}
               title="Company Rating vs Review Volume"
               description="Relationship between company ratings and total review count"
             />
             <DonutChart
-              data={analyticsData.categoryData}
+              data={filteredAnalyticsData.categoryData}
               title="Reviews by Web3 Category"
               description="Distribution of reviews across different Web3 sectors"
             />
           </div>
           <HeatMapChart
-            data={analyticsData.heatMapData}
+            data={filteredAnalyticsData.heatMapData}
             title="Review Activity Heatmap"
             description="Review activity patterns by category and day of week"
           />
@@ -261,12 +345,12 @@ const AdvancedAnalyticsDashboard = () => {
         <TabsContent value="distribution" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <DonutChart
-              data={analyticsData.ratingDistributionData}
+              data={filteredAnalyticsData.ratingDistributionData}
               title="Rating Distribution"
               description="Breakdown of companies by star rating"
             />
             <CustomBarChart
-              data={analyticsData.topCompaniesData}
+              data={filteredAnalyticsData.topCompaniesData}
               title="Top Companies by Review Count"
               description="Most reviewed Web3 companies on the platform"
               orientation="horizontal"
@@ -277,7 +361,7 @@ const AdvancedAnalyticsDashboard = () => {
 
         <TabsContent value="trends" className="space-y-6">
           <CustomLineChart
-            data={analyticsData.timeSeriesData}
+            data={filteredAnalyticsData.timeSeriesData}
             title="Review Trends Over Time"
             description="Daily review submissions and average ratings"
             lines={[
@@ -286,7 +370,7 @@ const AdvancedAnalyticsDashboard = () => {
             ]}
           />
           <CustomAreaChart
-            data={analyticsData.stackedAreaData}
+            data={filteredAnalyticsData.stackedAreaData}
             title="Category Review Trends"
             description="Stacked area chart showing review trends by Web3 category"
             areas={[
@@ -301,13 +385,13 @@ const AdvancedAnalyticsDashboard = () => {
         <TabsContent value="performance" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <CustomBarChart
-              data={analyticsData.categoryData.map(d => ({ name: d.name, value: d.value }))}
+              data={filteredAnalyticsData.categoryData.map(d => ({ name: d.name, value: d.value }))}
               title="Category Performance"
               description="Total reviews by Web3 category"
               color="#22c55e"
             />
             <ScatterPlotChart
-              data={analyticsData.scatterData.filter(d => d.rating >= 4.0)}
+              data={filteredAnalyticsData.scatterData.filter(d => d.rating >= 4.0)}
               title="High-Performing Companies"
               description="Companies with ratings above 4.0 stars"
             />
