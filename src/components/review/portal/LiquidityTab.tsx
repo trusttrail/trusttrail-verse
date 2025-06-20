@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Minus, Wallet, TrendingUp, Droplets, Info } from "lucide-react";
+import { Plus, Minus, Wallet, TrendingUp, Droplets, Info, RefreshCw, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useWeb3 } from '@/hooks/useWeb3';
 
 interface LiquidityTabProps {
   isWalletConnected: boolean;
@@ -16,6 +17,7 @@ interface LiquidityTabProps {
 
 const LiquidityTab = ({ isWalletConnected, connectWallet }: LiquidityTabProps) => {
   const { toast } = useToast();
+  const { web3Service, currentNetwork } = useWeb3();
   const [token1Amount, setToken1Amount] = useState("");
   const [token2Amount, setToken2Amount] = useState("");
   const [selectedPair, setSelectedPair] = useState("ETH/USDC");
@@ -33,34 +35,62 @@ const LiquidityTab = ({ isWalletConnected, connectWallet }: LiquidityTabProps) =
       token2: "USDC"
     },
     {
-      pair: "WBTC/ETH",
+      pair: "BTC/ETH", 
       tvl: "$1,850,000",
       apy: "12.8%",
       volume24h: "$650,000",
       yourLiquidity: "0.00",
-      token1: "WBTC",
+      token1: "BTC",
       token2: "ETH"
     },
     {
-      pair: "NOCAP/ETH",
+      pair: "TRUST/ETH",
       tvl: "$750,000",
       apy: "28.5%",
       volume24h: "$320,000",
       yourLiquidity: "0.00",
-      token1: "NOCAP",
+      token1: "TRUST",
       token2: "ETH"
+    },
+    {
+      pair: "USDT/USDC",
+      tvl: "$1,200,000",
+      apy: "8.2%",
+      volume24h: "$450,000",
+      yourLiquidity: "0.00",
+      token1: "USDT",
+      token2: "USDC"
+    },
+    {
+      pair: "TRUST/USDT",
+      tvl: "$650,000",
+      apy: "22.1%",
+      volume24h: "$280,000",
+      yourLiquidity: "0.00",
+      token1: "TRUST",
+      token2: "USDT"
     }
   ];
 
   const selectedPairData = liquidityPairs.find(p => p.pair === selectedPair);
+  const isValidNetwork = currentNetwork === "amoy";
 
-  const handleAddLiquidity = (e: React.FormEvent) => {
+  const handleAddLiquidity = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isWalletConnected) {
       toast({
         title: "Wallet Connection Required",
         description: "Please connect your wallet to add liquidity.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!isValidNetwork) {
+      toast({
+        title: "Wrong Network",
+        description: "Please switch to Polygon Amoy testnet to add liquidity.",
         variant: "destructive",
       });
       return;
@@ -77,19 +107,39 @@ const LiquidityTab = ({ isWalletConnected, connectWallet }: LiquidityTabProps) =
 
     setIsAddingLiquidity(true);
     
-    setTimeout(() => {
+    try {
       toast({
-        title: "Liquidity Added Successfully",
-        description: `Added ${token1Amount} ${selectedPairData?.token1} and ${token2Amount} ${selectedPairData?.token2} to the pool.`,
+        title: "Preparing Liquidity Addition",
+        description: "Please confirm the transaction in your MetaMask wallet...",
+      });
+
+      // Simulate Web3 liquidity addition transaction
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      // Mock transaction hash
+      const txHash = `0x${Math.random().toString(16).substr(2, 64)}`;
+      
+      toast({
+        title: "Liquidity Added Successfully! 🎉",
+        description: `Added ${token1Amount} ${selectedPairData?.token1} and ${token2Amount} ${selectedPairData?.token2} to the pool. Transaction: ${txHash.substring(0, 10)}...`,
       });
       
       setToken1Amount("");
       setToken2Amount("");
+      
+    } catch (error: any) {
+      console.error('Add liquidity failed:', error);
+      toast({
+        title: "Add Liquidity Failed",
+        description: error.message || "Transaction failed. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsAddingLiquidity(false);
-    }, 2000);
+    }
   };
 
-  const handleRemoveLiquidity = (e: React.FormEvent) => {
+  const handleRemoveLiquidity = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isWalletConnected) {
@@ -101,16 +151,44 @@ const LiquidityTab = ({ isWalletConnected, connectWallet }: LiquidityTabProps) =
       return;
     }
 
+    if (!isValidNetwork) {
+      toast({
+        title: "Wrong Network",
+        description: "Please switch to Polygon Amoy testnet to remove liquidity.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsRemovingLiquidity(true);
     
-    setTimeout(() => {
+    try {
       toast({
-        title: "Liquidity Removed",
-        description: "Your liquidity has been successfully removed from the pool.",
+        title: "Preparing Liquidity Removal",
+        description: "Please confirm the transaction in your MetaMask wallet...",
+      });
+
+      // Simulate Web3 liquidity removal transaction
+      await new Promise(resolve => setTimeout(resolve, 2500));
+
+      // Mock transaction hash
+      const txHash = `0x${Math.random().toString(16).substr(2, 64)}`;
+      
+      toast({
+        title: "Liquidity Removed! 🎉",
+        description: `Your liquidity has been successfully removed from the pool. Transaction: ${txHash.substring(0, 10)}...`,
       });
       
+    } catch (error: any) {
+      console.error('Remove liquidity failed:', error);
+      toast({
+        title: "Remove Liquidity Failed",
+        description: error.message || "Transaction failed. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsRemovingLiquidity(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -176,6 +254,12 @@ const LiquidityTab = ({ isWalletConnected, connectWallet }: LiquidityTabProps) =
                         Connect Wallet
                       </Button>
                     </div>
+                  ) : !isValidNetwork ? (
+                    <div className="text-center py-6">
+                      <AlertTriangle className="mx-auto text-yellow-500 mb-4" size={48} />
+                      <p className="mb-4 text-muted-foreground">Please switch to Polygon Amoy testnet</p>
+                      <Badge variant="destructive">Wrong Network</Badge>
+                    </div>
                   ) : (
                     <form onSubmit={handleAddLiquidity} className="space-y-6">
                       <div>
@@ -190,6 +274,7 @@ const LiquidityTab = ({ isWalletConnected, connectWallet }: LiquidityTabProps) =
                             value={token1Amount}
                             onChange={(e) => setToken1Amount(e.target.value)}
                             className="pr-16"
+                            step="0.000001"
                           />
                           <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                             <span className="text-sm text-muted-foreground">{selectedPairData?.token1}</span>
@@ -213,6 +298,7 @@ const LiquidityTab = ({ isWalletConnected, connectWallet }: LiquidityTabProps) =
                             value={token2Amount}
                             onChange={(e) => setToken2Amount(e.target.value)}
                             className="pr-16"
+                            step="0.000001"
                           />
                           <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                             <span className="text-sm text-muted-foreground">{selectedPairData?.token2}</span>
@@ -233,6 +319,10 @@ const LiquidityTab = ({ isWalletConnected, connectWallet }: LiquidityTabProps) =
                           <span>Est. Rewards/Day:</span>
                           <span>0.05 {selectedPairData?.token1}</span>
                         </div>
+                        <div className="flex justify-between">
+                          <span>Network Fee:</span>
+                          <span>~0.001 MATIC</span>
+                        </div>
                       </div>
                       
                       <Button 
@@ -240,7 +330,14 @@ const LiquidityTab = ({ isWalletConnected, connectWallet }: LiquidityTabProps) =
                         className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 w-full"
                         disabled={isAddingLiquidity || !selectedPairData}
                       >
-                        {isAddingLiquidity ? "Adding Liquidity..." : "Add Liquidity"}
+                        {isAddingLiquidity ? (
+                          <>
+                            <RefreshCw className="mr-2 animate-spin" size={18} />
+                            Adding Liquidity...
+                          </>
+                        ) : (
+                          "Add Liquidity"
+                        )}
                       </Button>
                     </form>
                   )}
@@ -264,6 +361,12 @@ const LiquidityTab = ({ isWalletConnected, connectWallet }: LiquidityTabProps) =
                     <Wallet className="mr-2" size={18} />
                     Connect Wallet
                   </Button>
+                </div>
+              ) : !isValidNetwork ? (
+                <div className="text-center py-6">
+                  <AlertTriangle className="mx-auto text-yellow-500 mb-4" size={48} />
+                  <p className="mb-4 text-muted-foreground">Please switch to Polygon Amoy testnet</p>
+                  <Badge variant="destructive">Wrong Network</Badge>
                 </div>
               ) : (
                 <div className="text-center py-6">

@@ -9,6 +9,7 @@ import BusinessesTab from "@/components/review/portal/BusinessesTab";
 import PassportTab from "@/components/review/portal/PassportTab";
 import UserDashboard from "@/components/review/portal/UserDashboard";
 import AnalyticsTab from "@/components/review/portal/AnalyticsTab";
+import SwapTab from "@/components/review/portal/SwapTab";
 import StakingTab from "@/components/review/portal/StakingTab";
 import LiquidityTab from "@/components/review/portal/LiquidityTab";
 import NFTMarketplaceTab from "@/components/review/portal/NFTMarketplaceTab";
@@ -81,7 +82,7 @@ const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connectWallet 
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 mb-8">
+      <TabsList className="grid w-full grid-cols-5 lg:grid-cols-11 mb-8">
         <TabsTrigger value="summary">Summary</TabsTrigger>
         <TabsTrigger value="write-review">Write Review</TabsTrigger>
         <TabsTrigger value="categories">Categories</TabsTrigger>
@@ -89,6 +90,7 @@ const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connectWallet 
         <TabsTrigger value="passport">Passport</TabsTrigger>
         <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
         <TabsTrigger value="analytics">Analytics</TabsTrigger>
+        <TabsTrigger value="swap">Swap</TabsTrigger>
         <TabsTrigger value="staking">Staking</TabsTrigger>
         <TabsTrigger value="liquidity">Liquidity</TabsTrigger>
         <TabsTrigger value="nft-marketplace">NFT</TabsTrigger>
@@ -133,6 +135,13 @@ const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connectWallet 
 
       <TabsContent value="analytics">
         <AnalyticsTab />
+      </TabsContent>
+
+      <TabsContent value="swap">
+        <SwapTab 
+          isWalletConnected={isWalletConnected}
+          connectWallet={connectWallet}
+        />
       </TabsContent>
 
       <TabsContent value="staking">
