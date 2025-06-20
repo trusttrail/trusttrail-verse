@@ -6,11 +6,13 @@ import { Coins, RefreshCw } from "lucide-react";
 import { useWeb3 } from '@/hooks/useWeb3';
 
 export const TokenBalance: React.FC = () => {
-  const { tokenBalance, refreshBalance, isLoading, address } = useWeb3();
+  const { tokenBalances, refreshBalances, isLoading, address, currentNetwork } = useWeb3();
 
-  if (!address) {
+  if (!address || currentNetwork !== "amoy") {
     return null;
   }
+
+  const trustBalance = tokenBalances["TRUST"] || "0";
 
   return (
     <Card>
@@ -20,19 +22,19 @@ export const TokenBalance: React.FC = () => {
           TRUST Token Balance
         </CardTitle>
         <CardDescription>
-          Your TrustTrail platform reward tokens
+          Your TrustTrail platform reward tokens on Polygon Amoy
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-2xl font-bold">{parseFloat(tokenBalance).toFixed(2)}</p>
+            <p className="text-2xl font-bold">{parseFloat(trustBalance).toFixed(2)}</p>
             <p className="text-sm text-muted-foreground">TRUST</p>
           </div>
           <Button
             variant="outline"
             size="sm"
-            onClick={refreshBalance}
+            onClick={refreshBalances}
             disabled={isLoading}
           >
             <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />

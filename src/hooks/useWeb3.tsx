@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { web3Service, Web3Service } from '../services/web3Service';
+import { web3Service, Web3Service, TokenInfo } from '../services/web3Service';
 import { useToast } from './use-toast';
 
 interface Web3ContextType {
@@ -10,8 +10,9 @@ interface Web3ContextType {
   currentNetwork: string;
   connectWallet: () => Promise<void>;
   isLoading: boolean;
-  tokenBalance: string;
-  refreshBalance: () => Promise<void>;
+  tokenBalances: Record<string, string>;
+  refreshBalances: () => Promise<void>;
+  tokens: TokenInfo[];
 }
 
 const Web3Context = createContext<Web3ContextType | undefined>(undefined);
@@ -25,7 +26,7 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
   const [address, setAddress] = useState('');
   const [currentNetwork, setCurrentNetwork] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [tokenBalance, setTokenBalance] = useState('0');
+  const [tokenBalances, setTokenBalances] = useState<Record<string, string>>({});
   const { toast } = useToast();
 
   const connectWallet = async () => {
@@ -36,8 +37,8 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
       setIsConnected(true);
       setCurrentNetwork(web3Service.getCurrentNetwork());
       
-      // Get token balance
-      await refreshBalance();
+      // Get all token balances
+      await refreshBalances();
       
       toast({
         title: "Wallet Connected",
@@ -55,13 +56,13 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
     }
   };
 
-  const refreshBalance = async () => {
-    if (address) {
+  const refreshBalances = async () => {
+    if (address && isConnected) {
       try {
-        const balance = await web3Service.getTokenBalance(address);
-        setTokenBalance(balance);
+        const balances = await web3Service.getAllTokenBalances(address);
+        setTokenBalances(balances);
       } catch (error) {
-        console.error('Failed to get token balance:', error);
+        console.error('Failed to get token balances:', error);
       }
     }
   };
@@ -76,7 +77,7 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
             setAddress(accounts[0]);
             setIsConnected(true);
             setCurrentNetwork(web3Service.getCurrentNetwork());
-            refreshBalance();
+            refreshBalances();
           }
         } catch (error) {
           console.error('Failed to check existing connection:', error);
@@ -94,8 +95,9 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
     currentNetwork,
     connectWallet,
     isLoading,
-    tokenBalance,
-    refreshBalance
+    tokenBalances,
+    refreshBalances,
+    tokens: web3Service.getTokens()
   };
 
   return (

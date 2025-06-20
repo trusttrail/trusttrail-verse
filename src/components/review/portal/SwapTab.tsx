@@ -16,8 +16,8 @@ interface SwapTabProps {
 
 const SwapTab = ({ isWalletConnected, connectWallet }: SwapTabProps) => {
   const { toast } = useToast();
-  const { web3Service, currentNetwork } = useWeb3();
-  const [fromToken, setFromToken] = useState("ETH");
+  const { web3Service, currentNetwork, tokenBalances, refreshBalances, tokens } = useWeb3();
+  const [fromToken, setFromToken] = useState("MATIC");
   const [toToken, setToToken] = useState("TRUST");
   const [fromAmount, setFromAmount] = useState("");
   const [toAmount, setToAmount] = useState("");
@@ -25,67 +25,27 @@ const SwapTab = ({ isWalletConnected, connectWallet }: SwapTabProps) => {
   const [exchangeRate, setExchangeRate] = useState(0);
   const [slippage, setSlippage] = useState("0.5");
 
-  const tokens = [
-    { 
-      symbol: "TRUST", 
-      name: "Trust Token", 
-      balance: "1,234.56",
-      icon: "🔷",
-      address: "0x186389f359713852366b4eA1eb9BC947f68F74ca"
-    },
-    { 
-      symbol: "ETH", 
-      name: "Ethereum", 
-      balance: "2.45",
-      icon: "⟠",
-      address: "0x0000000000000000000000000000000000000000"
-    },
-    { 
-      symbol: "BTC", 
-      name: "Bitcoin", 
-      balance: "0.12",
-      icon: "₿",
-      address: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6"
-    },
-    { 
-      symbol: "USDT", 
-      name: "Tether USD", 
-      balance: "5,678.90",
-      icon: "💚",
-      address: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"
-    },
-    { 
-      symbol: "USDC", 
-      name: "USD Coin", 
-      balance: "3,456.78",
-      icon: "🔵",
-      address: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
-    }
-  ];
-
-  const fromTokenData = tokens.find(t => t.symbol === fromToken);
-  const toTokenData = tokens.find(t => t.symbol === toToken);
-
   // Calculate exchange rate and to amount
   useEffect(() => {
     if (fromAmount && fromToken && toToken) {
-      // Mock exchange rates (in real implementation, fetch from DEX)
-      const rates: Record<string, Record<string, number>> = {
-        ETH: { TRUST: 1200, BTC: 0.065, USDT: 2500, USDC: 2500 },
-        TRUST: { ETH: 0.00083, BTC: 0.000054, USDT: 2.08, USDC: 2.08 },
-        BTC: { ETH: 15.4, TRUST: 18500, USDT: 38500, USDC: 38500 },
-        USDT: { ETH: 0.0004, TRUST: 0.48, BTC: 0.000026, USDC: 1.0 },
-        USDC: { ETH: 0.0004, TRUST: 0.48, BTC: 0.000026, USDT: 1.0 }
+      const calculateEstimate = async () => {
+        try {
+          const estimate = await web3Service.estimateSwap(fromToken, toToken, fromAmount);
+          setToAmount(estimate);
+          setExchangeRate(parseFloat(estimate) / parseFloat(fromAmount));
+        } catch (error) {
+          console.error('Failed to estimate swap:', error);
+          setToAmount("");
+          setExchangeRate(0);
+        }
       };
-
-      const rate = rates[fromToken]?.[toToken] || 1;
-      setExchangeRate(rate);
-      setToAmount((parseFloat(fromAmount) * rate).toFixed(6));
+      
+      calculateEstimate();
     } else {
       setToAmount("");
       setExchangeRate(0);
     }
-  }, [fromAmount, fromToken, toToken]);
+  }, [fromAmount, fromToken, toToken, web3Service]);
 
   const handleSwapTokens = () => {
     const tempToken = fromToken;
@@ -127,6 +87,19 @@ const SwapTab = ({ isWalletConnected, connectWallet }: SwapTabProps) => {
       return;
     }
 
+    // Check if user has sufficient balance
+    const userBalance = parseFloat(tokenBalances[fromToken] || "0");
+    const requestedAmount = parseFloat(fromAmount);
+    
+    if (requestedAmount > userBalance) {
+      toast({
+        title: "Insufficient Balance",
+        description: `You don't have enough ${fromToken}. Available: ${userBalance.toFixed(6)}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSwapping(true);
     
     try {
@@ -136,7 +109,6 @@ const SwapTab = ({ isWalletConnected, connectWallet }: SwapTabProps) => {
       });
 
       // Simulate Web3 swap transaction
-      // In real implementation, this would interact with a DEX smart contract
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Mock transaction hash
@@ -147,9 +119,10 @@ const SwapTab = ({ isWalletConnected, connectWallet }: SwapTabProps) => {
         description: `Swapped ${fromAmount} ${fromToken} for ${toAmount} ${toToken}. Transaction: ${txHash.substring(0, 10)}...`,
       });
 
-      // Reset form
+      // Reset form and refresh balances
       setFromAmount("");
       setToAmount("");
+      await refreshBalances();
       
     } catch (error: any) {
       console.error('Swap failed:', error);
@@ -206,6 +179,7 @@ const SwapTab = ({ isWalletConnected, connectWallet }: SwapTabProps) => {
                           value={fromAmount}
                           onChange={(e) => setFromAmount(e.target.value)}
                           className="text-lg"
+                          step="0.000001"
                         />
                       </div>
                       <Select value={fromToken} onValueChange={setFromToken}>
@@ -224,11 +198,9 @@ const SwapTab = ({ isWalletConnected, connectWallet }: SwapTabProps) => {
                         </SelectContent>
                       </Select>
                     </div>
-                    {fromTokenData && (
-                      <p className="text-sm text-muted-foreground">
-                        Balance: {fromTokenData.balance} {fromTokenData.symbol}
-                      </p>
-                    )}
+                    <p className="text-sm text-muted-foreground">
+                      Balance: {parseFloat(tokenBalances[fromToken] || "0").toFixed(6)} {fromToken}
+                    </p>
                   </div>
 
                   {/* Swap Direction Button */}
@@ -273,11 +245,9 @@ const SwapTab = ({ isWalletConnected, connectWallet }: SwapTabProps) => {
                         </SelectContent>
                       </Select>
                     </div>
-                    {toTokenData && (
-                      <p className="text-sm text-muted-foreground">
-                        Balance: {toTokenData.balance} {toTokenData.symbol}
-                      </p>
-                    )}
+                    <p className="text-sm text-muted-foreground">
+                      Balance: {parseFloat(tokenBalances[toToken] || "0").toFixed(6)} {toToken}
+                    </p>
                   </div>
 
                   {/* Exchange Rate Info */}
@@ -350,27 +320,47 @@ const SwapTab = ({ isWalletConnected, connectWallet }: SwapTabProps) => {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Token Balances</CardTitle>
-              <CardDescription>Your current token holdings</CardDescription>
+              <CardTitle className="flex items-center justify-between">
+                Token Balances
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={refreshBalances}
+                  disabled={!isWalletConnected}
+                >
+                  <RefreshCw size={16} />
+                </Button>
+              </CardTitle>
+              <CardDescription>Your current token holdings on Polygon Amoy</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {tokens.map((token) => (
-                  <div key={token.symbol} className="flex items-center justify-between p-3 bg-muted/40 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{token.icon}</span>
-                      <div>
-                        <p className="font-medium">{token.symbol}</p>
-                        <p className="text-sm text-muted-foreground">{token.name}</p>
+              {!isWalletConnected ? (
+                <div className="text-center py-6">
+                  <p className="text-muted-foreground">Connect wallet to view balances</p>
+                </div>
+              ) : !isValidNetwork ? (
+                <div className="text-center py-6">
+                  <p className="text-muted-foreground">Switch to Polygon Amoy to view balances</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {tokens.map((token) => (
+                    <div key={token.symbol} className="flex items-center justify-between p-3 bg-muted/40 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{token.icon}</span>
+                        <div>
+                          <p className="font-medium">{token.symbol}</p>
+                          <p className="text-sm text-muted-foreground">{token.name}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">{parseFloat(tokenBalances[token.symbol] || "0").toFixed(6)}</p>
+                        <p className="text-sm text-muted-foreground">{token.symbol}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium">{token.balance}</p>
-                      <p className="text-sm text-muted-foreground">{token.symbol}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 

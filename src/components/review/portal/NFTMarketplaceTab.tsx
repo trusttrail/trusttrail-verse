@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useWeb3 } from '@/hooks/useWeb3';
 import NFTSearchAndFilters from './nft/NFTSearchAndFilters';
 import NFTGrid from './nft/NFTGrid';
 import NFTCreateForm from './nft/NFTCreateForm';
@@ -14,6 +15,7 @@ interface NFTMarketplaceTabProps {
 
 const NFTMarketplaceTab = ({ isWalletConnected, connectWallet }: NFTMarketplaceTabProps) => {
   const { toast } = useToast();
+  const { currentNetwork, tokenBalances, refreshBalances } = useWeb3();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
@@ -23,7 +25,7 @@ const NFTMarketplaceTab = ({ isWalletConnected, connectWallet }: NFTMarketplaceT
     {
       id: 1,
       name: "Crypto Punk #1234",
-      price: "2.5 ETH",
+      price: "2.5 MATIC",
       image: "/placeholder.svg",
       creator: "0x1234...5678",
       category: "Art",
@@ -33,7 +35,7 @@ const NFTMarketplaceTab = ({ isWalletConnected, connectWallet }: NFTMarketplaceT
     {
       id: 2,
       name: "Bored Ape #5678",
-      price: "1.8 ETH",
+      price: "1.8 MATIC",
       image: "/placeholder.svg",
       creator: "0x8765...4321",
       category: "Art",
@@ -43,7 +45,7 @@ const NFTMarketplaceTab = ({ isWalletConnected, connectWallet }: NFTMarketplaceT
     {
       id: 3,
       name: "Cool Cat #9012",
-      price: "0.5 ETH",
+      price: "0.5 MATIC",
       image: "/placeholder.svg",
       creator: "0xabcd...ef12",
       category: "Art",
@@ -53,7 +55,7 @@ const NFTMarketplaceTab = ({ isWalletConnected, connectWallet }: NFTMarketplaceT
     {
       id: 4,
       name: "Rare Gaming Item",
-      price: "0.3 ETH",
+      price: "0.3 MATIC",
       image: "/placeholder.svg",
       creator: "0xdef1...2345",
       category: "Gaming",
@@ -74,7 +76,7 @@ const NFTMarketplaceTab = ({ isWalletConnected, connectWallet }: NFTMarketplaceT
     });
   };
 
-  const handleBuy = (nft: any) => {
+  const handleBuy = async (nft: any) => {
     if (!isWalletConnected) {
       toast({
         title: "Wallet Connection Required",
@@ -84,10 +86,55 @@ const NFTMarketplaceTab = ({ isWalletConnected, connectWallet }: NFTMarketplaceT
       return;
     }
 
-    toast({
-      title: "Purchase Initiated",
-      description: `Purchasing ${nft.name} for ${nft.price}`,
-    });
+    if (currentNetwork !== "amoy") {
+      toast({
+        title: "Wrong Network",
+        description: "Please switch to Polygon Amoy testnet to purchase NFTs.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if user has sufficient MATIC balance
+    const priceInMatic = parseFloat(nft.price.replace(" MATIC", ""));
+    const userBalance = parseFloat(tokenBalances["MATIC"] || "0");
+    
+    if (priceInMatic > userBalance) {
+      toast({
+        title: "Insufficient Balance",
+        description: `You need ${priceInMatic} MATIC but only have ${userBalance.toFixed(6)} MATIC.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      toast({
+        title: "Preparing Purchase",
+        description: "Please confirm the transaction in your MetaMask wallet...",
+      });
+
+      // Simulate Web3 NFT purchase transaction
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      // Mock transaction hash
+      const txHash = `0x${Math.random().toString(16).substr(2, 64)}`;
+      
+      toast({
+        title: "NFT Purchase Successful! 🎉",
+        description: `Successfully purchased ${nft.name} for ${nft.price}. Transaction: ${txHash.substring(0, 10)}...`,
+      });
+
+      await refreshBalances();
+      
+    } catch (error: any) {
+      console.error('NFT purchase failed:', error);
+      toast({
+        title: "Purchase Failed",
+        description: error.message || "NFT purchase failed. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const filteredNFTs = mockNFTs.filter(nft => {
@@ -95,6 +142,8 @@ const NFTMarketplaceTab = ({ isWalletConnected, connectWallet }: NFTMarketplaceT
     const matchesCategory = selectedCategory === "all" || nft.category.toLowerCase() === selectedCategory.toLowerCase();
     return matchesSearch && matchesCategory;
   });
+
+  const isValidNetwork = currentNetwork === "amoy";
 
   return (
     <div>
@@ -123,6 +172,7 @@ const NFTMarketplaceTab = ({ isWalletConnected, connectWallet }: NFTMarketplaceT
             likedNFTs={likedNFTs}
             onLike={handleLike}
             onBuy={handleBuy}
+            isValidNetwork={isValidNetwork}
           />
         </TabsContent>
         
@@ -132,6 +182,10 @@ const NFTMarketplaceTab = ({ isWalletConnected, connectWallet }: NFTMarketplaceT
               connectWallet={connectWallet}
               message="Connect your wallet to view your NFTs"
             />
+          ) : !isValidNetwork ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Please switch to Polygon Amoy testnet</p>
+            </div>
           ) : (
             <div className="text-center py-12">
               <p className="text-muted-foreground">You don't own any NFTs yet</p>
@@ -146,6 +200,10 @@ const NFTMarketplaceTab = ({ isWalletConnected, connectWallet }: NFTMarketplaceT
               connectWallet={connectWallet}
               message="Connect your wallet to create NFTs"
             />
+          ) : !isValidNetwork ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Please switch to Polygon Amoy testnet</p>
+            </div>
           ) : (
             <NFTCreateForm />
           )}

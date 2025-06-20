@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Minus, Wallet, TrendingUp, Droplets, Info, RefreshCw, AlertTriangle } from "lucide-react";
@@ -17,40 +16,40 @@ interface LiquidityTabProps {
 
 const LiquidityTab = ({ isWalletConnected, connectWallet }: LiquidityTabProps) => {
   const { toast } = useToast();
-  const { web3Service, currentNetwork } = useWeb3();
+  const { web3Service, currentNetwork, tokenBalances, refreshBalances, tokens } = useWeb3();
   const [token1Amount, setToken1Amount] = useState("");
   const [token2Amount, setToken2Amount] = useState("");
-  const [selectedPair, setSelectedPair] = useState("ETH/USDC");
+  const [selectedPair, setSelectedPair] = useState("MATIC/USDC");
   const [isAddingLiquidity, setIsAddingLiquidity] = useState(false);
   const [isRemovingLiquidity, setIsRemovingLiquidity] = useState(false);
 
   const liquidityPairs = [
     {
-      pair: "ETH/USDC",
+      pair: "MATIC/USDC",
       tvl: "$2,450,000",
       apy: "15.4%",
       volume24h: "$890,000",
       yourLiquidity: "0.00",
-      token1: "ETH",
+      token1: "MATIC",
       token2: "USDC"
     },
     {
-      pair: "BTC/ETH", 
+      pair: "WETH/WBTC", 
       tvl: "$1,850,000",
       apy: "12.8%",
       volume24h: "$650,000",
       yourLiquidity: "0.00",
-      token1: "BTC",
-      token2: "ETH"
+      token1: "WETH",
+      token2: "WBTC"
     },
     {
-      pair: "TRUST/ETH",
+      pair: "TRUST/MATIC",
       tvl: "$750,000",
       apy: "28.5%",
       volume24h: "$320,000",
       yourLiquidity: "0.00",
       token1: "TRUST",
-      token2: "ETH"
+      token2: "MATIC"
     },
     {
       pair: "USDT/USDC",
@@ -105,6 +104,30 @@ const LiquidityTab = ({ isWalletConnected, connectWallet }: LiquidityTabProps) =
       return;
     }
 
+    // Check if user has sufficient balance for both tokens
+    const token1Balance = parseFloat(tokenBalances[selectedPairData?.token1 || ""] || "0");
+    const token2Balance = parseFloat(tokenBalances[selectedPairData?.token2 || ""] || "0");
+    const requestedToken1 = parseFloat(token1Amount);
+    const requestedToken2 = parseFloat(token2Amount);
+    
+    if (requestedToken1 > token1Balance) {
+      toast({
+        title: "Insufficient Balance",
+        description: `You don't have enough ${selectedPairData?.token1}. Available: ${token1Balance.toFixed(6)}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (requestedToken2 > token2Balance) {
+      toast({
+        title: "Insufficient Balance",
+        description: `You don't have enough ${selectedPairData?.token2}. Available: ${token2Balance.toFixed(6)}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsAddingLiquidity(true);
     
     try {
@@ -126,6 +149,7 @@ const LiquidityTab = ({ isWalletConnected, connectWallet }: LiquidityTabProps) =
       
       setToken1Amount("");
       setToken2Amount("");
+      await refreshBalances();
       
     } catch (error: any) {
       console.error('Add liquidity failed:', error);
@@ -178,6 +202,8 @@ const LiquidityTab = ({ isWalletConnected, connectWallet }: LiquidityTabProps) =
         title: "Liquidity Removed! 🎉",
         description: `Your liquidity has been successfully removed from the pool. Transaction: ${txHash.substring(0, 10)}...`,
       });
+
+      await refreshBalances();
       
     } catch (error: any) {
       console.error('Remove liquidity failed:', error);
@@ -280,6 +306,9 @@ const LiquidityTab = ({ isWalletConnected, connectWallet }: LiquidityTabProps) =
                             <span className="text-sm text-muted-foreground">{selectedPairData?.token1}</span>
                           </div>
                         </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Balance: {parseFloat(tokenBalances[selectedPairData?.token1 || ""] || "0").toFixed(6)} {selectedPairData?.token1}
+                        </p>
                       </div>
                       
                       <div className="text-center">
@@ -304,6 +333,9 @@ const LiquidityTab = ({ isWalletConnected, connectWallet }: LiquidityTabProps) =
                             <span className="text-sm text-muted-foreground">{selectedPairData?.token2}</span>
                           </div>
                         </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Balance: {parseFloat(tokenBalances[selectedPairData?.token2 || ""] || "0").toFixed(6)} {selectedPairData?.token2}
+                        </p>
                       </div>
                       
                       <div className="space-y-2 text-sm bg-muted/40 p-3 rounded-lg">
