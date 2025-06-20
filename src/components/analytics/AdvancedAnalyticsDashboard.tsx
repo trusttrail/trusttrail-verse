@@ -19,6 +19,22 @@ const AdvancedAnalyticsDashboard = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isQueryActive, setIsQueryActive] = useState(false);
 
+  // Define consistent color palette for all charts
+  const colorPalette = [
+    "#7b58f6", // Purple
+    "#2c9fff", // Blue
+    "#22c55e", // Green
+    "#f59e0b", // Amber
+    "#ef4444", // Red
+    "#8b5cf6", // Violet
+    "#06b6d4", // Cyan
+    "#f97316", // Orange
+    "#84cc16", // Lime
+    "#ec4899", // Pink
+    "#6366f1", // Indigo
+    "#10b981"  // Emerald
+  ];
+
   // Generate analytics data from existing company data
   const analyticsData = useMemo(() => {
     const scatterData = sampleCompanies.map(company => ({
@@ -37,7 +53,7 @@ const AdvancedAnalyticsDashboard = () => {
         acc.push({
           name: company.category,
           value: company.reviewCount,
-          color: `hsl(${Math.random() * 360}, 70%, 50%)`
+          color: colorPalette[acc.length % colorPalette.length]
         });
       }
       return acc;
@@ -64,10 +80,10 @@ const AdvancedAnalyticsDashboard = () => {
 
     const ratingDistributionData = [
       { name: "5 Stars", value: sampleCompanies.filter(c => c.rating >= 4.5).length, color: "#22c55e" },
-      { name: "4 Stars", value: sampleCompanies.filter(c => c.rating >= 4 && c.rating < 4.5).length, color: "#84cc16" },
-      { name: "3 Stars", value: sampleCompanies.filter(c => c.rating >= 3 && c.rating < 4).length, color: "#eab308" },
-      { name: "2 Stars", value: sampleCompanies.filter(c => c.rating >= 2 && c.rating < 3).length, color: "#f97316" },
-      { name: "1 Star", value: sampleCompanies.filter(c => c.rating < 2).length, color: "#ef4444" }
+      { name: "4-4.5 Stars", value: sampleCompanies.filter(c => c.rating >= 4 && c.rating < 4.5).length, color: "#84cc16" },
+      { name: "3-4 Stars", value: sampleCompanies.filter(c => c.rating >= 3 && c.rating < 4).length, color: "#f59e0b" },
+      { name: "2-3 Stars", value: sampleCompanies.filter(c => c.rating >= 2 && c.rating < 3).length, color: "#f97316" },
+      { name: "Below 2 Stars", value: sampleCompanies.filter(c => c.rating < 2).length, color: "#ef4444" }
     ];
 
     const heatMapData = [];
@@ -92,6 +108,33 @@ const AdvancedAnalyticsDashboard = () => {
       gaming: Math.floor(Math.random() * 8) + 1
     }));
 
+    // New Category Trust Score Analysis
+    const categoryTrustData = sampleCompanies.reduce((acc, company) => {
+      const existing = acc.find(item => item.category === company.category);
+      if (existing) {
+        existing.totalRating += company.rating;
+        existing.count += 1;
+        existing.totalReviews += company.reviewCount;
+      } else {
+        acc.push({
+          category: company.category,
+          totalRating: company.rating,
+          count: 1,
+          totalReviews: company.reviewCount,
+          avgRating: 0,
+          trustScore: 0
+        });
+      }
+      return acc;
+    }, [] as Array<{ category: string; totalRating: number; count: number; totalReviews: number; avgRating: number; trustScore: number }>);
+
+    // Calculate averages and trust scores
+    categoryTrustData.forEach((item, index) => {
+      item.avgRating = item.totalRating / item.count;
+      item.trustScore = (item.avgRating * 20) + (Math.log(item.totalReviews + 1) * 5); // Custom trust score formula
+      item.color = colorPalette[index % colorPalette.length];
+    });
+
     return {
       scatterData,
       categoryData,
@@ -99,7 +142,8 @@ const AdvancedAnalyticsDashboard = () => {
       topCompaniesData,
       ratingDistributionData,
       heatMapData,
-      stackedAreaData
+      stackedAreaData,
+      categoryTrustData
     };
   }, []);
 
@@ -346,8 +390,8 @@ const AdvancedAnalyticsDashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <DonutChart
               data={filteredAnalyticsData.ratingDistributionData}
-              title="Rating Distribution"
-              description="Breakdown of companies by star rating"
+              title="Rating Distribution Analysis"
+              description="Breakdown of companies by star rating ranges"
             />
             <CustomBarChart
               data={filteredAnalyticsData.topCompaniesData}
@@ -376,20 +420,60 @@ const AdvancedAnalyticsDashboard = () => {
             areas={[
               { dataKey: "dex", stackId: "1", fill: "#7b58f6", name: "DEX" },
               { dataKey: "lending", stackId: "1", fill: "#2c9fff", name: "DeFi Lending" },
-              { dataKey: "nft", stackId: "1", fill: "#f0b003", name: "NFT" },
-              { dataKey: "gaming", stackId: "1", fill: "#54baff", name: "Gaming" }
+              { dataKey: "nft", stackId: "1", fill: "#f59e0b", name: "NFT" },
+              { dataKey: "gaming", stackId: "1", fill: "#22c55e", name: "Gaming" }
             ]}
           />
         </TabsContent>
 
         <TabsContent value="performance" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <CustomBarChart
-              data={filteredAnalyticsData.categoryData.map(d => ({ name: d.name, value: d.value }))}
-              title="Category Performance"
-              description="Total reviews by Web3 category"
-              color="#22c55e"
-            />
+            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-xl">Web3 Category Trust Score Analysis</CardTitle>
+                <CardDescription>
+                  Trust scores calculated based on average ratings and review volume
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {filteredAnalyticsData.categoryTrustData
+                    .sort((a, b) => b.trustScore - a.trustScore)
+                    .slice(0, 8)
+                    .map((category, index) => (
+                    <div key={category.category} className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/50">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-4 h-4 rounded-full"
+                            style={{ backgroundColor: category.color }}
+                          />
+                          <span className="font-medium text-sm">{category.category}</span>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span>Avg: {category.avgRating.toFixed(1)}⭐</span>
+                          <span>{category.totalReviews} reviews</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge 
+                          variant={category.trustScore >= 80 ? "default" : category.trustScore >= 60 ? "secondary" : "outline"}
+                          className="text-xs font-mono"
+                        >
+                          Trust: {category.trustScore.toFixed(0)}
+                        </Badge>
+                        <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 transition-all"
+                            style={{ width: `${Math.min(category.trustScore, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
             <ScatterPlotChart
               data={filteredAnalyticsData.scatterData.filter(d => d.rating >= 4.0)}
               title="High-Performing Companies"
