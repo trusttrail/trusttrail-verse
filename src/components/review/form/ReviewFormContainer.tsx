@@ -69,6 +69,15 @@ const ReviewFormContainer = ({ categories }: ReviewFormContainerProps) => {
     setGitcoinVerified,
   });
 
+  // Debug logging to help identify issues
+  console.log('ReviewFormContainer Debug:', {
+    formData,
+    categoriesLength: categories?.length,
+    isFormValid,
+    isWalletConnected,
+    gitcoinVerified
+  });
+
   return (
     <ReviewFormContent
       formData={formData}

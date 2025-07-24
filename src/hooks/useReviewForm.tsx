@@ -90,7 +90,7 @@ export const useReviewForm = () => {
     setFormData(prev => ({
       ...prev,
       companyName: company.name,
-      category: company.category
+      category: company.category // This should now match our new category IDs
     }));
   };
 
