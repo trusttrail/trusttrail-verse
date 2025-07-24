@@ -18,11 +18,23 @@ export const submitReviewToDatabase = async (
   txHash?: string
 ): Promise<SubmissionResult> => {
   try {
+    // Get current user for secure review submission
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      console.error('❌ Authentication required for review submission');
+      return {
+        success: false,
+        message: 'Please sign in to submit a review.',
+      };
+    }
+
     console.log('💾 Submitting review to database with INSTANT AI screening:', {
       company: formData.companyName,
       category: formData.category,
       title: formData.title,
       wallet: walletAddress,
+      userId: user.id,
       txHash
     });
 
@@ -43,6 +55,7 @@ export const submitReviewToDatabase = async (
 
     // Sanitize all input data
     const sanitizedData = {
+      user_id: user.id, // Required for security compliance
       company_name: sanitizeInput(formData.companyName),
       category: sanitizeInput(formData.category),
       title: sanitizeInput(formData.title),

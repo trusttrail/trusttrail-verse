@@ -5,12 +5,24 @@ const path = require("path");
 async function main() {
   console.log("Starting secure deployment...");
   
-  // Validate that we have the required private key
+  // Enhanced security validation for private key
   if (!process.env.PRIVATE_KEY) {
     console.error("❌ PRIVATE_KEY environment variable is required for deployment");
     console.log("Please set your private key as an environment variable:");
     console.log("export PRIVATE_KEY=your_private_key_here");
     process.exit(1);
+  }
+  
+  // Validate private key format
+  if (!/^0x[a-fA-F0-9]{64}$/.test(process.env.PRIVATE_KEY)) {
+    console.error("❌ Invalid PRIVATE_KEY format. Must be a 64-character hex string with 0x prefix");
+    process.exit(1);
+  }
+  
+  // Security warning for production deployments
+  if (process.env.NODE_ENV === 'production') {
+    console.log("⚠️  PRODUCTION DEPLOYMENT DETECTED");
+    console.log("⚠️  Ensure private key is stored securely and rotated regularly");
   }
   
   const [deployer] = await ethers.getSigners();
