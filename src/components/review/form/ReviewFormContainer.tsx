@@ -69,14 +69,29 @@ const ReviewFormContainer = ({ categories }: ReviewFormContainerProps) => {
     setGitcoinVerified,
   });
 
-  // Debug logging to help identify issues
-  console.log('ReviewFormContainer Debug:', {
+  // Enhanced debug logging to track all form state changes
+  console.log('ReviewFormContainer State:', {
     formData,
-    categoriesLength: categories?.length,
+    categoriesProvided: categories?.length || 0,
+    categoryOptions: categories?.map(c => ({ id: c.id, name: c.name })) || [],
     isFormValid,
     isWalletConnected,
-    gitcoinVerified
+    walletAddress,
+    gitcoinVerified,
+    needsSignup,
+    existingUser,
+    isAuthenticated
   });
+
+  // Validate that categories are properly formatted
+  if (!categories || categories.length === 0) {
+    console.error('No categories provided to ReviewFormContainer');
+    return (
+      <div className="p-4 border border-destructive rounded-md">
+        <p className="text-destructive">Error: No categories available. Please refresh the page.</p>
+      </div>
+    );
+  }
 
   return (
     <ReviewFormContent

@@ -59,6 +59,7 @@ export const useReviewForm = () => {
   };
 
   const handleCategoryChange = (category: string) => {
+    console.log('Category changed to:', category);
     setFormData(prev => ({
       ...prev,
       category
@@ -74,23 +75,35 @@ export const useReviewForm = () => {
 
   const handleCompanySearch = (value: string) => {
     if (!value.trim()) {
-      setFilteredCompanies(mockCompanies.slice(0, 50)); // Show first 50 companies when no search
+      setFilteredCompanies(mockCompanies.slice(0, 50));
       return;
     }
 
     const filtered = mockCompanies.filter(company =>
       company.name.toLowerCase().includes(value.toLowerCase()) ||
       company.category.toLowerCase().includes(value.toLowerCase())
-    ).slice(0, 100); // Limit to 100 results for performance
+    ).slice(0, 100);
     
     setFilteredCompanies(filtered);
   };
 
   const handleCompanySelect = (company: { id: number; name: string; category: string; logo?: string }) => {
+    console.log('Selecting company:', company);
+    
+    // Find the matching category ID from our categories list
+    const matchingCategory = mockCategories.find(cat => 
+      cat.name.toLowerCase() === company.category.toLowerCase() ||
+      cat.id === company.category
+    );
+    
+    const categoryId = matchingCategory ? matchingCategory.id : company.category;
+    
+    console.log('Setting category to:', categoryId);
+    
     setFormData(prev => ({
       ...prev,
       companyName: company.name,
-      category: company.category // This should now match our new category IDs
+      category: categoryId
     }));
   };
 

@@ -32,10 +32,12 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
   // Listen for "amoy" (Polygon Amoy testnet) chainId: 80002 / 0x13882
   useEffect(() => {
     const desiredChainId = '0x13882'; // Polygon Amoy
+    
     const checkNetwork = async () => {
       if (window.ethereum) {
         try {
           const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+          console.log('Current chain ID:', chainId, 'Expected:', desiredChainId);
           if (chainId === desiredChainId) {
             setActualNetwork("amoy");
           } else {
@@ -43,23 +45,40 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
           }
         } catch (error) {
           console.error("Error checking network:", error);
+          setActualNetwork("wrong");
         }
       }
     };
+    
     checkNetwork();
+    
     if (window.ethereum) {
       const handleChainChanged = (chainId: string) => {
-        if (chainId === desiredChainId) setActualNetwork("amoy");
-        else setActualNetwork("wrong");
+        console.log('Chain changed to:', chainId);
+        if (chainId === desiredChainId) {
+          setActualNetwork("amoy");
+          toast({
+            title: "Network Changed",
+            description: "Connected to Polygon Amoy Testnet",
+          });
+        } else {
+          setActualNetwork("wrong");
+          toast({
+            title: "Wrong Network",
+            description: "Please switch to Polygon Amoy Testnet",
+            variant: "destructive",
+          });
+        }
       };
+      
       window.ethereum.on('chainChanged', handleChainChanged);
       return () => {
         window.ethereum?.removeListener('chainChanged', handleChainChanged);
       };
     }
-  }, []);
+  }, [toast]);
   
-  const handleNetworkSelect = (networkId: string, supported: boolean) => {
+  const handleNetworkSelect = async (networkId: string, supported: boolean) => {
     if (!supported) {
       toast({
         title: "Network Not Supported",
@@ -68,6 +87,50 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
       });
       return;
     }
+    
+    if (networkId === "amoy" && window.ethereum) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: '0x13882' }],
+        });
+      } catch (switchError: any) {
+        if (switchError.code === 4902) {
+          // Network not added, add it
+          try {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: '0x13882',
+                chainName: 'Polygon Amoy Testnet',
+                nativeCurrency: {
+                  name: 'MATIC',
+                  symbol: 'MATIC',
+                  decimals: 18
+                },
+                rpcUrls: ['https://rpc-amoy.polygon.technology/'],
+                blockExplorerUrls: ['https://amoy.polygonscan.com/']
+              }]
+            });
+          } catch (addError) {
+            console.error('Failed to add network:', addError);
+            toast({
+              title: "Failed to Add Network",
+              description: "Could not add Polygon Amoy Testnet to MetaMask",
+              variant: "destructive",
+            });
+          }
+        } else {
+          console.error('Failed to switch network:', switchError);
+          toast({
+            title: "Failed to Switch Network",
+            description: "Could not switch to Polygon Amoy Testnet",
+            variant: "destructive",
+          });
+        }
+      }
+    }
+    
     onChange(networkId);
   };
 
@@ -77,7 +140,7 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className={`flex items-center gap-2 ${isWrongNetwork ? 'border-red-500 text-red-400' : ''}`}>
+        <Button variant="outline" className={`flex items-center gap-2 ${isWrongNetwork ? 'border-destructive text-destructive' : ''}`}>
           {isWrongNetwork ? <AlertTriangle size={16} /> : <Globe size={16} />}
           <span className="hidden sm:inline">
             {isWrongNetwork ? "Wrong Network" : selectedNetwork.name}
@@ -88,9 +151,9 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
           <ChevronDown size={14} />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 bg-background border-border z-50">
+      <DropdownMenuContent className="w-56 bg-popover border-border z-[200]">
         {isWrongNetwork && (
-          <div className="px-3 py-2 text-sm text-red-400 border-b border-border mb-1">
+          <div className="px-3 py-2 text-sm text-destructive border-b border-border mb-1">
             Please switch to Polygon Amoy Testnet in MetaMask
           </div>
         )}
@@ -98,7 +161,7 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
           <DropdownMenuItem
             key={network.id}
             className={`flex items-center gap-3 cursor-pointer ${
-              actualNetwork === network.id && network.supported ? "bg-muted" : ""
+              actualNetwork === network.id && network.supported ? "bg-accent" : ""
             } ${!network.supported ? "opacity-60" : ""}`}
             onClick={() => handleNetworkSelect(network.id, network.supported)}
           >
