@@ -21,7 +21,7 @@ const CategorySelector = ({ category, setCategory, categories }: CategorySelecto
         <SelectTrigger>
           <SelectValue placeholder="Select category" />
         </SelectTrigger>
-        <SelectContent className="max-h-80">
+        <SelectContent className="max-h-80 bg-background border z-50">
           {categories.map((cat) => (
             <SelectItem key={cat.id} value={cat.id}>
               {cat.name}
