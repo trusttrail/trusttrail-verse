@@ -16,43 +16,43 @@ export const screenReviewWithAI = async (reviewData: {
 }): Promise<AIScreeningResult> => {
   const startTime = Date.now();
   console.log('🤖 Starting AI review screening for:', reviewData.companyName);
-  console.log('⏱️ Minimum processing time: 60 seconds');
-
-  // Comprehensive AI screening - minimum 60 seconds processing
+  console.log('🤖 TEST PHASE: Quick AI review screening for:', reviewData.companyName);
+  
+  // Enhanced AI screening for TEST PHASE - more lenient approval
   const { companyName, title, content, rating } = reviewData;
   
   let riskFactors: string[] = [];
-  let confidence = 75; // Start with moderate confidence
+  let confidence = 85; // Start with higher confidence for test phase
   
-  // Content length analysis
-  if (content.length < 20) {
+  // Content length analysis - more lenient
+  if (content.length < 10) {
     riskFactors.push('Very short content');
-    confidence -= 15;
-  } else if (content.length < 50) {
+    confidence -= 10; // Reduced penalty
+  } else if (content.length < 25) {
     riskFactors.push('Short content');
-    confidence -= 10;
+    confidence -= 5; // Reduced penalty
   }
   
-  // Spam detection patterns
+  // Spam detection patterns - only severe spam
   const spamPatterns = [
-    /\b(viagra|casino|lottery|winner|congratulations.*prize|click here|free money)\b/gi,
-    /!{10,}|\?{10,}/g, // Excessive punctuation
-    /[A-Z]{30,}/g, // Long all-caps text
-    /(\$|\€|\£)\d+.*free/gi, // Free money offers
+    /\b(viagra|casino|lottery)\b/gi, // Removed milder patterns
+    /!{20,}|\?{20,}/g, // Only excessive punctuation (20+ instead of 10+)
+    /[A-Z]{50,}/g, // Only very long all-caps text (50+ instead of 30+)
   ];
   
   spamPatterns.forEach((pattern) => {
     if (content.match(pattern)) {
-      riskFactors.push('Potential spam content detected');
-      confidence -= 20;
+      riskFactors.push('Severe spam content detected');
+      confidence -= 15; // Reduced penalty
     }
   });
   
-  // Reputation boost for known companies
+  // Reputation boost for known companies - enhanced
   const reputableCompanies = [
     'coinbase', 'binance', 'kraken', 'metamask', 'uniswap', 'opensea', 
     'compound', 'aave', 'sushiswap', 'pancakeswap', 'quickswap',
-    'polygon', 'avalanche', 'chainlink', 'ethereum', 'bitcoin'
+    'polygon', 'avalanche', 'chainlink', 'ethereum', 'bitcoin',
+    'curve', 'balancer', 'synthetix', 'maker', 'yearn'
   ];
   
   const isReputableCompany = reputableCompanies.some(company => 
@@ -60,72 +60,61 @@ export const screenReviewWithAI = async (reviewData: {
   );
   
   if (isReputableCompany) {
-    confidence += 15;
+    confidence += 10; // Bonus for reputable companies
     console.log('🏢 Reputable company detected, confidence boosted to', confidence);
   }
   
-  // Quality indicators analysis
+  // Quality indicators analysis - more generous
   const qualityIndicators = [
     /\$\d+/, // Price mentions
     /\d+\s*(days?|weeks?|months?|years?)/, // Time periods
-    /customer|support|service|experience|interface|feature|trading|wallet|exchange/gi, // Service terms
-    /good|great|excellent|bad|terrible|poor|amazing|awful|fantastic|horrible/gi, // Opinion words
-    /because|since|however|although|while|despite/gi, // Reasoning words
+    /customer|support|service|experience|interface|feature|trading|wallet|exchange|liquidity|staking|yield|rewards/gi, // More terms
+    /good|great|excellent|bad|terrible|poor|amazing|awful|fantastic|horrible|nice|decent|okay|solid|impressive/gi, // More opinion words
+    /because|since|however|although|while|despite|actually|really|very|quite|pretty|fairly/gi, // More reasoning words
   ];
   
   const qualityMatches = qualityIndicators.filter(pattern => content.match(pattern));
-  if (qualityMatches.length >= 2) {
-    confidence += 10;
+  if (qualityMatches.length >= 1) { // Reduced requirement from 2 to 1
+    confidence += 8; // Generous bonus
     console.log('✅ Quality indicators found:', qualityMatches.length);
   }
   
-  // Rating consistency check
-  if (rating >= 4 && content.toLowerCase().includes('bad|terrible|awful|horrible')) {
+  // Rating consistency check - more lenient
+  const negativeWords = /\b(bad|terrible|awful|horrible|worst|hate|scam|fraud)\b/gi;
+  const positiveWords = /\b(good|great|excellent|amazing|best|love|fantastic|awesome)\b/gi;
+  
+  if (rating >= 4 && negativeWords.test(content)) {
     riskFactors.push('Rating inconsistent with negative content');
-    confidence -= 15;
-  } else if (rating <= 2 && content.toLowerCase().includes('good|great|excellent|amazing')) {
+    confidence -= 10; // Reduced penalty
+  } else if (rating <= 2 && positiveWords.test(content)) {
     riskFactors.push('Rating inconsistent with positive content');
-    confidence -= 15;
+    confidence -= 10; // Reduced penalty
   }
   
-  // Length bonus for substantive content
-  if (content.length > 100) {
-    confidence += 8;
+  // Length bonus for substantive content - more generous
+  if (content.length > 50) { // Reduced requirement
+    confidence += 5;
+  }
+  if (content.length > 150) { // Additional bonus
+    confidence += 5;
   }
   
-  // Ensure confidence stays within bounds
-  confidence = Math.max(20, Math.min(95, confidence));
+  // TEST PHASE: Extra lenient approval threshold
+  confidence = Math.max(30, Math.min(98, confidence)); // Higher floor, higher ceiling
   
-  // Approval threshold - balanced approach
-  const approved = confidence >= 60 && riskFactors.length <= 2;
+  // Very lenient approval threshold for testing
+  const approved = confidence >= 45 && riskFactors.length <= 3; // Much more lenient
   
   const result: AIScreeningResult = {
     approved,
     confidence,
     riskFactors,
     reasoning: approved 
-      ? `✅ Review APPROVED with ${confidence}% confidence. ${isReputableCompany ? 'Reputable company + ' : ''}${qualityMatches.length > 0 ? 'Quality content detected.' : 'Content appears authentic.'}`
-      : `❌ Review REJECTED. Confidence: ${confidence}%. Issues: ${riskFactors.join(', ')}`,
-    processingTimeMs: 0 // Will be set after processing
+      ? `✅ TEST PHASE: Review APPROVED with ${confidence}% confidence. ${isReputableCompany ? 'Reputable company + ' : ''}${qualityMatches.length > 0 ? 'Quality content detected.' : 'Content appears authentic.'}`
+      : `❌ TEST PHASE: Review needs review. Confidence: ${confidence}%. Issues: ${riskFactors.join(', ')}`,
+    processingTimeMs: Date.now() - startTime
   };
   
-  console.log('🤖 AI screening analysis complete:', result);
-  
-  // ENFORCE MINIMUM 60 SECONDS PROCESSING TIME
-  const minProcessingTime = 60000; // 60 seconds
-  const currentProcessingTime = Date.now() - startTime;
-  const remainingTime = Math.max(0, minProcessingTime - currentProcessingTime);
-  
-  console.log(`⏱️ Current processing time: ${currentProcessingTime}ms`);
-  console.log(`⏱️ Remaining time to reach 60s minimum: ${remainingTime}ms`);
-  
-  if (remainingTime > 0) {
-    console.log(`⏳ Waiting additional ${Math.round(remainingTime/1000)}s to meet minimum processing time...`);
-    await new Promise(resolve => setTimeout(resolve, remainingTime));
-  }
-  
-  result.processingTimeMs = Date.now() - startTime;
-  console.log(`✅ AI screening completed in ${result.processingTimeMs}ms (${Math.round(result.processingTimeMs/1000)}s)`);
-  
+  console.log('🤖 Quick AI screening complete:', result);
   return result;
 };
