@@ -35,12 +35,29 @@ export const useFormValidation = ({
                        isWalletConnected && 
                        gitcoinVerified;
 
+    // Debug logging to help troubleshoot form validation issues
+    console.log('=== FORM VALIDATION DEBUG ===');
+    console.log('formData.companyName:', `"${formData.companyName}"`);
+    console.log('formData.category:', `"${formData.category}"`);
+    console.log('formData.title:', `"${formData.title}"`);
+    console.log('formData.review:', `"${formData.review.substring(0, 50)}..."`);
+    console.log('formData.rating:', formData.rating);
+    console.log('isAuthenticated:', isAuthenticated);
+    console.log('isWalletConnected:', isWalletConnected);
+    console.log('existingUser:', existingUser);
+    console.log('gitcoinVerified:', gitcoinVerified);
+    console.log('files.length:', files.length);
+    console.log('allFieldsFilled:', allFieldsFilled);
+    console.log('isEffectivelyAuthenticated:', isEffectivelyAuthenticated);
+    console.log('Final isFormValid:', isFormValid);
+    console.log('=== END FORM VALIDATION DEBUG ===');
+
     return {
       isEffectivelyAuthenticated,
       allFieldsFilled,
       isFormValid,
     };
-  }, [formData, isAuthenticated, isWalletConnected, gitcoinVerified]);
+  }, [formData, files, isAuthenticated, isWalletConnected, existingUser, gitcoinVerified]);
 
   return validationResults;
 };
