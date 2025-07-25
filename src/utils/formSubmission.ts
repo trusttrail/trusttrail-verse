@@ -18,26 +18,48 @@ export const submitReviewToDatabase = async (
   txHash?: string
 ): Promise<SubmissionResult> => {
   try {
-    // For wallet-connected users, we don't require traditional Supabase auth
-    // Get current user if available, but allow wallet-only submission
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // For wallet-connected users, create or get wallet profile
+    console.log('💾 Processing wallet-based review submission for:', walletAddress);
     
-    // Create a wallet-based user ID for non-authenticated users
-    const effectiveUserId = user?.id || `wallet_${walletAddress}`;
+    // First, ensure wallet profile exists
+    let walletProfileId: string;
     
-    console.log('💾 Processing review submission:', {
-      hasSupabaseAuth: !!user,
-      walletAddress,
-      effectiveUserId,
-      submissionMethod: user ? 'authenticated' : 'wallet-only'
-    });
+    // Check if wallet profile already exists
+    const { data: existingProfile } = await supabase
+      .from('wallet_profiles')
+      .select('id')
+      .eq('wallet_address', walletAddress.toLowerCase())
+      .maybeSingle();
+    
+    if (existingProfile) {
+      walletProfileId = existingProfile.id;
+      console.log('📁 Using existing wallet profile:', walletProfileId);
+    } else {
+      // Create new wallet profile
+      const { data: newProfile, error: profileError } = await supabase
+        .from('wallet_profiles')
+        .insert({ wallet_address: walletAddress.toLowerCase() })
+        .select('id')
+        .single();
+      
+      if (profileError) {
+        console.error('❌ Failed to create wallet profile:', profileError);
+        return {
+          success: false,
+          message: 'Failed to create wallet profile. Please try again.',
+        };
+      }
+      
+      walletProfileId = newProfile.id;
+      console.log('✅ Created new wallet profile:', walletProfileId);
+    }
 
     console.log('💾 Submitting review to database with INSTANT AI screening:', {
       company: formData.companyName,
       category: formData.category,
       title: formData.title,
       wallet: walletAddress,
-      effectiveUserId,
+      walletProfileId,
       txHash
     });
 
@@ -56,9 +78,10 @@ export const submitReviewToDatabase = async (
     const aiProcessingTime = Date.now() - aiStartTime;
     console.log('🤖 AI screening completed in', aiProcessingTime, 'ms:', aiResult);
 
-    // Sanitize all input data
+    // Sanitize all input data - use wallet profile for user_id
     const sanitizedData = {
-      user_id: effectiveUserId, // Use effective user ID (either auth user or wallet-based)
+      user_id: walletProfileId, // Use wallet profile ID
+      wallet_profile_id: walletProfileId, // Reference to wallet profile
       company_name: sanitizeInput(formData.companyName),
       category: sanitizeInput(formData.category),
       title: sanitizeInput(formData.title),

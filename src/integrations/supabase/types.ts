@@ -83,6 +83,7 @@ export type Database = {
           updated_at: string
           user_id: string
           wallet_address: string
+          wallet_profile_id: string | null
         }
         Insert: {
           admin_notes?: string | null
@@ -101,6 +102,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           wallet_address: string
+          wallet_profile_id?: string | null
         }
         Update: {
           admin_notes?: string | null
@@ -118,6 +120,36 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          wallet_address?: string
+          wallet_profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_wallet_profile_id_fkey"
+            columns: ["wallet_profile_id"]
+            isOneToOne: false
+            referencedRelation: "wallet_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          updated_at: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          updated_at?: string
           wallet_address?: string
         }
         Relationships: []
