@@ -27,7 +27,7 @@ const ReviewSubmissionSection = ({
         <Button
           type="submit"
           size="lg"
-          disabled={!isFormValid || isSubmitting || isTransacting || isVerifying}
+          disabled={!isFormValid || isSubmitting || isTransacting}
           className="w-full sm:w-auto min-w-48"
         >
           {isSubmitting || isTransacting ? (
@@ -39,6 +39,11 @@ const ReviewSubmissionSection = ({
             'Submit Review to Blockchain'
           )}
         </Button>
+        
+        {/* Debug info for troubleshooting */}
+        <div className="text-xs text-gray-500 mt-2">
+          Debug: isFormValid={isFormValid.toString()}, isSubmitting={isSubmitting.toString()}, isTransacting={isTransacting.toString()}, isVerifying={isVerifying.toString()}
+        </div>
         
         {!isFormValid && (
           <p className="text-sm text-muted-foreground text-center">
