@@ -157,17 +157,54 @@ export class Web3Service {
     }
 
     try {
-      // Mock transaction for review submission
+      console.log('🔗 Preparing review transaction on Amoy testnet...');
+      console.log('📊 Review data for blockchain:', reviewData);
+
+      // Get current gas price to ensure transaction goes through
+      const gasPrice = await this.provider.getFeeData();
+      console.log('⛽ Gas price data:', gasPrice);
+
+      // Create transaction data (encoding review hash for the blockchain)
+      const reviewHash = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(reviewData)));
+      const txData = ethers.concat(['0x01', reviewHash.slice(2)]); // Simple prefix + hash
+
+      // For testnet, send a small transaction to demonstrate blockchain interaction
       const tx = await this.signer.sendTransaction({
-        to: '0x186389f359713852366b4eA1eb9BC947f68F74ca', // TRUST token contract
-        value: ethers.parseEther('0'), // No ETH sent
-        data: '0x' // Mock data
+        to: await this.signer.getAddress(), // Send to self to avoid contract issues
+        value: ethers.parseEther('0.001'), // Small amount (0.001 MATIC)
+        data: txData,
+        gasLimit: 21000 + 5000, // Standard + extra for data
+        gasPrice: gasPrice.gasPrice || ethers.parseUnits('20', 'gwei') // Fallback gas price
       });
 
-      return tx.hash;
-    } catch (error) {
-      console.error('Failed to submit review:', error);
-      throw error;
+      console.log('📡 Transaction submitted:', tx.hash);
+      console.log('⏳ Waiting for confirmation...');
+
+      // Wait for transaction confirmation
+      const receipt = await tx.wait(1); // Wait for 1 confirmation
+      
+      if (receipt?.status === 1) {
+        console.log('✅ Transaction confirmed on Amoy!', receipt);
+        return tx.hash;
+      } else {
+        throw new Error('Transaction failed during confirmation');
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Blockchain transaction error:', error);
+      
+      // Provide specific error messages for common issues
+      if (error.code === 'ACTION_REJECTED' || error.code === 4001) {
+        throw new Error('Transaction was rejected by user in MetaMask');
+      } else if (error.code === 'INSUFFICIENT_FUNDS' || error.code === -32000) {
+        throw new Error('Insufficient MATIC balance for transaction fees');
+      } else if (error.code === 'NETWORK_ERROR') {
+        throw new Error('Network connection error. Please check your internet connection');
+      } else if (error.message?.includes('gas')) {
+        throw new Error('Gas estimation failed. Please try again');
+      } else {
+        throw new Error(`Transaction failed: ${error.message || 'Unknown error'}`);
+      }
     }
   }
 
