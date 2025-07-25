@@ -18,23 +18,26 @@ export const submitReviewToDatabase = async (
   txHash?: string
 ): Promise<SubmissionResult> => {
   try {
-    // Get current user for secure review submission
+    // For wallet-connected users, we don't require traditional Supabase auth
+    // Get current user if available, but allow wallet-only submission
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
-    if (authError || !user) {
-      console.error('❌ Authentication required for review submission');
-      return {
-        success: false,
-        message: 'Please sign in to submit a review.',
-      };
-    }
+    // Create a wallet-based user ID for non-authenticated users
+    const effectiveUserId = user?.id || `wallet_${walletAddress}`;
+    
+    console.log('💾 Processing review submission:', {
+      hasSupabaseAuth: !!user,
+      walletAddress,
+      effectiveUserId,
+      submissionMethod: user ? 'authenticated' : 'wallet-only'
+    });
 
     console.log('💾 Submitting review to database with INSTANT AI screening:', {
       company: formData.companyName,
       category: formData.category,
       title: formData.title,
       wallet: walletAddress,
-      userId: user.id,
+      effectiveUserId,
       txHash
     });
 
@@ -55,7 +58,7 @@ export const submitReviewToDatabase = async (
 
     // Sanitize all input data
     const sanitizedData = {
-      user_id: user.id, // Required for security compliance
+      user_id: effectiveUserId, // Use effective user ID (either auth user or wallet-based)
       company_name: sanitizeInput(formData.companyName),
       category: sanitizeInput(formData.category),
       title: sanitizeInput(formData.title),
