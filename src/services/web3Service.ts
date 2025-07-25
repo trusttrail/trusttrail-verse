@@ -153,57 +153,80 @@ export class Web3Service {
 
   async submitReview(reviewData: any): Promise<string> {
     if (!this.provider || !this.signer) {
-      throw new Error('Wallet not connected');
+      throw new Error('Wallet not connected - call connect() first');
     }
 
     try {
-      console.log('🔗 Preparing review transaction on Amoy testnet...');
+      console.log('🔗 Starting review submission transaction...');
       console.log('📊 Review data for blockchain:', reviewData);
 
-      // Get current gas price to ensure transaction goes through
-      const gasPrice = await this.provider.getFeeData();
-      console.log('⛽ Gas price data:', gasPrice);
+      // Ensure we're on the correct network
+      await this.checkNetwork();
+      
+      // Get the current account to ensure we have a valid signer
+      const signerAddress = await this.signer.getAddress();
+      console.log('👤 Signer address:', signerAddress);
 
-      // Create transaction data (encoding review hash for the blockchain)
-      const reviewHash = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(reviewData)));
-      const txData = ethers.concat(['0x01', reviewHash.slice(2)]); // Simple prefix + hash
+      // Check balance to ensure user has enough MATIC
+      const balance = await this.provider.getBalance(signerAddress);
+      const balanceInMatic = Number(balance) / 1e18;
+      console.log('💰 Current MATIC balance:', balanceInMatic);
 
-      // For testnet, send a small transaction to demonstrate blockchain interaction
-      const tx = await this.signer.sendTransaction({
-        to: await this.signer.getAddress(), // Send to self to avoid contract issues
-        value: ethers.parseEther('0.001'), // Small amount (0.001 MATIC)
-        data: txData,
-        gasLimit: 21000 + 5000, // Standard + extra for data
-        gasPrice: gasPrice.gasPrice || ethers.parseUnits('20', 'gwei') // Fallback gas price
-      });
+      if (balanceInMatic < 0.01) {
+        throw new Error(`Insufficient MATIC balance: ${balanceInMatic.toFixed(4)} MATIC. Get free MATIC from https://faucet.polygon.technology/`);
+      }
 
-      console.log('📡 Transaction submitted:', tx.hash);
+      // Create simple transaction data
+      const reviewHash = ethers.id(JSON.stringify({
+        company: reviewData.companyName,
+        title: reviewData.title,
+        rating: reviewData.rating,
+        timestamp: reviewData.timestamp
+      }));
+
+      console.log('📝 Review hash:', reviewHash);
+
+      // Prepare transaction - simple self-send with review data
+      const txRequest = {
+        to: signerAddress, // Send to self
+        value: ethers.parseEther('0.001'), // 0.001 MATIC 
+        data: reviewHash, // Review hash as data
+        gasLimit: 25000 // Simple transaction limit
+      };
+
+      console.log('🚀 Transaction request prepared:', txRequest);
+      console.log('⚡ About to send transaction - MetaMask should popup now...');
+
+      // This SHOULD trigger MetaMask popup
+      const tx = await this.signer.sendTransaction(txRequest);
+      
+      console.log('📡 Transaction sent! Hash:', tx.hash);
       console.log('⏳ Waiting for confirmation...');
 
-      // Wait for transaction confirmation
-      const receipt = await tx.wait(1); // Wait for 1 confirmation
+      // Wait for confirmation  
+      const receipt = await tx.wait(1);
       
-      if (receipt?.status === 1) {
-        console.log('✅ Transaction confirmed on Amoy!', receipt);
+      if (receipt && receipt.status === 1) {
+        console.log('✅ Transaction confirmed successfully:', receipt);
         return tx.hash;
       } else {
         throw new Error('Transaction failed during confirmation');
       }
       
     } catch (error: any) {
-      console.error('❌ Blockchain transaction error:', error);
+      console.error('❌ submitReview failed:', error);
       
-      // Provide specific error messages for common issues
+      // Re-throw with more specific error messages
       if (error.code === 'ACTION_REJECTED' || error.code === 4001) {
-        throw new Error('Transaction was rejected by user in MetaMask');
-      } else if (error.code === 'INSUFFICIENT_FUNDS' || error.code === -32000) {
-        throw new Error('Insufficient MATIC balance for transaction fees');
+        throw new Error('Transaction rejected by user');
+      } else if (error.message?.includes('insufficient funds')) {
+        throw new Error('Insufficient MATIC for transaction fees');
+      } else if (error.message?.includes('Insufficient MATIC balance')) {
+        throw error; // Re-throw our custom balance error
       } else if (error.code === 'NETWORK_ERROR') {
-        throw new Error('Network connection error. Please check your internet connection');
-      } else if (error.message?.includes('gas')) {
-        throw new Error('Gas estimation failed. Please try again');
+        throw new Error('Network connection failed');
       } else {
-        throw new Error(`Transaction failed: ${error.message || 'Unknown error'}`);
+        throw error; // Re-throw original error
       }
     }
   }
