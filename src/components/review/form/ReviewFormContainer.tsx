@@ -7,6 +7,7 @@ import { useGitcoinHandlers } from './useGitcoinHandlers';
 import { useReviewForm } from '@/hooks/useReviewForm';
 import { useWalletConnection } from '@/hooks/useWalletConnection';
 import { useAuth } from '@/hooks/useAuth';
+import { useGitcoinPassport } from '@/hooks/useGitcoinPassport';
 import ReviewFormContent from '../ReviewFormContent';
 
 interface ReviewFormContainerProps {
@@ -32,7 +33,7 @@ const ReviewFormContainer = ({ categories }: ReviewFormContainerProps) => {
     openCompanySelect,
     setOpenCompanySelect,
     filteredCompanies,
-    gitcoinVerified,
+    gitcoinVerified: localGitcoinVerified,
     setGitcoinVerified,
     handleInputChange,
     handleRatingChange,
@@ -42,6 +43,12 @@ const ReviewFormContainer = ({ categories }: ReviewFormContainerProps) => {
     handleCompanySelect,
     resetForm,
   } = useReviewForm();
+
+  // Use the actual Gitcoin passport hook for proper verification status
+  const { isVerified: gitcoinPassportVerified } = useGitcoinPassport();
+  
+  // Use the passport hook's verification status as the source of truth
+  const gitcoinVerified = gitcoinPassportVerified || localGitcoinVerified;
 
   const { isFormValid } = useFormValidation({
     formData,
