@@ -76,9 +76,16 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
         try {
           const accounts = await window.ethereum.request({ method: 'eth_accounts' });
           if (accounts.length > 0) {
+            console.log('🔍 Found existing wallet connection, initializing Web3Service...');
+            // Initialize Web3Service with provider and signer
+            await web3Service.connect();
+            
             setAddress(accounts[0]);
             setIsConnected(true);
             setCurrentNetwork(web3Service.getCurrentNetwork());
+            
+            // Now refresh balances after Web3Service is properly connected
+            console.log('🔄 Web3Service connected, fetching balances...');
             refreshBalances();
           }
         } catch (error) {
