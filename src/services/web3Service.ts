@@ -178,39 +178,39 @@ export class Web3Service {
         throw new Error(`Insufficient MATIC balance: ${balanceInMatic.toFixed(4)} MATIC. Get free MATIC from https://faucet.polygon.technology/`);
       }
 
-      // Smart contract address on Polygon Amoy testnet for review submission
-      const REVIEW_CONTRACT_ADDRESS = "0x7b96aF9Bd211cBf6BA5b0dd53aa61Dc5806b6AcE";
+      // Create a null transaction to Polygon Amoy null address with review data
+      // This is a standard way to store data on blockchain without needing a deployed contract
+      const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-      // Create review data hash for smart contract interaction
-      const reviewHash = ethers.id(JSON.stringify({
+      // Create review data as transaction input data
+      const reviewDataString = JSON.stringify({
         company: reviewData.companyName,
         title: reviewData.title,
+        content: reviewData.content?.substring(0, 100) || "",
         rating: reviewData.rating,
-        timestamp: reviewData.timestamp
-      }));
+        category: reviewData.category,
+        timestamp: reviewData.timestamp,
+        reviewer: signerAddress
+      });
 
-      console.log('📝 Review hash:', reviewHash);
+      // Convert review data to hex
+      const reviewDataHex = ethers.hexlify(ethers.toUtf8Bytes(reviewDataString));
 
-      // Simple contract interaction ABI for storing review
-      const contractABI = [
-        "function submitReview(string memory company, string memory title, uint8 rating, bytes32 reviewHash) external payable"
-      ];
+      console.log('📝 Review data hex:', reviewDataHex);
 
-      // Create contract instance
-      const contract = new ethers.Contract(REVIEW_CONTRACT_ADDRESS, contractABI, this.signer);
+      // Prepare transaction to null address with review data
+      const txRequest = {
+        to: NULL_ADDRESS,
+        value: ethers.parseEther('0'), // No value needed
+        data: reviewDataHex, // Review data as transaction data
+        gasLimit: 50000 // Sufficient gas for data transaction
+      };
 
-      console.log('🚀 Calling smart contract submitReview method...');
-      console.log('📋 Contract address:', REVIEW_CONTRACT_ADDRESS);
+      console.log('🚀 Transaction request prepared:', txRequest);
       console.log('⚡ About to send transaction - MetaMask should popup now...');
 
-      // This will interact with the smart contract
-      const tx = await contract.submitReview(
-        reviewData.companyName,
-        reviewData.title,
-        reviewData.rating,
-        reviewHash,
-        { value: ethers.parseEther('0.001') } // 0.001 MATIC as fee
-      );
+      // Send transaction with review data
+      const tx = await this.signer.sendTransaction(txRequest);
       
       console.log('✅ Transaction object returned:', tx);
       console.log('📡 Transaction sent! Hash:', tx.hash);
