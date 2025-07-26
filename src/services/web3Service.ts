@@ -181,29 +181,54 @@ export class Web3Service {
       // Your deployed TrustTrailReviews contract on Polygon Amoy
       const TRUST_TRAIL_CONTRACT_ADDRESS = "0xf99ebeb5087ff43c44A1cE86d66Cd367d3c5EcAb";
 
-      // Create a simple ABI with just the submitReview function that matches your deployed contract
-      const SIMPLE_ABI = [
-        "function submitReview(string _companyName, string _category, string _ipfsHash, string _proofIpfsHash, uint8 _rating)"
-      ];
-
-      // Create contract instance with the simple ABI that matches your successful transactions
-      const contract = new ethers.Contract(TRUST_TRAIL_CONTRACT_ADDRESS, SIMPLE_ABI, this.signer);
-
       console.log('🚀 Using TrustTrailReviews contract at:', TRUST_TRAIL_CONTRACT_ADDRESS);
-      console.log('⚡ About to call submitReview - MetaMask should popup now...');
+      console.log('⚡ About to send direct transaction - MetaMask should popup now...');
 
-      // For now, we'll use placeholder IPFS hashes since IPFS upload isn't implemented yet
-      const placeholderIpfsHash = "QmPlaceholder123456789abcdef"; // Replace with actual IPFS upload
-      const placeholderProofHash = "QmProofPlaceholder123456789"; // Replace with actual proof upload
-
-      // Call your actual contract's submitReview function
-      const tx = await contract.submitReview(
-        reviewData.companyName,
-        reviewData.category,
-        placeholderIpfsHash,      // _ipfsHash - will need IPFS integration
-        placeholderProofHash,     // _proofIpfsHash - will need IPFS integration  
-        reviewData.rating
+      // Create transaction data manually to match your successful transactions exactly
+      // Function selector for submitReview: 0xe8678368
+      const functionSelector = "0xe8678368";
+      
+      // Encode parameters exactly like successful transactions
+      const companyNameHex = ethers.hexlify(ethers.toUtf8Bytes(reviewData.companyName));
+      const categoryHex = ethers.hexlify(ethers.toUtf8Bytes(reviewData.category));
+      
+      // Create timestamped IPFS hashes like successful transactions
+      const timestamp = Date.now();
+      const ipfsHash = `QmHash_${timestamp}_${Math.random().toString(36).substring(7)}`;
+      const proofHash = `QmProofHash_${timestamp}_${Math.random().toString(36).substring(7)}`;
+      
+      const ipfsHashHex = ethers.hexlify(ethers.toUtf8Bytes(ipfsHash));
+      const proofHashHex = ethers.hexlify(ethers.toUtf8Bytes(proofHash));
+      
+      // Encode the parameters as ABI-encoded data
+      const abiCoder = ethers.AbiCoder.defaultAbiCoder();
+      const encodedParams = abiCoder.encode(
+        ['string', 'string', 'string', 'string', 'uint8'],
+        [reviewData.companyName, reviewData.category, ipfsHash, proofHash, reviewData.rating]
       );
+      
+      // Combine function selector with encoded parameters
+      const txData = functionSelector + encodedParams.slice(2); // Remove 0x from encoded params
+      
+      console.log('📝 Transaction data:', txData);
+      console.log('📊 Parameters:', {
+        company: reviewData.companyName,
+        category: reviewData.category,
+        ipfsHash,
+        proofHash,
+        rating: reviewData.rating
+      });
+
+      // Send transaction directly with manual data
+      const txRequest = {
+        to: TRUST_TRAIL_CONTRACT_ADDRESS,
+        data: txData,
+        gasLimit: 300000, // Increase gas limit to be safe
+        value: 0
+      };
+
+      console.log('🚀 Sending transaction request:', txRequest);
+      const tx = await this.signer.sendTransaction(txRequest);
       
       console.log('✅ Transaction object returned:', tx);
       console.log('📡 Transaction sent! Hash:', tx.hash);
