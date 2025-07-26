@@ -20,8 +20,8 @@ export class Web3Service {
 
   // Official token addresses on Polygon Amoy testnet
   private readonly TOKENS: Record<string, TokenInfo> = {
-    MATIC: {
-      symbol: 'MATIC',
+    POL: {
+      symbol: 'POL',
       name: 'Polygon',
       address: '0x0000000000000000000000000000000000000000', // Native token
       decimals: 18,
@@ -116,8 +116,8 @@ export class Web3Service {
               chainId: '0x13882',
               chainName: 'Polygon Amoy Testnet',
               nativeCurrency: {
-                name: 'MATIC',
-                symbol: 'MATIC',
+                name: 'POL',
+                symbol: 'POL',
                 decimals: 18
               },
               rpcUrls: ['https://rpc-amoy.polygon.technology/'],
@@ -255,7 +255,7 @@ export class Web3Service {
       if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
         throw new Error('You cancelled the transaction in MetaMask');
       } else if (error.message?.includes('insufficient funds')) {
-        throw new Error('Insufficient MATIC for gas fees');
+        throw new Error('Insufficient POL for gas fees');
       } else if (error.code === -32603) {
         throw new Error('RPC Error: The Polygon network is having issues. Try again in a moment.');
       } else if (error.message?.includes('could not coalesce error')) {
@@ -280,8 +280,8 @@ export class Web3Service {
     if (!this.provider) throw new Error('Wallet not connected');
 
     try {
-      if (!tokenSymbol || tokenSymbol === 'MATIC') {
-        // Get native MATIC balance
+      if (!tokenSymbol || tokenSymbol === 'POL') {
+        // Get native POL balance
         const balance = await this.provider.getBalance(address);
         return ethers.formatEther(balance);
       }
@@ -293,7 +293,7 @@ export class Web3Service {
       const balance = await contract.balanceOf(address);
       return ethers.formatUnits(balance, tokenInfo.decimals);
     } catch (error) {
-      console.error(`Failed to get ${tokenSymbol || 'MATIC'} balance:`, error);
+      console.error(`Failed to get ${tokenSymbol || 'POL'} balance:`, error);
       return '0';
     }
   }
@@ -301,13 +301,13 @@ export class Web3Service {
   async getAllTokenBalances(address: string): Promise<Record<string, string>> {
     const balances: Record<string, string> = {};
     
-    // Ensure we have MATIC balance for gas fees
-    const maticBalance = await this.getTokenBalance(address, 'MATIC');
-    balances['MATIC'] = maticBalance;
+    // Ensure we have POL balance for gas fees
+    const polBalance = await this.getTokenBalance(address, 'POL');
+    balances['POL'] = polBalance;
     
-    // Check if user has sufficient MATIC for transactions
-    if (parseFloat(maticBalance) < 0.01) {
-      console.warn('⚠️ Low MATIC balance detected. User may need to get MATIC from faucet.');
+    // Check if user has sufficient POL for transactions
+    if (parseFloat(polBalance) < 0.01) {
+      console.warn('⚠️ Low POL balance detected. User may need to get POL from faucet.');
     }
     
     // Get TRUST token balance from review rewards
@@ -316,7 +316,7 @@ export class Web3Service {
     
     // Get other token balances (these are mock for testnet)
     for (const token of this.getTokens()) {
-      if (token.symbol === 'MATIC' || token.symbol === 'TRUST') continue; // Already fetched
+      if (token.symbol === 'POL' || token.symbol === 'TRUST') continue; // Already fetched
       
       try {
         const balance = await this.getTokenBalance(address, token.symbol);
@@ -371,12 +371,12 @@ export class Web3Service {
   async estimateSwap(fromToken: string, toToken: string, amount: string): Promise<string> {
     // Mock exchange rates for demo - in production, this would call a DEX API
     const rates: Record<string, Record<string, number>> = {
-      MATIC: { ETH: 0.0015, BTC: 0.000025, USDT: 0.85, USDC: 0.85, TRUST: 1200 },
-      ETH: { MATIC: 650, BTC: 0.065, USDT: 2500, USDC: 2500, TRUST: 1800000 },
-      BTC: { MATIC: 40000, ETH: 15.4, USDT: 95000, USDC: 95000, TRUST: 28000000 },
-      USDT: { MATIC: 1.18, ETH: 0.0004, BTC: 0.00001, USDC: 1.0, TRUST: 1400 },
-      USDC: { MATIC: 1.18, ETH: 0.0004, BTC: 0.00001, USDT: 1.0, TRUST: 1400 },
-      TRUST: { MATIC: 0.00083, ETH: 0.00000056, BTC: 0.000000036, USDT: 0.00071, USDC: 0.00071 }
+      POL: { ETH: 0.0015, BTC: 0.000025, USDT: 0.85, USDC: 0.85, TRUST: 1200 },
+      ETH: { POL: 650, BTC: 0.065, USDT: 2500, USDC: 2500, TRUST: 1800000 },
+      BTC: { POL: 40000, ETH: 15.4, USDT: 95000, USDC: 95000, TRUST: 28000000 },
+      USDT: { POL: 1.18, ETH: 0.0004, BTC: 0.00001, USDC: 1.0, TRUST: 1400 },
+      USDC: { POL: 1.18, ETH: 0.0004, BTC: 0.00001, USDT: 1.0, TRUST: 1400 },
+      TRUST: { POL: 0.00083, ETH: 0.00000056, BTC: 0.000000036, USDT: 0.00071, USDC: 0.00071 }
     };
 
     const rate = rates[fromToken]?.[toToken] || 1;
