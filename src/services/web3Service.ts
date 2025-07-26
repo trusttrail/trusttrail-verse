@@ -168,27 +168,11 @@ export class Web3Service {
         chainId: network.chainId.toString()
       });
       
-      // STEP 2: Get signer and balance with retry logic
+      // STEP 2: Get signer (skip balance check to avoid RPC issues)
       console.log('👤 STEP 2: Getting signer info...');
       const signerAddress = await this.signer.getAddress();
-      
-      let balanceInMatic = "0";
-      try {
-        console.log('💰 Attempting to get balance...');
-        const balance = await this.provider.getBalance(signerAddress);
-        balanceInMatic = ethers.formatEther(balance);
-        console.log('💰 Balance:', balanceInMatic, 'MATIC');
-      } catch (balanceError: any) {
-        console.warn('⚠️ Balance check failed (RPC issue), continuing anyway:', balanceError.message);
-        // Skip balance check if RPC is having issues - proceed with transaction
-        balanceInMatic = "0.01"; // Assume sufficient for testnet
-      }
-      
       console.log('👤 Signer address:', signerAddress);
-      
-      if (parseFloat(balanceInMatic) < 0.001) {
-        console.warn('⚠️ Low MATIC balance, but proceeding anyway for testnet');
-      }
+      console.log('💰 Skipping balance check to avoid RPC issues on testnet');
 
       // STEP 3: Contract verification
       console.log('📜 STEP 3: Contract verification...');
