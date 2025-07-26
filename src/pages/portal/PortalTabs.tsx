@@ -8,9 +8,7 @@ import CategoriesTab from "@/components/review/portal/CategoriesTab";
 import BusinessesTab from "@/components/review/portal/BusinessesTab";
 import UserDashboard from "@/components/review/portal/UserDashboard";
 import AnalyticsTab from "@/components/review/portal/AnalyticsTab";
-import SwapTab from "@/components/review/portal/SwapTab";
 import StakingTab from "@/components/review/portal/StakingTab";
-import LiquidityTab from "@/components/review/portal/LiquidityTab";
 import NFTMarketplaceTab from "@/components/review/portal/NFTMarketplaceTab";
 import { sampleCategories, sampleCompanies } from '@/data/companyData';
 
@@ -81,16 +79,14 @@ const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connectWallet 
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 mb-8">
+      <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 mb-8">
         <TabsTrigger value="summary">Summary</TabsTrigger>
         <TabsTrigger value="write-review">Write Review</TabsTrigger>
         <TabsTrigger value="categories">Categories</TabsTrigger>
         <TabsTrigger value="businesses">Companies</TabsTrigger>
         <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
         <TabsTrigger value="analytics">Analytics</TabsTrigger>
-        <TabsTrigger value="swap">Swap</TabsTrigger>
         <TabsTrigger value="staking">Staking</TabsTrigger>
-        <TabsTrigger value="liquidity">Liquidity</TabsTrigger>
         <TabsTrigger value="nft-marketplace">NFT</TabsTrigger>
       </TabsList>
 
@@ -128,22 +124,8 @@ const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connectWallet 
         <AnalyticsTab />
       </TabsContent>
 
-      <TabsContent value="swap">
-        <SwapTab 
-          isWalletConnected={isWalletConnected}
-          connectWallet={connectWallet}
-        />
-      </TabsContent>
-
       <TabsContent value="staking">
         <StakingTab 
-          isWalletConnected={isWalletConnected}
-          connectWallet={connectWallet}
-        />
-      </TabsContent>
-
-      <TabsContent value="liquidity">
-        <LiquidityTab 
           isWalletConnected={isWalletConnected}
           connectWallet={connectWallet}
         />

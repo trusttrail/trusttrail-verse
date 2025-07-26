@@ -5,8 +5,7 @@ import {
   Grid3X3, 
   Building2, 
   Store, 
-  Droplets, 
-  Coins, 
+  Coins,
   BarChart3,
   User
 } from "lucide-react";
@@ -104,7 +103,6 @@ export const portalTabs = [
   { id: "categories", label: "Categories", icon: Grid3X3 },
   { id: "businesses", label: "Businesses", icon: Building2 },
   { id: "nft-marketplace", label: "NFT Marketplace", icon: Store },
-  { id: "liquidity", label: "Liquidity", icon: Droplets },
   { id: "staking", label: "Staking", icon: Coins },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
 ];
