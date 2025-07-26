@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowUpDown, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWeb3 } from '@/hooks/useWeb3';
+import { useSwapTransaction } from '@/hooks/useSwapTransaction';
 import { TokenInfo } from '@/services/web3Service';
 
 interface SwapFormProps {
@@ -17,7 +18,8 @@ interface SwapFormProps {
 
 const SwapForm: React.FC<SwapFormProps> = ({ tokens, tokenBalances, refreshBalances }) => {
   const { toast } = useToast();
-  const { web3Service, currentNetwork } = useWeb3();
+  const { web3Service, currentNetwork, address } = useWeb3();
+  const { executeSwap, isSwapping: isSwapTransacting } = useSwapTransaction();
   const [fromToken, setFromToken] = useState("MATIC");
   const [toToken, setToToken] = useState("TRUST");
   const [fromAmount, setFromAmount] = useState("");
@@ -59,6 +61,15 @@ const SwapForm: React.FC<SwapFormProps> = ({ tokens, tokenBalances, refreshBalan
   const handleSwap = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!address) {
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet to perform swaps.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (currentNetwork !== "amoy") {
       toast({
         title: "Wrong Network",
@@ -92,30 +103,38 @@ const SwapForm: React.FC<SwapFormProps> = ({ tokens, tokenBalances, refreshBalan
     setIsSwapping(true);
     
     try {
-      toast({
-        title: "Preparing Swap",
-        description: "Please confirm the transaction in your MetaMask wallet...",
-      });
-
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      const txHash = `0x${Math.random().toString(16).substr(2, 64)}`;
+      // Get token addresses for the swap
+      const fromTokenInfo = tokens.find(t => t.symbol === fromToken);
+      const toTokenInfo = tokens.find(t => t.symbol === toToken);
       
-      toast({
-        title: "Swap Successful! 🎉",
-        description: `Swapped ${fromAmount} ${fromToken} for ${toAmount} ${toToken}. Transaction: ${txHash.substring(0, 10)}...`,
-      });
+      if (!fromTokenInfo || !toTokenInfo) {
+        throw new Error('Token information not found');
+      }
 
-      setFromAmount("");
-      setToAmount("");
-      await refreshBalances();
+      // Execute real swap transaction
+      const txHash = await executeSwap(
+        fromToken,
+        toToken,
+        fromAmount,
+        fromTokenInfo.address,
+        toTokenInfo.address,
+        address
+      );
+
+      if (txHash) {
+        toast({
+          title: "Swap Successful! 🎉",
+          description: `Swapped ${fromAmount} ${fromToken} for ${toAmount} ${toToken}`,
+        });
+
+        setFromAmount("");
+        setToAmount("");
+        await refreshBalances();
+      }
       
     } catch (error: any) {
       console.error('Swap failed:', error);
-      toast({
-        title: "Swap Failed",
-        description: error.message || "Swap transaction failed. Please try again.",
-        variant: "destructive",
-      });
+      // Error handling is done in the executeSwap hook
     } finally {
       setIsSwapping(false);
     }
@@ -228,9 +247,9 @@ const SwapForm: React.FC<SwapFormProps> = ({ tokens, tokenBalances, refreshBalan
           <Button 
             type="submit" 
             className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 w-full"
-            disabled={isSwapping || !fromAmount || !toAmount}
+            disabled={isSwapping || isSwapTransacting || !fromAmount || !toAmount}
           >
-            {isSwapping ? (
+            {(isSwapping || isSwapTransacting) ? (
               <>
                 <RefreshCw className="mr-2 animate-spin" size={18} />
                 Swapping...

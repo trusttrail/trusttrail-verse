@@ -345,7 +345,18 @@ export class Web3Service {
   async getAllTokenBalances(address: string): Promise<Record<string, string>> {
     const balances: Record<string, string> = {};
     
+    // Ensure we have MATIC balance for gas fees
+    const maticBalance = await this.getTokenBalance(address, 'MATIC');
+    balances['MATIC'] = maticBalance;
+    
+    // Check if user has sufficient MATIC for transactions
+    if (parseFloat(maticBalance) < 0.01) {
+      console.warn('⚠️ Low MATIC balance detected. User may need to get MATIC from faucet.');
+    }
+    
     for (const token of this.getTokens()) {
+      if (token.symbol === 'MATIC') continue; // Already fetched
+      
       try {
         const balance = await this.getTokenBalance(address, token.symbol);
         balances[token.symbol] = balance;
@@ -359,18 +370,41 @@ export class Web3Service {
   }
 
   async estimateSwap(fromToken: string, toToken: string, amount: string): Promise<string> {
-    // Mock exchange rates for demo - in production, this would call a DEX API
-    const rates: Record<string, Record<string, number>> = {
-      MATIC: { ETH: 0.0015, BTC: 0.000025, USDT: 0.85, USDC: 0.85, TRUST: 1200 },
-      ETH: { MATIC: 650, BTC: 0.065, USDT: 2500, USDC: 2500, TRUST: 1800000 },
-      BTC: { MATIC: 40000, ETH: 15.4, USDT: 95000, USDC: 95000, TRUST: 28000000 },
-      USDT: { MATIC: 1.18, ETH: 0.0004, BTC: 0.00001, USDC: 1.0, TRUST: 1400 },
-      USDC: { MATIC: 1.18, ETH: 0.0004, BTC: 0.00001, USDT: 1.0, TRUST: 1400 },
-      TRUST: { MATIC: 0.00083, ETH: 0.00000056, BTC: 0.000000036, USDT: 0.00071, USDC: 0.00071 }
-    };
+    // Simplified 1:1 exchange rate for testnet swaps
+    // In production, this would call a DEX API or use AMM pricing
+    return parseFloat(amount).toFixed(6);
+  }
 
-    const rate = rates[fromToken]?.[toToken] || 1;
-    return (parseFloat(amount) * rate).toFixed(6);
+  async executeSwap(fromToken: string, toToken: string, amount: string): Promise<string> {
+    if (!this.provider || !this.signer) {
+      throw new Error('Wallet not connected');
+    }
+
+    console.log('🔄 Executing swap:', { fromToken, toToken, amount });
+    
+    try {
+      // Get token addresses
+      const fromTokenInfo = this.getTokenInfo(fromToken);
+      const toTokenInfo = this.getTokenInfo(toToken);
+      
+      if (!fromTokenInfo || !toTokenInfo) {
+        throw new Error('Token not supported');
+      }
+
+      // For testnet, we'll simulate a successful swap
+      // In production, this would interact with the actual swap contract
+      const mockTxHash = `0x${Math.random().toString(16).substr(2, 64)}`;
+      
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      console.log('✅ Mock swap completed:', mockTxHash);
+      return mockTxHash;
+      
+    } catch (error) {
+      console.error('❌ Swap execution failed:', error);
+      throw error;
+    }
   }
 }
 
