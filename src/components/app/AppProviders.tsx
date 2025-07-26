@@ -19,19 +19,19 @@ const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <Web3Provider>
-          <TooltipProvider>
-            <RecentActivityProvider>
-              <div className="transition-colors duration-300">
-                <Toaster />
-                <Sonner />
+        <TooltipProvider>
+          <div className="transition-colors duration-300">
+            <Toaster />
+            <Sonner />
+            <Web3Provider>
+              <RecentActivityProvider>
                 <BrowserRouter>
                   {children}
                 </BrowserRouter>
-              </div>
-            </RecentActivityProvider>
-          </TooltipProvider>
-        </Web3Provider>
+              </RecentActivityProvider>
+            </Web3Provider>
+          </div>
+        </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
