@@ -1,4 +1,3 @@
-
 import { ethers } from 'ethers';
 
 declare global {
@@ -153,6 +152,7 @@ export class Web3Service {
 
   async submitReview(reviewData: any): Promise<string> {
     console.log('🔥 submitReview called with data:', reviewData);
+    
     if (!this.provider || !this.signer) {
       console.error('❌ Provider or signer not available:', { provider: !!this.provider, signer: !!this.signer });
       throw new Error('Wallet not connected - call connect() first');
@@ -163,13 +163,17 @@ export class Web3Service {
       console.log('📊 Review data for blockchain:', reviewData);
 
       // Ensure we're on the correct network
+      console.log('🌐 Checking network...');
       await this.checkNetwork();
+      console.log('✅ Network check passed');
       
       // Get the current account to ensure we have a valid signer
+      console.log('👤 Getting signer address...');
       const signerAddress = await this.signer.getAddress();
       console.log('👤 Signer address:', signerAddress);
 
       // Check balance to ensure user has enough MATIC
+      console.log('💰 Checking balance...');
       const balance = await this.provider.getBalance(signerAddress);
       const balanceInMatic = Number(balance) / 1e18;
       console.log('💰 Current MATIC balance:', balanceInMatic);
@@ -180,37 +184,29 @@ export class Web3Service {
 
       // Your deployed TrustTrailReviews contract on Polygon Amoy
       const TRUST_TRAIL_CONTRACT_ADDRESS = "0xf99ebeb5087ff43c44A1cE86d66Cd367d3c5EcAb";
-
       console.log('🚀 Using TrustTrailReviews contract at:', TRUST_TRAIL_CONTRACT_ADDRESS);
 
-      // First, let's verify the contract exists and get its code
+      // Verify the contract exists
+      console.log('📜 Verifying contract exists...');
       try {
         const contractCode = await this.provider.getCode(TRUST_TRAIL_CONTRACT_ADDRESS);
         console.log('📜 Contract code length:', contractCode.length);
-        console.log('📜 Contract exists:', contractCode !== '0x');
         
         if (contractCode === '0x') {
-          throw new Error(`Contract not found at address ${TRUST_TRAIL_CONTRACT_ADDRESS}. The contract may not be deployed or the address is incorrect.`);
+          throw new Error(`Contract not found at address ${TRUST_TRAIL_CONTRACT_ADDRESS}`);
         }
-      } catch (error) {
-        console.error('❌ Failed to verify contract:', error);
-        throw new Error('Failed to verify contract deployment');
+        console.log('✅ Contract verification passed');
+      } catch (verifyError) {
+        console.error('❌ Contract verification failed:', verifyError);
+        throw new Error('Contract verification failed - contract may not be deployed');
       }
 
-      // Let's try the original ABI approach first since manual encoding might have issues
-      const REVIEW_ABI = [
-        "function submitReview(string memory _companyName, string memory _category, string memory _ipfsHash, string memory _proofIpfsHash, uint8 _rating) public"
-      ];
-
-      console.log('🔨 Creating contract instance with ABI...');
-      const contract = new ethers.Contract(TRUST_TRAIL_CONTRACT_ADDRESS, REVIEW_ABI, this.signer);
-      
       // Create timestamped IPFS hashes
       const timestamp = Date.now();
       const ipfsHash = `QmHash_${timestamp}_${Math.random().toString(36).substring(7)}`;
       const proofHash = `QmProofHash_${timestamp}_${Math.random().toString(36).substring(7)}`;
       
-      console.log('📊 Final parameters for contract call:', {
+      console.log('📊 Transaction parameters:', {
         companyName: reviewData.companyName,
         category: reviewData.category,
         ipfsHash,
@@ -218,67 +214,81 @@ export class Web3Service {
         rating: reviewData.rating
       });
 
-      // Estimate gas first
-      console.log('⛽ Estimating gas...');
-      let gasEstimate;
-      try {
-        gasEstimate = await contract.submitReview.estimateGas(
-          reviewData.companyName,
-          reviewData.category,
-          ipfsHash,
-          proofHash,
-          reviewData.rating
-        );
-        console.log('⛽ Gas estimate:', gasEstimate.toString());
-      } catch (gasError) {
-        console.error('❌ Gas estimation failed:', gasError);
-        console.log('🔄 Proceeding with fixed gas limit...');
-        gasEstimate = 300000; // Fallback gas limit
-      }
-
-      console.log('🚀 Calling contract.submitReview() - MetaMask should popup now...');
+      // Use your successful transaction pattern exactly
+      console.log('🔨 Preparing direct transaction call...');
       
-      const tx = await contract.submitReview(
-        reviewData.companyName,
-        reviewData.category,
-        ipfsHash,
-        proofHash,
-        reviewData.rating,
-        {
-          gasLimit: Math.max(Number(gasEstimate) * 1.2, 300000) // 20% buffer or minimum 300k
-        }
+      // Direct transaction using your working pattern from previous successful txs
+      const functionSelector = "0xe8678368"; // submitReview function selector
+      
+      // Encode parameters exactly like successful transactions
+      const abiCoder = ethers.AbiCoder.defaultAbiCoder();
+      console.log('📝 Encoding parameters...');
+      
+      const encodedParams = abiCoder.encode(
+        ['string', 'string', 'string', 'string', 'uint8'],
+        [reviewData.companyName, reviewData.category, ipfsHash, proofHash, reviewData.rating]
       );
       
-      console.log('✅ Transaction object returned:', tx);
-      console.log('📡 Transaction sent! Hash:', tx.hash);
+      const txData = functionSelector + encodedParams.slice(2);
+      console.log('📝 Transaction data prepared, length:', txData.length);
+
+      // Create transaction request
+      const txRequest = {
+        to: TRUST_TRAIL_CONTRACT_ADDRESS,
+        data: txData,
+        gasLimit: 300000,
+        value: 0
+      };
+
+      console.log('🚀 SENDING TRANSACTION - MetaMask should popup NOW...');
+      console.log('📋 Transaction request:', txRequest);
+      
+      const tx = await this.signer.sendTransaction(txRequest);
+      
+      console.log('✅ Transaction sent successfully!');
+      console.log('📡 Transaction hash:', tx.hash);
       console.log('⏳ Waiting for confirmation...');
 
       // Wait for confirmation  
       const receipt = await tx.wait(1);
+      console.log('📦 Transaction receipt:', receipt);
       
       if (receipt && receipt.status === 1) {
-        console.log('✅ Transaction confirmed successfully:', receipt);
-        console.log('🎉 Review submitted to TrustTrailReviews contract!');
+        console.log('✅ Transaction confirmed successfully!');
+        console.log('🎉 Review submitted to blockchain!');
         return tx.hash;
       } else {
-        console.error('❌ Transaction failed with receipt:', receipt);
+        console.error('❌ Transaction failed with status:', receipt?.status);
         throw new Error('Transaction failed during confirmation');
       }
       
     } catch (error: any) {
-      console.error('❌ submitReview failed:', error);
+      console.error('❌ submitReview failed with error:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        code: error.code,
+        data: error.data,
+        stack: error.stack
+      });
       
-      // Re-throw with more specific error messages
+      // Enhanced error handling for specific Web3 errors
       if (error.code === 'ACTION_REJECTED' || error.code === 4001) {
-        throw new Error('Transaction rejected by user');
+        throw new Error('Transaction rejected by user in MetaMask');
       } else if (error.message?.includes('insufficient funds')) {
         throw new Error('Insufficient MATIC for transaction fees');
       } else if (error.message?.includes('Insufficient MATIC balance')) {
         throw error; // Re-throw our custom balance error
       } else if (error.code === 'NETWORK_ERROR') {
-        throw new Error('Network connection failed');
+        throw new Error('Network connection failed - check your internet');
+      } else if (error.message?.includes('Contract verification failed')) {
+        throw error; // Re-throw contract verification errors
+      } else if (error.code === 'CALL_EXCEPTION') {
+        throw new Error('Contract call failed - the contract may have reverted');
+      } else if (error.message?.includes('gas')) {
+        throw new Error('Gas estimation failed - try increasing gas limit');
       } else {
-        throw error; // Re-throw original error
+        // For any other error, provide a detailed message
+        throw new Error(`Transaction failed: ${error.message || 'Unknown error'}`);
       }
     }
   }
