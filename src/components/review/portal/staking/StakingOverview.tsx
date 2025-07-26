@@ -134,7 +134,16 @@ const StakingOverview: React.FC<StakingOverviewProps> = ({
                 </div>
               </div>
               
-              <Button variant="outline" className="w-full">
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={async () => {
+                  if (!address) return;
+                  // This would trigger a MetaMask transaction to claim rewards
+                  // For now, we'll show a toast since rewards claiming isn't implemented in the contract yet
+                  console.log("Claim rewards for:", address);
+                }}
+              >
                 Claim All Rewards
               </Button>
             </>

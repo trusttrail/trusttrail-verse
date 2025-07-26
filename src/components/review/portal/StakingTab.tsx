@@ -21,14 +21,10 @@ const StakingTab = ({ isWalletConnected, connectWallet }: StakingTabProps) => {
   const trustToken = tokens.find(t => t.symbol === 'TRUST');
   const stakingTokens = trustToken ? [trustToken] : [];
 
-  const stakingAPYs: Record<string, string> = {
-    TRUST: calculateAPY()
-  };
+  const stakingAPYs: Record<string, string> = {};
 
-  // Real staked amounts will be fetched from blockchain in StakingOverview
-  const stakedAmounts: Record<string, string> = {
-    TRUST: "0"
-  };
+  // Staked amounts will be fetched from blockchain in StakingOverview
+  const stakedAmounts: Record<string, string> = {};
 
   const isValidNetwork = currentNetwork === "amoy";
 

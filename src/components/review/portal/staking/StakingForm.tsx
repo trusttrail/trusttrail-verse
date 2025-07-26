@@ -192,11 +192,11 @@ const StakingForm: React.FC<StakingFormProps> = ({
             <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-muted-foreground">Available Balance</p>
-                <p className="font-medium">{parseFloat(tokenBalances[selectedToken] || "0").toFixed(6)} {selectedToken}</p>
+                <p className="font-medium">{parseFloat(tokenBalances[selectedToken] || "0").toFixed(0)} {selectedToken}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Already Staked</p>
-                <p className="font-medium">{stakedAmounts[selectedToken]} {selectedToken}</p>
+                <p className="font-medium">{stakedAmounts[selectedToken] || "0"} {selectedToken}</p>
               </div>
             </div>
           )}
@@ -230,7 +230,7 @@ const StakingForm: React.FC<StakingFormProps> = ({
                 </div>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                Max: {parseFloat(tokenBalances[selectedToken] || "0").toFixed(6)} {selectedToken}
+                Max: {parseFloat(tokenBalances[selectedToken] || "0").toFixed(0)} {selectedToken}
               </p>
             </div>
             
