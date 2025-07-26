@@ -152,7 +152,9 @@ export class Web3Service {
   }
 
   async submitReview(reviewData: any): Promise<string> {
+    console.log('🔥 submitReview called with data:', reviewData);
     if (!this.provider || !this.signer) {
+      console.error('❌ Provider or signer not available:', { provider: !!this.provider, signer: !!this.signer });
       throw new Error('Wallet not connected - call connect() first');
     }
 
@@ -196,9 +198,13 @@ export class Web3Service {
 
       console.log('🚀 Transaction request prepared:', txRequest);
       console.log('⚡ About to send transaction - MetaMask should popup now...');
+      console.log('🔍 Current signer:', this.signer);
+      console.log('🔍 Transaction being sent to network...');
 
       // This SHOULD trigger MetaMask popup
+      console.log('📢 CALLING SIGNER.SENDTRANSACTION NOW - METAMASK POPUP SHOULD APPEAR!');
       const tx = await this.signer.sendTransaction(txRequest);
+      console.log('✅ Transaction object returned:', tx);
       
       console.log('📡 Transaction sent! Hash:', tx.hash);
       console.log('⏳ Waiting for confirmation...');

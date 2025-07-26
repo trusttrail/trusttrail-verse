@@ -12,6 +12,8 @@ export const useWeb3Transaction = () => {
     console.log('🎯 STARTING TRANSACTION PROCESS...');
     console.log('📊 Review data received:', reviewData);
     console.log('👤 Wallet address:', walletAddress);
+    console.log('🔍 MetaMask available:', !!window.ethereum);
+    console.log('🔍 MetaMask isMetaMask:', window.ethereum?.isMetaMask);
 
     // Check if we have wallet address from the calling component
     if (!walletAddress) {
@@ -84,6 +86,7 @@ export const useWeb3Transaction = () => {
 
       // Submit review to smart contract - THIS SHOULD TRIGGER METAMASK POPUP
       console.log('🚀 Calling web3Service.submitReview() - MetaMask should popup now...');
+      console.log('📋 About to submit this data to blockchain:', blockchainReviewData);
       const txHash = await web3Service.submitReview(blockchainReviewData);
       
       console.log('✅ Transaction hash received:', txHash);
