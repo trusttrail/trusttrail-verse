@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Wallet, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useWeb3 } from '@/hooks/useWeb3';
+import { useStakingTransaction } from '@/hooks/useStakingTransaction';
 import StakingForm from './staking/StakingForm';
 import StakingOverview from './staking/StakingOverview';
 
@@ -14,24 +15,19 @@ interface StakingTabProps {
 
 const StakingTab = ({ isWalletConnected, connectWallet }: StakingTabProps) => {
   const { currentNetwork, tokenBalances, refreshBalances, tokens } = useWeb3();
+  const { calculateAPY } = useStakingTransaction();
+
+  // Only show TRUST token for staking
+  const trustToken = tokens.find(t => t.symbol === 'TRUST');
+  const stakingTokens = trustToken ? [trustToken] : [];
 
   const stakingAPYs: Record<string, string> = {
-    TRUST: "25.5%",
-    MATIC: "12.2%",
-    ETH: "8.2%",
-    BTC: "6.8%",
-    USDT: "12.4%",
-    USDC: "11.9%"
+    TRUST: calculateAPY()
   };
 
-  // Mock staked amounts (in production, fetch from smart contract)
+  // Real staked amounts will be fetched from blockchain in StakingOverview
   const stakedAmounts: Record<string, string> = {
-    TRUST: "500.00",
-    MATIC: "100.00",
-    ETH: "1.00",
-    BTC: "0.05",
-    USDT: "2000.00",
-    USDC: "1500.00"
+    TRUST: "0"
   };
 
   const isValidNetwork = currentNetwork === "amoy";
@@ -60,7 +56,7 @@ const StakingTab = ({ isWalletConnected, connectWallet }: StakingTabProps) => {
             </div>
           ) : (
             <StakingForm
-              tokens={tokens}
+              tokens={stakingTokens}
               tokenBalances={tokenBalances}
               refreshBalances={refreshBalances}
               stakingAPYs={stakingAPYs}
@@ -71,7 +67,7 @@ const StakingTab = ({ isWalletConnected, connectWallet }: StakingTabProps) => {
 
         {/* Staking Overview */}
         <StakingOverview
-          tokens={tokens}
+          tokens={stakingTokens}
           stakingAPYs={stakingAPYs}
           stakedAmounts={stakedAmounts}
           isWalletConnected={isWalletConnected}

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Coins, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWeb3 } from '@/hooks/useWeb3';
+import { useStakingTransaction } from '@/hooks/useStakingTransaction';
 import { TokenInfo } from '@/services/web3Service';
 
 interface StakingFormProps {
@@ -26,12 +27,17 @@ const StakingForm: React.FC<StakingFormProps> = ({
   stakedAmounts 
 }) => {
   const { toast } = useToast();
-  const { currentNetwork } = useWeb3();
+  const { currentNetwork, address } = useWeb3();
+  const { executeStaking, isLoading: isTransactionLoading } = useStakingTransaction();
   const [selectedToken, setSelectedToken] = useState("TRUST");
   const [stakeAmount, setStakeAmount] = useState("");
   const [unstakeAmount, setUnstakeAmount] = useState("");
   const [isStaking, setIsStaking] = useState(false);
   const [isUnstaking, setIsUnstaking] = useState(false);
+
+  // Only show TRUST token for staking
+  const trustToken = tokens.find(t => t.symbol === 'TRUST');
+  const filteredTokens = trustToken ? [trustToken] : [];
 
   const selectedTokenData = tokens.find(t => t.symbol === selectedToken);
 
@@ -71,22 +77,22 @@ const StakingForm: React.FC<StakingFormProps> = ({
     setIsStaking(true);
     
     try {
-      toast({
-        title: "Preparing Stake",
-        description: "Please confirm the transaction in your MetaMask wallet...",
-      });
-
-      await new Promise(resolve => setTimeout(resolve, 2500));
-      const txHash = `0x${Math.random().toString(16).substr(2, 64)}`;
+      const result = await executeStaking(stakeAmount, 'stake');
       
-      toast({
-        title: "Staking Successful! 🎉",
-        description: `Staked ${stakeAmount} ${selectedToken} successfully. Transaction: ${txHash.substring(0, 10)}...`,
-      });
-
-      setStakeAmount("");
-      await refreshBalances();
-      
+      if (result.success) {
+        toast({
+          title: "Staking Successful! 🎉",
+          description: `Staked ${stakeAmount} ${selectedToken} successfully. TX: ${result.txHash?.substring(0, 10)}...`,
+        });
+        setStakeAmount("");
+        await refreshBalances();
+      } else {
+        toast({
+          title: "Staking Failed",
+          description: result.error || "Staking transaction failed. Please try again.",
+          variant: "destructive",
+        });
+      }
     } catch (error: any) {
       console.error('Staking failed:', error);
       toast({
@@ -123,22 +129,22 @@ const StakingForm: React.FC<StakingFormProps> = ({
     setIsUnstaking(true);
     
     try {
-      toast({
-        title: "Preparing Unstake",
-        description: "Please confirm the transaction in your MetaMask wallet...",
-      });
-
-      await new Promise(resolve => setTimeout(resolve, 2500));
-      const txHash = `0x${Math.random().toString(16).substr(2, 64)}`;
+      const result = await executeStaking(unstakeAmount, 'unstake');
       
-      toast({
-        title: "Unstaking Successful! 🎉",
-        description: `Unstaked ${unstakeAmount} ${selectedToken} successfully. Transaction: ${txHash.substring(0, 10)}...`,
-      });
-
-      setUnstakeAmount("");
-      await refreshBalances();
-      
+      if (result.success) {
+        toast({
+          title: "Unstaking Successful! 🎉",
+          description: `Unstaked ${unstakeAmount} ${selectedToken} successfully. TX: ${result.txHash?.substring(0, 10)}...`,
+        });
+        setUnstakeAmount("");
+        await refreshBalances();
+      } else {
+        toast({
+          title: "Unstaking Failed",
+          description: result.error || "Unstaking transaction failed. Please try again.",
+          variant: "destructive",
+        });
+      }
     } catch (error: any) {
       console.error('Unstaking failed:', error);
       toast({
@@ -165,7 +171,7 @@ const StakingForm: React.FC<StakingFormProps> = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {tokens.map((token) => (
+              {filteredTokens.map((token) => (
                 <SelectItem key={token.symbol} value={token.symbol}>
                   <div className="flex items-center gap-3 w-full">
                     <span>{token.icon}</span>
@@ -248,7 +254,7 @@ const StakingForm: React.FC<StakingFormProps> = ({
             <Button 
               type="submit" 
               className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 w-full"
-              disabled={isStaking || !stakeAmount}
+              disabled={isStaking || isTransactionLoading || !stakeAmount}
             >
               {isStaking ? (
                 <>
@@ -301,7 +307,7 @@ const StakingForm: React.FC<StakingFormProps> = ({
               type="submit" 
               variant="outline"
               className="w-full"
-              disabled={isUnstaking || !unstakeAmount}
+              disabled={isUnstaking || isTransactionLoading || !unstakeAmount}
             >
               {isUnstaking ? (
                 <>
