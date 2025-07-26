@@ -19,13 +19,15 @@ interface StakingFormProps {
   stakedAmounts: Record<string, string>;
 }
 
-const StakingForm: React.FC<StakingFormProps> = ({ 
-  tokens, 
-  tokenBalances, 
-  refreshBalances, 
-  stakingAPYs, 
-  stakedAmounts 
+const StakingForm: React.FC<StakingFormProps> = ({
+  tokens,
+  tokenBalances,
+  refreshBalances,
+  stakingAPYs,
+  stakedAmounts
 }) => {
+  console.log('🎯 StakingForm received tokenBalances:', tokenBalances);
+  console.log('🎯 StakingForm received tokens:', tokens);
   const { toast } = useToast();
   const { currentNetwork, address } = useWeb3();
   const { executeStaking, isLoading: isTransactionLoading } = useStakingTransaction();

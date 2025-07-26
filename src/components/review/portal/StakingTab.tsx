@@ -14,8 +14,22 @@ interface StakingTabProps {
 }
 
 const StakingTab = ({ isWalletConnected, connectWallet }: StakingTabProps) => {
-  const { currentNetwork, tokenBalances, refreshBalances, tokens } = useWeb3();
+  const { currentNetwork, tokenBalances, refreshBalances, tokens, address } = useWeb3();
   const { calculateAPY } = useStakingTransaction();
+  
+  console.log('🔍 StakingTab Debug Info:');
+  console.log('  - isWalletConnected:', isWalletConnected);
+  console.log('  - Web3 address:', address);
+  console.log('  - Token balances:', tokenBalances);
+  console.log('  - TRUST tokens available:', tokens.filter(t => t.symbol === 'TRUST'));
+  
+  // Refresh balances when wallet connects
+  React.useEffect(() => {
+    if (isWalletConnected && address) {
+      console.log('🔄 Wallet connected, refreshing balances...');
+      refreshBalances();
+    }
+  }, [isWalletConnected, address, refreshBalances]);
 
   // Only show TRUST token for staking
   const trustToken = tokens.find(t => t.symbol === 'TRUST');

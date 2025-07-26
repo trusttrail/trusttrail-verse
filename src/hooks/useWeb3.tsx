@@ -59,7 +59,9 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
   const refreshBalances = async () => {
     if (address && isConnected) {
       try {
+        console.log('🔄 Refreshing balances for address:', address);
         const balances = await web3Service.getAllTokenBalances(address);
+        console.log('💰 All token balances fetched:', balances);
         setTokenBalances(balances);
       } catch (error) {
         console.error('Failed to get token balances:', error);
