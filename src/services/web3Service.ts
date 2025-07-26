@@ -178,7 +178,10 @@ export class Web3Service {
         throw new Error(`Insufficient MATIC balance: ${balanceInMatic.toFixed(4)} MATIC. Get free MATIC from https://faucet.polygon.technology/`);
       }
 
-      // Create simple transaction data
+      // Smart contract address on Polygon Amoy testnet for review submission
+      const REVIEW_CONTRACT_ADDRESS = "0x7b96aF9Bd211cBf6BA5b0dd53aa61Dc5806b6AcE";
+
+      // Create review data hash for smart contract interaction
       const reviewHash = ethers.id(JSON.stringify({
         company: reviewData.companyName,
         title: reviewData.title,
@@ -188,26 +191,28 @@ export class Web3Service {
 
       console.log('📝 Review hash:', reviewHash);
 
-      // Prepare transaction - simple value transfer (no data to self)
-      const txRequest = {
-        to: signerAddress, // Send to self
-        value: ethers.parseEther('0.001'), // 0.001 MATIC 
-        gasLimit: 21000 // Standard transfer limit
-      };
+      // Simple contract interaction ABI for storing review
+      const contractABI = [
+        "function submitReview(string memory company, string memory title, uint8 rating, bytes32 reviewHash) external payable"
+      ];
 
-      // Store review hash in logs/console for now (in production, use proper smart contract)
-      console.log('📝 Review hash stored:', reviewHash);
+      // Create contract instance
+      const contract = new ethers.Contract(REVIEW_CONTRACT_ADDRESS, contractABI, this.signer);
 
-      console.log('🚀 Transaction request prepared:', txRequest);
+      console.log('🚀 Calling smart contract submitReview method...');
+      console.log('📋 Contract address:', REVIEW_CONTRACT_ADDRESS);
       console.log('⚡ About to send transaction - MetaMask should popup now...');
-      console.log('🔍 Current signer:', this.signer);
-      console.log('🔍 Transaction being sent to network...');
 
-      // This SHOULD trigger MetaMask popup
-      console.log('📢 CALLING SIGNER.SENDTRANSACTION NOW - METAMASK POPUP SHOULD APPEAR!');
-      const tx = await this.signer.sendTransaction(txRequest);
-      console.log('✅ Transaction object returned:', tx);
+      // This will interact with the smart contract
+      const tx = await contract.submitReview(
+        reviewData.companyName,
+        reviewData.title,
+        reviewData.rating,
+        reviewHash,
+        { value: ethers.parseEther('0.001') } // 0.001 MATIC as fee
+      );
       
+      console.log('✅ Transaction object returned:', tx);
       console.log('📡 Transaction sent! Hash:', tx.hash);
       console.log('⏳ Waiting for confirmation...');
 
