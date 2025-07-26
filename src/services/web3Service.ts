@@ -354,8 +354,13 @@ export class Web3Service {
       console.warn('⚠️ Low MATIC balance detected. User may need to get MATIC from faucet.');
     }
     
+    // Get TRUST token balance from review rewards
+    const trustBalance = await this.getTrustTokenBalance(address);
+    balances['TRUST'] = trustBalance;
+    
+    // Get other token balances (these are mock for testnet)
     for (const token of this.getTokens()) {
-      if (token.symbol === 'MATIC') continue; // Already fetched
+      if (token.symbol === 'MATIC' || token.symbol === 'TRUST') continue; // Already fetched
       
       try {
         const balance = await this.getTokenBalance(address, token.symbol);
@@ -367,6 +372,44 @@ export class Web3Service {
     }
     
     return balances;
+  }
+
+  async getTrustTokenBalance(address: string): Promise<string> {
+    if (!this.provider) throw new Error('Wallet not connected');
+    
+    try {
+      // Import the ReviewPlatform ABI
+      const { ReviewPlatformABI } = await import('@/contracts/abis/ReviewPlatform');
+      const CONTRACT_ADDRESS = '0xf99ebeb5087ff43c44A1cE86d66Cd367d3c5EcAb'; // Using the actual deployed contract address
+      
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, ReviewPlatformABI, this.provider);
+      
+      // Get user's review IDs
+      const reviewIds = await contract.getUserReviews(address);
+      console.log(`📊 User has ${reviewIds.length} reviews on blockchain`);
+      
+      // Calculate TRUST balance: 5 TRUST per approved review
+      const trustBalance = reviewIds.length * 5;
+      
+      console.log(`🪙 TRUST Balance calculated: ${trustBalance} TRUST (${reviewIds.length} reviews × 5 TRUST)`);
+      
+      return trustBalance.toString();
+      
+    } catch (error) {
+      console.error('Failed to get TRUST balance from reviews:', error);
+      // Fallback: try to get from standard ERC20 if contract has minted tokens
+      try {
+        const tokenInfo = this.getTokenInfo('TRUST');
+        if (tokenInfo) {
+          const contract = new ethers.Contract(tokenInfo.address, this.ERC20_ABI, this.provider);
+          const balance = await contract.balanceOf(address);
+          return ethers.formatUnits(balance, tokenInfo.decimals);
+        }
+      } catch (erc20Error) {
+        console.error('Failed to get TRUST balance from ERC20:', erc20Error);
+      }
+      return '0';
+    }
   }
 
   async estimateSwap(fromToken: string, toToken: string, amount: string): Promise<string> {

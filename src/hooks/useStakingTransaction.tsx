@@ -36,7 +36,6 @@ export const useStakingTransaction = () => {
         throw new Error('Please switch to Polygon Amoy testnet');
       }
 
-      // Connect to contract
       const contract = new ethers.Contract(
         REVIEW_PLATFORM_ADDRESS,
         ReviewPlatformABI,
@@ -55,27 +54,29 @@ export const useStakingTransaction = () => {
       if (action === 'stake') {
         // For now, we'll use the review submission as staking (you'll need to add staking methods to contract)
         // This is a mock implementation - replace with actual staking contract call
-        const companyId = ethers.encodeBytes32String("STAKING_POOL");
-        const reviewId = ethers.keccak256(ethers.toUtf8Bytes(`stake_${Date.now()}`));
+        const companyId = "STAKING_POOL";
+        const category = "STAKING";
+        const ipfsHash = `QmStake_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        const proofHash = `QmStakeProof_${Date.now()}_${Math.random().toString(36).substring(7)}`;
         tx = await contract.submitReview(
           companyId,
-          reviewId,
-          5, // rating
-          "Staking tokens", // review text
-          "0x", // proof hash
-          amountWei // This represents staked amount
+          category,
+          ipfsHash,
+          proofHash,
+          5 // rating for staking transaction
         );
       } else {
         // Mock unstaking transaction
-        const companyId = ethers.encodeBytes32String("UNSTAKING_POOL");
-        const reviewId = ethers.keccak256(ethers.toUtf8Bytes(`unstake_${Date.now()}`));
+        const companyId = "UNSTAKING_POOL";
+        const category = "UNSTAKING";
+        const ipfsHash = `QmUnstake_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        const proofHash = `QmUnstakeProof_${Date.now()}_${Math.random().toString(36).substring(7)}`;
         tx = await contract.submitReview(
           companyId,
-          reviewId,
-          5,
-          "Unstaking tokens",
-          "0x",
-          amountWei
+          category,
+          ipfsHash,
+          proofHash,
+          5
         );
       }
 
@@ -142,8 +143,8 @@ export const useStakingTransaction = () => {
 
       // Get user's review count as a proxy for staked amount
       // In a real implementation, you'd have a dedicated staking contract
-      const reviewCount = await contract.getUserReviewCount(address);
-      const stakedAmount = Number(reviewCount) * 5; // 5 TRUST per review as staking
+      const reviewIds = await contract.getUserReviews(address);
+      const stakedAmount = reviewIds.length * 5; // 5 TRUST per review as staking
 
       return stakedAmount.toString();
     } catch (error) {
