@@ -151,201 +151,163 @@ export class Web3Service {
   }
 
   async submitReview(reviewData: any): Promise<string> {
-    console.log('🔥 submitReview called with data:', reviewData);
+    console.log('🔥 =================== REVIEW SUBMISSION ATTEMPT ===================');
+    console.log('📊 Input data:', reviewData);
     
     if (!this.provider || !this.signer) {
-      console.error('❌ Provider or signer not available:', { provider: !!this.provider, signer: !!this.signer });
+      console.error('❌ No provider/signer');
       throw new Error('Wallet not connected - call connect() first');
     }
 
     try {
-      console.log('🔗 Starting review submission transaction...');
-      console.log('📊 Review data for blockchain:', reviewData);
-
-      // Ensure we're on the correct network
-      console.log('🌐 Checking network...');
-      await this.checkNetwork();
-      console.log('✅ Network check passed');
-      
-      // Get the current account to ensure we have a valid signer
-      console.log('👤 Getting signer address...');
-      const signerAddress = await this.signer.getAddress();
-      console.log('👤 Signer address:', signerAddress);
-
-      // Check balance to ensure user has enough MATIC
-      console.log('💰 Checking balance...');
-      const balance = await this.provider.getBalance(signerAddress);
-      const balanceInMatic = Number(balance) / 1e18;
-      console.log('💰 Current MATIC balance:', balanceInMatic);
-
-      if (balanceInMatic < 0.001) {
-        throw new Error(`Insufficient MATIC balance: ${balanceInMatic.toFixed(6)} MATIC. Get free MATIC from https://faucet.polygon.technology/`);
-      }
-
-      // Your deployed TrustTrailReviews contract on Polygon Amoy
-      const TRUST_TRAIL_CONTRACT_ADDRESS = "0xf99ebeb5087ff43c44A1cE86d66Cd367d3c5EcAb";
-      console.log('🚀 Using TrustTrailReviews contract at:', TRUST_TRAIL_CONTRACT_ADDRESS);
-
-      // Import the proper ABI
-      const { ReviewPlatformABI } = await import('@/contracts/abis/ReviewPlatform');
-      
-      // Create contract instance with proper ABI
-      console.log('📜 Creating contract instance...');
-      const contract = new ethers.Contract(TRUST_TRAIL_CONTRACT_ADDRESS, ReviewPlatformABI, this.signer);
-      
-      // Verify contract is accessible
-      try {
-        const contractCode = await this.provider.getCode(TRUST_TRAIL_CONTRACT_ADDRESS);
-        if (contractCode === '0x') {
-          throw new Error(`Contract not found at address ${TRUST_TRAIL_CONTRACT_ADDRESS}`);
-        }
-        console.log('✅ Contract verified and accessible');
-      } catch (verifyError) {
-        console.error('❌ Contract verification failed:', verifyError);
-        throw new Error('Contract verification failed - contract may not be deployed');
-      }
-
-      // Create timestamped IPFS hashes
-      const timestamp = Date.now();
-      const ipfsHash = `QmHash_${timestamp}_${Math.random().toString(36).substring(7)}`;
-      const proofHash = `QmProofHash_${timestamp}_${Math.random().toString(36).substring(7)}`;
-      
-      const txParams = [
-        reviewData.companyName,
-        reviewData.category, 
-        ipfsHash,
-        proofHash,
-        reviewData.rating
-      ];
-      
-      console.log('📊 Final transaction parameters:', txParams);
-
-      // Skip gas estimation completely - use fixed high gas limit
-      console.log('⛽ SKIPPING gas estimation - using fixed high gas limit');
-      const gasLimit = 800000n; // Very high gas limit
-      console.log('⛽ Using fixed gas limit:', gasLimit.toString());
-
-      // Get current gas price and add premium for faster confirmation
-      console.log('💰 Getting gas price...');
-      let feeData;
-      try {
-        feeData = await this.provider.getFeeData();
-        console.log('💰 Current fee data:', {
-          gasPrice: feeData.gasPrice?.toString(),
-          maxFeePerGas: feeData.maxFeePerGas?.toString(),
-          maxPriorityFeePerGas: feeData.maxPriorityFeePerGas?.toString()
-        });
-      } catch (feeError) {
-        console.error('❌ Fee data fetch failed:', feeError);
-        // Use fallback fee data
-        feeData = {
-          gasPrice: 30000000000n, // 30 gwei
-          maxFeePerGas: 30000000000n,
-          maxPriorityFeePerGas: 2000000000n
-        };
-        console.log('💰 Using fallback fee data:', feeData);
-      }
-
-      // Prepare transaction options with SIMPLE gas structure for Polygon Amoy
-      const txOptions: any = {
-        gasLimit: gasLimit,
-        gasPrice: 50000000000n, // Fixed 50 gwei - high but reliable
-      };
-
-      console.log('💰 Using simple fixed gas price structure:', txOptions);
-
-      console.log('🚀 CALLING CONTRACT.submitReview() - MetaMask should popup NOW...');
-      console.log('📋 Final parameters check:', {
-        contractAddress: contract.target,
-        txParams,
-        txOptions
+      // STEP 1: Basic connectivity check
+      console.log('🌐 STEP 1: Checking basic connectivity...');
+      const network = await this.provider.getNetwork();
+      console.log('🌐 Connected to network:', {
+        name: network.name,
+        chainId: network.chainId.toString()
       });
       
-      // Try the contract call with extensive error catching
-      let tx;
-      try {
-        console.log('🎯 Attempting contract.submitReview call...');
-        tx = await contract.submitReview(...txParams, txOptions);
-        console.log('✅ Contract call successful:', tx.hash);
-      } catch (contractError: any) {
-        console.error('❌ Contract call failed:', contractError);
-        console.error('❌ Contract error details:', {
-          message: contractError.message,
-          code: contractError.code,
-          data: contractError.data,
-          reason: contractError.reason
-        });
-        
-        // Try direct low-level call as backup
-        console.log('🔄 Trying direct low-level transaction as backup...');
-        const abiCoder = ethers.AbiCoder.defaultAbiCoder();
-        const functionSelector = "0xe8678368"; // submitReview function selector
-        const encodedParams = abiCoder.encode(
-          ['string', 'string', 'string', 'string', 'uint8'],
-          txParams
-        );
-        const txData = functionSelector + encodedParams.slice(2);
-        
-        const directTxRequest = {
-          to: contract.target,
-          data: txData,
-          gasLimit: gasLimit,
-          gasPrice: 50000000000n,
-          value: 0
-        };
-        
-        console.log('🚀 Sending direct transaction:', directTxRequest);
-        tx = await this.signer.sendTransaction(directTxRequest);
-        console.log('✅ Direct transaction successful:', tx.hash);
+      // STEP 2: Get signer and balance
+      console.log('👤 STEP 2: Getting signer info...');
+      const signerAddress = await this.signer.getAddress();
+      const balance = await this.provider.getBalance(signerAddress);
+      const balanceInMatic = ethers.formatEther(balance);
+      
+      console.log('👤 Signer address:', signerAddress);
+      console.log('💰 Balance:', balanceInMatic, 'MATIC');
+      
+      if (parseFloat(balanceInMatic) < 0.001) {
+        throw new Error(`Insufficient MATIC: ${balanceInMatic} MATIC. Get free MATIC from faucet.`);
       }
-      
-      console.log('✅ Transaction sent successfully!');
-      console.log('📡 Transaction hash:', tx.hash);
-      console.log('⏳ Waiting for confirmation...');
 
-      // Wait for confirmation with increased timeout
-      const receipt = await tx.wait(2); // Wait for 2 confirmations
-      console.log('📦 Transaction receipt:', receipt);
+      // STEP 3: Contract verification
+      console.log('📜 STEP 3: Contract verification...');
+      const CONTRACT_ADDRESS = "0xf99ebeb5087ff43c44A1cE86d66Cd367d3c5EcAb";
       
-      if (receipt && receipt.status === 1) {
-        console.log('✅ Transaction confirmed successfully!');
-        console.log('🎉 Review submitted to blockchain!');
-        console.log('🔗 Explorer URL:', `https://amoy.polygonscan.com/tx/${tx.hash}`);
+      const contractCode = await this.provider.getCode(CONTRACT_ADDRESS);
+      if (contractCode === '0x') {
+        throw new Error('Contract not deployed at address');
+      }
+      console.log('✅ Contract verified at:', CONTRACT_ADDRESS);
+
+      // STEP 4: Prepare transaction data using your EXACT successful pattern
+      console.log('🔨 STEP 4: Preparing transaction using successful pattern...');
+      
+      const timestamp = Date.now();
+      const ipfsHash = `QmHash_${timestamp}_${Math.random().toString(36).substring(7)}`;
+      const proofHash = `QmProof_${timestamp}_${Math.random().toString(36).substring(7)}`;
+      
+      // Use EXACT successful transaction encoding
+      const abiCoder = ethers.AbiCoder.defaultAbiCoder();
+      const functionSelector = "0xe8678368"; // Your working submitReview selector
+      
+      const encodedParams = abiCoder.encode(
+        ['string', 'string', 'string', 'string', 'uint8'],
+        [
+          reviewData.companyName,
+          reviewData.category,
+          ipfsHash,
+          proofHash,
+          reviewData.rating
+        ]
+      );
+      
+      const txData = functionSelector + encodedParams.slice(2);
+      console.log('🔨 Transaction data prepared, length:', txData.length);
+
+      // STEP 5: Get current nonce and gas price
+      console.log('⚙️ STEP 5: Getting transaction parameters...');
+      
+      const nonce = await this.provider.getTransactionCount(signerAddress, 'pending');
+      console.log('🔢 Nonce:', nonce);
+      
+      // Use simple gas price instead of complex fee structure
+      const gasPrice = 50000000000n; // 50 gwei - fixed and high
+      console.log('⛽ Using fixed gas price:', gasPrice.toString(), 'wei (50 gwei)');
+
+      // STEP 6: Create transaction object exactly like your successful ones
+      console.log('📋 STEP 6: Creating transaction object...');
+      
+      const txRequest = {
+        to: CONTRACT_ADDRESS,
+        data: txData,
+        gasLimit: 1000000, // Very high gas limit
+        gasPrice: gasPrice,
+        nonce: nonce,
+        value: 0,
+        type: 0 // Legacy transaction type
+      };
+      
+      console.log('📋 Final transaction request:', {
+        to: txRequest.to,
+        dataLength: txRequest.data.length,
+        gasLimit: txRequest.gasLimit,
+        gasPrice: txRequest.gasPrice.toString(),
+        nonce: txRequest.nonce,
+        type: txRequest.type
+      });
+
+      // STEP 7: Send transaction
+      console.log('🚀 STEP 7: SENDING TRANSACTION - MetaMask should popup NOW...');
+      console.log('🚀 ===============================================================');
+      
+      const tx = await this.signer.sendTransaction(txRequest);
+      
+      console.log('✅ ================= TRANSACTION SENT SUCCESSFULLY =================');
+      console.log('📡 Transaction hash:', tx.hash);
+      console.log('📋 Transaction details:', {
+        hash: tx.hash,
+        to: tx.to,
+        from: tx.from,
+        gasLimit: tx.gasLimit?.toString(),
+        gasPrice: tx.gasPrice?.toString(),
+        nonce: tx.nonce
+      });
+
+      // STEP 8: Wait for confirmation
+      console.log('⏳ STEP 8: Waiting for confirmation...');
+      const receipt = await tx.wait(1);
+      
+      console.log('✅ ================= TRANSACTION CONFIRMED =================');
+      console.log('📦 Receipt:', {
+        hash: receipt.hash,
+        status: receipt.status,
+        gasUsed: receipt.gasUsed?.toString(),
+        blockNumber: receipt.blockNumber,
+        blockHash: receipt.blockHash
+      });
+      
+      if (receipt.status === 1) {
+        console.log('🎉 SUCCESS! Review submitted to blockchain!');
+        console.log('🔗 View on explorer:', `https://amoy.polygonscan.com/tx/${tx.hash}`);
         return tx.hash;
       } else {
-        console.error('❌ Transaction failed with status:', receipt?.status);
-        throw new Error('Transaction failed during confirmation');
+        throw new Error('Transaction failed with status 0');
       }
       
     } catch (error: any) {
-      console.error('❌ submitReview failed with error:', error);
-      console.error('❌ Error details:', {
-        message: error.message,
-        code: error.code,
-        data: error.data,
-        stack: error.stack
-      });
+      console.error('❌ ================= TRANSACTION FAILED =================');
+      console.error('❌ Error:', error);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ Error code:', error.code);
+      console.error('❌ Error data:', error.data);
+      console.error('❌ Error reason:', error.reason);
+      console.error('❌ Full error object:', JSON.stringify(error, null, 2));
       
-      // Enhanced error handling for specific Web3 errors
-      if (error.code === 'ACTION_REJECTED' || error.code === 4001) {
-        throw new Error('Transaction rejected by user in MetaMask');
+      // Provide specific error messages
+      if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
+        throw new Error('You cancelled the transaction in MetaMask');
       } else if (error.message?.includes('insufficient funds')) {
-        throw new Error('Insufficient MATIC for transaction fees');
-      } else if (error.message?.includes('Insufficient MATIC balance')) {
-        throw error; // Re-throw our custom balance error
-      } else if (error.code === 'NETWORK_ERROR' || error.code === -32603) {
-        throw new Error('Network RPC error - try switching to a different RPC endpoint');
-      } else if (error.message?.includes('Contract verification failed')) {
-        throw error; // Re-throw contract verification errors
-      } else if (error.code === 'CALL_EXCEPTION') {
-        throw new Error('Contract call failed - the contract may have reverted the transaction');
-      } else if (error.message?.includes('gas') || error.message?.includes('Gas')) {
-        throw new Error('Gas estimation failed - the transaction may fail due to insufficient gas or contract logic');
+        throw new Error('Insufficient MATIC for gas fees');
+      } else if (error.code === -32603) {
+        throw new Error('RPC Error: The Polygon network is having issues. Try again in a moment.');
       } else if (error.message?.includes('could not coalesce error')) {
-        throw new Error('RPC endpoint error - try refreshing and attempting again');
+        throw new Error('Network connectivity issue. Please refresh and try again.');
+      } else if (error.message?.includes('gas')) {
+        throw new Error('Gas limit too low or network congestion. Try again.');
       } else {
-        // For any other error, provide a detailed message
-        throw new Error(`Blockchain transaction failed: ${error.message || 'Unknown error'}`);
+        throw new Error(`Blockchain error: ${error.message || 'Unknown transaction failure'}`);
       }
     }
   }
