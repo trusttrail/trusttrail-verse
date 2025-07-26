@@ -168,84 +168,47 @@ export class Web3Service {
         chainId: network.chainId.toString()
       });
       
-      // STEP 2: Get signer (skip balance check to avoid RPC issues)
+      // STEP 2: Get signer info
       console.log('👤 STEP 2: Getting signer info...');
       const signerAddress = await this.signer.getAddress();
       console.log('👤 Signer address:', signerAddress);
-      console.log('💰 Skipping balance check to avoid RPC issues on testnet');
 
-      // STEP 3: Contract verification
-      console.log('📜 STEP 3: Contract verification...');
+      // STEP 3: Setup contract using proper ethers interface
+      console.log('📜 STEP 3: Setting up contract interface...');
       const CONTRACT_ADDRESS = "0xf99ebeb5087ff43c44A1cE86d66Cd367d3c5EcAb";
       
-      const contractCode = await this.provider.getCode(CONTRACT_ADDRESS);
-      if (contractCode === '0x') {
-        throw new Error('Contract not deployed at address');
-      }
-      console.log('✅ Contract verified at:', CONTRACT_ADDRESS);
-
-      // STEP 4: Prepare transaction data using your EXACT successful pattern
-      console.log('🔨 STEP 4: Preparing transaction using successful pattern...');
+      // Import the ABI
+      const { ReviewPlatformABI } = await import('@/contracts/abis/ReviewPlatform');
       
+      // Create contract instance with signer
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, ReviewPlatformABI, this.signer);
+      console.log('✅ Contract instance created');
+
+      // STEP 4: Prepare review data
+      console.log('🔨 STEP 4: Preparing review data...');
       const timestamp = Date.now();
       const ipfsHash = `QmHash_${timestamp}_${Math.random().toString(36).substring(7)}`;
       const proofHash = `QmProof_${timestamp}_${Math.random().toString(36).substring(7)}`;
       
-      // Use EXACT successful transaction encoding
-      const abiCoder = ethers.AbiCoder.defaultAbiCoder();
-      const functionSelector = "0xe8678368"; // Your working submitReview selector
-      
-      const encodedParams = abiCoder.encode(
-        ['string', 'string', 'string', 'string', 'uint8'],
-        [
-          reviewData.companyName,
-          reviewData.category,
-          ipfsHash,
-          proofHash,
-          reviewData.rating
-        ]
-      );
-      
-      const txData = functionSelector + encodedParams.slice(2);
-      console.log('🔨 Transaction data prepared, length:', txData.length);
-
-      // STEP 5: Get current nonce and gas price
-      console.log('⚙️ STEP 5: Getting transaction parameters...');
-      
-      const nonce = await this.provider.getTransactionCount(signerAddress, 'pending');
-      console.log('🔢 Nonce:', nonce);
-      
-      // Use simple gas price instead of complex fee structure
-      const gasPrice = 50000000000n; // 50 gwei - fixed and high
-      console.log('⛽ Using fixed gas price:', gasPrice.toString(), 'wei (50 gwei)');
-
-      // STEP 6: Create transaction object exactly like your successful ones
-      console.log('📋 STEP 6: Creating transaction object...');
-      
-      const txRequest = {
-        to: CONTRACT_ADDRESS,
-        data: txData,
-        gasLimit: 1000000, // Very high gas limit
-        gasPrice: gasPrice,
-        nonce: nonce,
-        value: 0,
-        type: 0 // Legacy transaction type
-      };
-      
-      console.log('📋 Final transaction request:', {
-        to: txRequest.to,
-        dataLength: txRequest.data.length,
-        gasLimit: txRequest.gasLimit,
-        gasPrice: txRequest.gasPrice.toString(),
-        nonce: txRequest.nonce,
-        type: txRequest.type
+      console.log('📝 Review parameters:', {
+        companyName: reviewData.companyName,
+        category: reviewData.category,
+        rating: reviewData.rating,
+        ipfsHash: ipfsHash,
+        proofHash: proofHash
       });
 
-      // STEP 7: Send transaction
-      console.log('🚀 STEP 7: SENDING TRANSACTION - MetaMask should popup NOW...');
+      // STEP 5: Call contract method directly - this will trigger MetaMask
+      console.log('🚀 STEP 5: CALLING CONTRACT METHOD - MetaMask should popup NOW...');
       console.log('🚀 ===============================================================');
       
-      const tx = await this.signer.sendTransaction(txRequest);
+      const tx = await contract.submitReview(
+        reviewData.companyName,
+        reviewData.category,
+        ipfsHash,
+        proofHash,
+        reviewData.rating
+      );
       
       console.log('✅ ================= TRANSACTION SENT SUCCESSFULLY =================');
       console.log('📡 Transaction hash:', tx.hash);
@@ -258,8 +221,8 @@ export class Web3Service {
         nonce: tx.nonce
       });
 
-      // STEP 8: Wait for confirmation
-      console.log('⏳ STEP 8: Waiting for confirmation...');
+      // STEP 6: Wait for confirmation
+      console.log('⏳ STEP 6: Waiting for confirmation...');
       const receipt = await tx.wait(1);
       
       console.log('✅ ================= TRANSACTION CONFIRMED =================');
