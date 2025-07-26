@@ -119,6 +119,8 @@ export const useWeb3Transaction = () => {
         errorMessage = "Insufficient MATIC balance. Get some from the faucet.";
       } else if (error.message?.includes('Connection failed')) {
         errorMessage = error.message;
+      } else if (error.message?.includes('RPC Error') || error.message?.includes('Network connectivity issue')) {
+        errorMessage = "RPC connection issues. Please refresh the page and try again.";
       } else if (error.message?.includes('network')) {
         errorMessage = "Network error. Please check your connection to Amoy testnet.";
       } else {
