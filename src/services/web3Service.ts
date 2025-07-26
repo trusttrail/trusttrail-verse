@@ -220,52 +220,84 @@ export class Web3Service {
       
       console.log('📊 Final transaction parameters:', txParams);
 
-      // Estimate gas first with proper error handling
-      console.log('⛽ Estimating gas...');
-      let estimatedGas;
-      try {
-        estimatedGas = await contract.submitReview.estimateGas(...txParams);
-        console.log('⛽ Gas estimated:', estimatedGas.toString());
-      } catch (gasError: any) {
-        console.error('❌ Gas estimation failed:', gasError);
-        // Use a higher fallback gas limit for Polygon Amoy
-        estimatedGas = 500000n;
-        console.log('⛽ Using fallback gas limit:', estimatedGas.toString());
-      }
-
-      // Add 20% buffer to gas estimate
-      const gasLimit = estimatedGas + (estimatedGas * 20n / 100n);
-      console.log('⛽ Final gas limit with buffer:', gasLimit.toString());
+      // Skip gas estimation completely - use fixed high gas limit
+      console.log('⛽ SKIPPING gas estimation - using fixed high gas limit');
+      const gasLimit = 800000n; // Very high gas limit
+      console.log('⛽ Using fixed gas limit:', gasLimit.toString());
 
       // Get current gas price and add premium for faster confirmation
       console.log('💰 Getting gas price...');
-      const feeData = await this.provider.getFeeData();
-      console.log('💰 Current fee data:', {
-        gasPrice: feeData.gasPrice?.toString(),
-        maxFeePerGas: feeData.maxFeePerGas?.toString(),
-        maxPriorityFeePerGas: feeData.maxPriorityFeePerGas?.toString()
-      });
-
-      // Prepare transaction options with EIP-1559 fee structure for Polygon
-      const txOptions: any = {
-        gasLimit: gasLimit,
-      };
-
-      // Use EIP-1559 if available, otherwise fallback to legacy
-      if (feeData.maxFeePerGas && feeData.maxPriorityFeePerGas) {
-        txOptions.maxFeePerGas = feeData.maxFeePerGas + (feeData.maxFeePerGas * 20n / 100n);
-        txOptions.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas + (feeData.maxPriorityFeePerGas * 20n / 100n);
-        console.log('💰 Using EIP-1559 with 20% premium:', txOptions);
-      } else if (feeData.gasPrice) {
-        txOptions.gasPrice = feeData.gasPrice + (feeData.gasPrice * 20n / 100n);
-        console.log('💰 Using legacy gas price with 20% premium:', txOptions);
+      let feeData;
+      try {
+        feeData = await this.provider.getFeeData();
+        console.log('💰 Current fee data:', {
+          gasPrice: feeData.gasPrice?.toString(),
+          maxFeePerGas: feeData.maxFeePerGas?.toString(),
+          maxPriorityFeePerGas: feeData.maxPriorityFeePerGas?.toString()
+        });
+      } catch (feeError) {
+        console.error('❌ Fee data fetch failed:', feeError);
+        // Use fallback fee data
+        feeData = {
+          gasPrice: 30000000000n, // 30 gwei
+          maxFeePerGas: 30000000000n,
+          maxPriorityFeePerGas: 2000000000n
+        };
+        console.log('💰 Using fallback fee data:', feeData);
       }
 
+      // Prepare transaction options with SIMPLE gas structure for Polygon Amoy
+      const txOptions: any = {
+        gasLimit: gasLimit,
+        gasPrice: 50000000000n, // Fixed 50 gwei - high but reliable
+      };
+
+      console.log('💰 Using simple fixed gas price structure:', txOptions);
+
       console.log('🚀 CALLING CONTRACT.submitReview() - MetaMask should popup NOW...');
-      console.log('📋 Transaction options:', txOptions);
+      console.log('📋 Final parameters check:', {
+        contractAddress: contract.target,
+        txParams,
+        txOptions
+      });
       
-      // Call the contract function with proper options
-      const tx = await contract.submitReview(...txParams, txOptions);
+      // Try the contract call with extensive error catching
+      let tx;
+      try {
+        console.log('🎯 Attempting contract.submitReview call...');
+        tx = await contract.submitReview(...txParams, txOptions);
+        console.log('✅ Contract call successful:', tx.hash);
+      } catch (contractError: any) {
+        console.error('❌ Contract call failed:', contractError);
+        console.error('❌ Contract error details:', {
+          message: contractError.message,
+          code: contractError.code,
+          data: contractError.data,
+          reason: contractError.reason
+        });
+        
+        // Try direct low-level call as backup
+        console.log('🔄 Trying direct low-level transaction as backup...');
+        const abiCoder = ethers.AbiCoder.defaultAbiCoder();
+        const functionSelector = "0xe8678368"; // submitReview function selector
+        const encodedParams = abiCoder.encode(
+          ['string', 'string', 'string', 'string', 'uint8'],
+          txParams
+        );
+        const txData = functionSelector + encodedParams.slice(2);
+        
+        const directTxRequest = {
+          to: contract.target,
+          data: txData,
+          gasLimit: gasLimit,
+          gasPrice: 50000000000n,
+          value: 0
+        };
+        
+        console.log('🚀 Sending direct transaction:', directTxRequest);
+        tx = await this.signer.sendTransaction(directTxRequest);
+        console.log('✅ Direct transaction successful:', tx.hash);
+      }
       
       console.log('✅ Transaction sent successfully!');
       console.log('📡 Transaction hash:', tx.hash);
