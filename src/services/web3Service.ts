@@ -178,39 +178,30 @@ export class Web3Service {
         throw new Error(`Insufficient MATIC balance: ${balanceInMatic.toFixed(4)} MATIC. Get free MATIC from https://faucet.polygon.technology/`);
       }
 
-      // Create a null transaction to Polygon Amoy null address with review data
-      // This is a standard way to store data on blockchain without needing a deployed contract
-      const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
+      // Your deployed TrustTrailReviews contract on Polygon Amoy
+      const TRUST_TRAIL_CONTRACT_ADDRESS = "0xf99ebeb5087ff43c44A1cE86d66Cd367d3c5EcAb";
 
-      // Create review data as transaction input data
-      const reviewDataString = JSON.stringify({
-        company: reviewData.companyName,
-        title: reviewData.title,
-        content: reviewData.content?.substring(0, 100) || "",
-        rating: reviewData.rating,
-        category: reviewData.category,
-        timestamp: reviewData.timestamp,
-        reviewer: signerAddress
-      });
+      // Import the actual contract ABI
+      const { ReviewPlatformABI } = await import('@/contracts/abis/ReviewPlatform');
 
-      // Convert review data to hex
-      const reviewDataHex = ethers.hexlify(ethers.toUtf8Bytes(reviewDataString));
+      // Create contract instance with your deployed contract
+      const contract = new ethers.Contract(TRUST_TRAIL_CONTRACT_ADDRESS, ReviewPlatformABI, this.signer);
 
-      console.log('📝 Review data hex:', reviewDataHex);
+      console.log('🚀 Using TrustTrailReviews contract at:', TRUST_TRAIL_CONTRACT_ADDRESS);
+      console.log('⚡ About to call submitReview - MetaMask should popup now...');
 
-      // Prepare transaction to null address with review data
-      const txRequest = {
-        to: NULL_ADDRESS,
-        value: ethers.parseEther('0'), // No value needed
-        data: reviewDataHex, // Review data as transaction data
-        gasLimit: 50000 // Sufficient gas for data transaction
-      };
+      // For now, we'll use placeholder IPFS hashes since IPFS upload isn't implemented yet
+      const placeholderIpfsHash = "QmPlaceholder123456789abcdef"; // Replace with actual IPFS upload
+      const placeholderProofHash = "QmProofPlaceholder123456789"; // Replace with actual proof upload
 
-      console.log('🚀 Transaction request prepared:', txRequest);
-      console.log('⚡ About to send transaction - MetaMask should popup now...');
-
-      // Send transaction with review data
-      const tx = await this.signer.sendTransaction(txRequest);
+      // Call your actual contract's submitReview function
+      const tx = await contract.submitReview(
+        reviewData.companyName,
+        reviewData.category,
+        placeholderIpfsHash,      // _ipfsHash - will need IPFS integration
+        placeholderProofHash,     // _proofIpfsHash - will need IPFS integration  
+        reviewData.rating
+      );
       
       console.log('✅ Transaction object returned:', tx);
       console.log('📡 Transaction sent! Hash:', tx.hash);
@@ -221,6 +212,7 @@ export class Web3Service {
       
       if (receipt && receipt.status === 1) {
         console.log('✅ Transaction confirmed successfully:', receipt);
+        console.log('🎉 Review submitted to TrustTrailReviews contract!');
         return tx.hash;
       } else {
         throw new Error('Transaction failed during confirmation');
