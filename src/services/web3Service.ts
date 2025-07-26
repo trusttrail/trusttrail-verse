@@ -181,11 +181,13 @@ export class Web3Service {
       // Your deployed TrustTrailReviews contract on Polygon Amoy
       const TRUST_TRAIL_CONTRACT_ADDRESS = "0xf99ebeb5087ff43c44A1cE86d66Cd367d3c5EcAb";
 
-      // Import the actual contract ABI
-      const { ReviewPlatformABI } = await import('@/contracts/abis/ReviewPlatform');
+      // Create a simple ABI with just the submitReview function that matches your deployed contract
+      const SIMPLE_ABI = [
+        "function submitReview(string _companyName, string _category, string _ipfsHash, string _proofIpfsHash, uint8 _rating)"
+      ];
 
-      // Create contract instance with your deployed contract
-      const contract = new ethers.Contract(TRUST_TRAIL_CONTRACT_ADDRESS, ReviewPlatformABI, this.signer);
+      // Create contract instance with the simple ABI that matches your successful transactions
+      const contract = new ethers.Contract(TRUST_TRAIL_CONTRACT_ADDRESS, SIMPLE_ABI, this.signer);
 
       console.log('🚀 Using TrustTrailReviews contract at:', TRUST_TRAIL_CONTRACT_ADDRESS);
       console.log('⚡ About to call submitReview - MetaMask should popup now...');
