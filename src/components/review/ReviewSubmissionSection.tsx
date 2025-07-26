@@ -25,14 +25,15 @@ const ReviewSubmissionSection = ({
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
         <Button
-          type="submit"
+          type="button"
           size="lg"
-          disabled={!isFormValid || isSubmitting || isTransacting}
+          disabled={false}
           className="w-full sm:w-auto min-w-48"
           onClick={(e) => {
-            console.log('🎯 SUBMIT BUTTON CLICKED!');
+            console.log('🎯 SUBMIT BUTTON CLICKED - FORCING SUBMISSION!');
             console.log('📋 Button state:', { isFormValid, isSubmitting, isTransacting, filesLength });
-            // Let the form's onSubmit handle the actual submission
+            e.preventDefault();
+            onSubmit(e);
           }}
         >
           {isSubmitting || isTransacting ? (
