@@ -110,7 +110,21 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
 export const useWeb3 = (): Web3ContextType => {
   const context = useContext(Web3Context);
   if (!context) {
-    throw new Error('useWeb3 must be used within a Web3Provider');
+    // Return default values instead of throwing an error to prevent crashes
+    console.warn('useWeb3 hook used outside of Web3Provider - using default values');
+    return {
+      web3Service,
+      isConnected: false,
+      address: '',
+      currentNetwork: '',
+      connectWallet: async () => {
+        console.warn('Wallet connection attempted outside of Web3Provider');
+      },
+      isLoading: false,
+      tokenBalances: {},
+      refreshBalances: async () => {},
+      tokens: []
+    };
   }
   return context;
 };
