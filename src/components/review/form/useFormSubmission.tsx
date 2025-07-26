@@ -25,7 +25,15 @@ export const useFormSubmission = ({
   const handleSubmit = async (e: React.FormEvent, formData: ReviewFormData) => {
     e.preventDefault();
     
+    console.log('🚀 FORM SUBMISSION STARTED');
+    console.log('📋 Form data:', formData);
+    console.log('🔍 Validation checks:');
+    console.log('  - isWalletConnected:', isWalletConnected);
+    console.log('  - walletAddress:', walletAddress);
+    console.log('  - gitcoinVerified:', gitcoinVerified);
+    
     if (!isWalletConnected || !walletAddress) {
+      console.error('❌ Wallet check failed');
       toast({
         title: "Wallet Not Connected",
         description: "Please connect your wallet first.",
@@ -35,6 +43,7 @@ export const useFormSubmission = ({
     }
 
     if (!gitcoinVerified) {
+      console.error('❌ Gitcoin verification failed');
       toast({
         title: "Gitcoin Verification Required",
         description: "Please verify your Gitcoin passport before submitting a review.",
@@ -42,6 +51,8 @@ export const useFormSubmission = ({
       });
       return;
     }
+
+    console.log('✅ All validation checks passed, proceeding with submission...');
 
     setIsSubmitting(true);
 
