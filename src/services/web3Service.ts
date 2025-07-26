@@ -182,53 +182,72 @@ export class Web3Service {
       const TRUST_TRAIL_CONTRACT_ADDRESS = "0xf99ebeb5087ff43c44A1cE86d66Cd367d3c5EcAb";
 
       console.log('🚀 Using TrustTrailReviews contract at:', TRUST_TRAIL_CONTRACT_ADDRESS);
-      console.log('⚡ About to send direct transaction - MetaMask should popup now...');
 
-      // Create transaction data manually to match your successful transactions exactly
-      // Function selector for submitReview: 0xe8678368
-      const functionSelector = "0xe8678368";
+      // First, let's verify the contract exists and get its code
+      try {
+        const contractCode = await this.provider.getCode(TRUST_TRAIL_CONTRACT_ADDRESS);
+        console.log('📜 Contract code length:', contractCode.length);
+        console.log('📜 Contract exists:', contractCode !== '0x');
+        
+        if (contractCode === '0x') {
+          throw new Error(`Contract not found at address ${TRUST_TRAIL_CONTRACT_ADDRESS}. The contract may not be deployed or the address is incorrect.`);
+        }
+      } catch (error) {
+        console.error('❌ Failed to verify contract:', error);
+        throw new Error('Failed to verify contract deployment');
+      }
+
+      // Let's try the original ABI approach first since manual encoding might have issues
+      const REVIEW_ABI = [
+        "function submitReview(string memory _companyName, string memory _category, string memory _ipfsHash, string memory _proofIpfsHash, uint8 _rating) public"
+      ];
+
+      console.log('🔨 Creating contract instance with ABI...');
+      const contract = new ethers.Contract(TRUST_TRAIL_CONTRACT_ADDRESS, REVIEW_ABI, this.signer);
       
-      // Encode parameters exactly like successful transactions
-      const companyNameHex = ethers.hexlify(ethers.toUtf8Bytes(reviewData.companyName));
-      const categoryHex = ethers.hexlify(ethers.toUtf8Bytes(reviewData.category));
-      
-      // Create timestamped IPFS hashes like successful transactions
+      // Create timestamped IPFS hashes
       const timestamp = Date.now();
       const ipfsHash = `QmHash_${timestamp}_${Math.random().toString(36).substring(7)}`;
       const proofHash = `QmProofHash_${timestamp}_${Math.random().toString(36).substring(7)}`;
       
-      const ipfsHashHex = ethers.hexlify(ethers.toUtf8Bytes(ipfsHash));
-      const proofHashHex = ethers.hexlify(ethers.toUtf8Bytes(proofHash));
-      
-      // Encode the parameters as ABI-encoded data
-      const abiCoder = ethers.AbiCoder.defaultAbiCoder();
-      const encodedParams = abiCoder.encode(
-        ['string', 'string', 'string', 'string', 'uint8'],
-        [reviewData.companyName, reviewData.category, ipfsHash, proofHash, reviewData.rating]
-      );
-      
-      // Combine function selector with encoded parameters
-      const txData = functionSelector + encodedParams.slice(2); // Remove 0x from encoded params
-      
-      console.log('📝 Transaction data:', txData);
-      console.log('📊 Parameters:', {
-        company: reviewData.companyName,
+      console.log('📊 Final parameters for contract call:', {
+        companyName: reviewData.companyName,
         category: reviewData.category,
         ipfsHash,
         proofHash,
         rating: reviewData.rating
       });
 
-      // Send transaction directly with manual data
-      const txRequest = {
-        to: TRUST_TRAIL_CONTRACT_ADDRESS,
-        data: txData,
-        gasLimit: 300000, // Increase gas limit to be safe
-        value: 0
-      };
+      // Estimate gas first
+      console.log('⛽ Estimating gas...');
+      let gasEstimate;
+      try {
+        gasEstimate = await contract.submitReview.estimateGas(
+          reviewData.companyName,
+          reviewData.category,
+          ipfsHash,
+          proofHash,
+          reviewData.rating
+        );
+        console.log('⛽ Gas estimate:', gasEstimate.toString());
+      } catch (gasError) {
+        console.error('❌ Gas estimation failed:', gasError);
+        console.log('🔄 Proceeding with fixed gas limit...');
+        gasEstimate = 300000; // Fallback gas limit
+      }
 
-      console.log('🚀 Sending transaction request:', txRequest);
-      const tx = await this.signer.sendTransaction(txRequest);
+      console.log('🚀 Calling contract.submitReview() - MetaMask should popup now...');
+      
+      const tx = await contract.submitReview(
+        reviewData.companyName,
+        reviewData.category,
+        ipfsHash,
+        proofHash,
+        reviewData.rating,
+        {
+          gasLimit: Math.max(Number(gasEstimate) * 1.2, 300000) // 20% buffer or minimum 300k
+        }
+      );
       
       console.log('✅ Transaction object returned:', tx);
       console.log('📡 Transaction sent! Hash:', tx.hash);
@@ -242,6 +261,7 @@ export class Web3Service {
         console.log('🎉 Review submitted to TrustTrailReviews contract!');
         return tx.hash;
       } else {
+        console.error('❌ Transaction failed with receipt:', receipt);
         throw new Error('Transaction failed during confirmation');
       }
       
