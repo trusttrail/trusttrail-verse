@@ -188,13 +188,15 @@ export class Web3Service {
 
       console.log('📝 Review hash:', reviewHash);
 
-      // Prepare transaction - simple self-send with review data
+      // Prepare transaction - simple value transfer (no data to self)
       const txRequest = {
         to: signerAddress, // Send to self
         value: ethers.parseEther('0.001'), // 0.001 MATIC 
-        data: reviewHash, // Review hash as data
-        gasLimit: 25000 // Simple transaction limit
+        gasLimit: 21000 // Standard transfer limit
       };
+
+      // Store review hash in logs/console for now (in production, use proper smart contract)
+      console.log('📝 Review hash stored:', reviewHash);
 
       console.log('🚀 Transaction request prepared:', txRequest);
       console.log('⚡ About to send transaction - MetaMask should popup now...');
