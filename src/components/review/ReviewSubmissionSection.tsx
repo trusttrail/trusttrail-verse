@@ -29,6 +29,11 @@ const ReviewSubmissionSection = ({
           size="lg"
           disabled={!isFormValid || isSubmitting || isTransacting}
           className="w-full sm:w-auto min-w-48"
+          onClick={(e) => {
+            console.log('🎯 SUBMIT BUTTON CLICKED!');
+            console.log('📋 Button state:', { isFormValid, isSubmitting, isTransacting, filesLength });
+            // Let the form's onSubmit handle the actual submission
+          }}
         >
           {isSubmitting || isTransacting ? (
             <>
@@ -52,8 +57,8 @@ const ReviewSubmissionSection = ({
         )}
         
         {isFormValid && filesLength === 0 && (
-          <p className="text-sm text-orange-600 text-center">
-            Please upload at least one proof document for blockchain submission
+          <p className="text-sm text-yellow-600 text-center">
+            Files are optional for testing. Blockchain submission will proceed without files.
           </p>
         )}
       </div>
