@@ -78,9 +78,9 @@ export const submitReviewToDatabase = async (
     const aiProcessingTime = Date.now() - aiStartTime;
     console.log('🤖 AI screening completed in', aiProcessingTime, 'ms:', aiResult);
 
-    // Sanitize all input data - use wallet profile for user_id
+    // Sanitize all input data - set user_id to null for wallet-only users
     const sanitizedData = {
-      user_id: walletProfileId, // Use wallet profile ID
+      user_id: null, // Set to null for wallet-only authentication
       wallet_profile_id: walletProfileId, // Reference to wallet profile
       company_name: sanitizeInput(formData.companyName),
       category: sanitizeInput(formData.category),

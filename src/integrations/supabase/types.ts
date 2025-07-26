@@ -81,7 +81,7 @@ export type Database = {
           status: Database["public"]["Enums"]["review_status"]
           title: string
           updated_at: string
-          user_id: string
+          user_id: string | null
           wallet_address: string
           wallet_profile_id: string | null
         }
@@ -100,7 +100,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["review_status"]
           title: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           wallet_address: string
           wallet_profile_id?: string | null
         }
@@ -119,7 +119,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["review_status"]
           title?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           wallet_address?: string
           wallet_profile_id?: string | null
         }
