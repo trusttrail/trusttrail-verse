@@ -1,9 +1,9 @@
 
 import React from "react";
-import AdvancedAnalyticsDashboard from "./AdvancedAnalyticsDashboard";
+import RealTimeAnalyticsDashboard from "./RealTimeAnalyticsDashboard";
 
 const BasicAnalyticsSection = () => {
-  return <AdvancedAnalyticsDashboard />;
+  return <RealTimeAnalyticsDashboard />;
 };
 
 export default BasicAnalyticsSection;

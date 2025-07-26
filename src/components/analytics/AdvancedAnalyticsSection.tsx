@@ -3,7 +3,7 @@ import { Lock, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import AdvancedAnalyticsDashboard from "./AdvancedAnalyticsDashboard";
+import RealTimeAnalyticsDashboard from "./RealTimeAnalyticsDashboard";
 
 const AdminAdvancedAnalytics = () => (
   <div className="space-y-6">
@@ -63,8 +63,8 @@ const AdminAdvancedAnalytics = () => (
       </CardContent>
     </Card>
     
-    {/* Include the advanced dashboard for admins */}
-    <AdvancedAnalyticsDashboard />
+    {/* Include the real-time dashboard for admins */}
+    <RealTimeAnalyticsDashboard />
   </div>
 );
 
