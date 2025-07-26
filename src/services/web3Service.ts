@@ -178,24 +178,28 @@ export class Web3Service {
       const balanceInMatic = Number(balance) / 1e18;
       console.log('💰 Current MATIC balance:', balanceInMatic);
 
-      if (balanceInMatic < 0.01) {
-        throw new Error(`Insufficient MATIC balance: ${balanceInMatic.toFixed(4)} MATIC. Get free MATIC from https://faucet.polygon.technology/`);
+      if (balanceInMatic < 0.001) {
+        throw new Error(`Insufficient MATIC balance: ${balanceInMatic.toFixed(6)} MATIC. Get free MATIC from https://faucet.polygon.technology/`);
       }
 
       // Your deployed TrustTrailReviews contract on Polygon Amoy
       const TRUST_TRAIL_CONTRACT_ADDRESS = "0xf99ebeb5087ff43c44A1cE86d66Cd367d3c5EcAb";
       console.log('🚀 Using TrustTrailReviews contract at:', TRUST_TRAIL_CONTRACT_ADDRESS);
 
-      // Verify the contract exists
-      console.log('📜 Verifying contract exists...');
+      // Import the proper ABI
+      const { ReviewPlatformABI } = await import('@/contracts/abis/ReviewPlatform');
+      
+      // Create contract instance with proper ABI
+      console.log('📜 Creating contract instance...');
+      const contract = new ethers.Contract(TRUST_TRAIL_CONTRACT_ADDRESS, ReviewPlatformABI, this.signer);
+      
+      // Verify contract is accessible
       try {
         const contractCode = await this.provider.getCode(TRUST_TRAIL_CONTRACT_ADDRESS);
-        console.log('📜 Contract code length:', contractCode.length);
-        
         if (contractCode === '0x') {
           throw new Error(`Contract not found at address ${TRUST_TRAIL_CONTRACT_ADDRESS}`);
         }
-        console.log('✅ Contract verification passed');
+        console.log('✅ Contract verified and accessible');
       } catch (verifyError) {
         console.error('❌ Contract verification failed:', verifyError);
         throw new Error('Contract verification failed - contract may not be deployed');
@@ -206,56 +210,75 @@ export class Web3Service {
       const ipfsHash = `QmHash_${timestamp}_${Math.random().toString(36).substring(7)}`;
       const proofHash = `QmProofHash_${timestamp}_${Math.random().toString(36).substring(7)}`;
       
-      console.log('📊 Transaction parameters:', {
-        companyName: reviewData.companyName,
-        category: reviewData.category,
+      const txParams = [
+        reviewData.companyName,
+        reviewData.category, 
         ipfsHash,
         proofHash,
-        rating: reviewData.rating
+        reviewData.rating
+      ];
+      
+      console.log('📊 Final transaction parameters:', txParams);
+
+      // Estimate gas first with proper error handling
+      console.log('⛽ Estimating gas...');
+      let estimatedGas;
+      try {
+        estimatedGas = await contract.submitReview.estimateGas(...txParams);
+        console.log('⛽ Gas estimated:', estimatedGas.toString());
+      } catch (gasError: any) {
+        console.error('❌ Gas estimation failed:', gasError);
+        // Use a higher fallback gas limit for Polygon Amoy
+        estimatedGas = 500000n;
+        console.log('⛽ Using fallback gas limit:', estimatedGas.toString());
+      }
+
+      // Add 20% buffer to gas estimate
+      const gasLimit = estimatedGas + (estimatedGas * 20n / 100n);
+      console.log('⛽ Final gas limit with buffer:', gasLimit.toString());
+
+      // Get current gas price and add premium for faster confirmation
+      console.log('💰 Getting gas price...');
+      const feeData = await this.provider.getFeeData();
+      console.log('💰 Current fee data:', {
+        gasPrice: feeData.gasPrice?.toString(),
+        maxFeePerGas: feeData.maxFeePerGas?.toString(),
+        maxPriorityFeePerGas: feeData.maxPriorityFeePerGas?.toString()
       });
 
-      // Use your successful transaction pattern exactly
-      console.log('🔨 Preparing direct transaction call...');
-      
-      // Direct transaction using your working pattern from previous successful txs
-      const functionSelector = "0xe8678368"; // submitReview function selector
-      
-      // Encode parameters exactly like successful transactions
-      const abiCoder = ethers.AbiCoder.defaultAbiCoder();
-      console.log('📝 Encoding parameters...');
-      
-      const encodedParams = abiCoder.encode(
-        ['string', 'string', 'string', 'string', 'uint8'],
-        [reviewData.companyName, reviewData.category, ipfsHash, proofHash, reviewData.rating]
-      );
-      
-      const txData = functionSelector + encodedParams.slice(2);
-      console.log('📝 Transaction data prepared, length:', txData.length);
-
-      // Create transaction request
-      const txRequest = {
-        to: TRUST_TRAIL_CONTRACT_ADDRESS,
-        data: txData,
-        gasLimit: 300000,
-        value: 0
+      // Prepare transaction options with EIP-1559 fee structure for Polygon
+      const txOptions: any = {
+        gasLimit: gasLimit,
       };
 
-      console.log('🚀 SENDING TRANSACTION - MetaMask should popup NOW...');
-      console.log('📋 Transaction request:', txRequest);
+      // Use EIP-1559 if available, otherwise fallback to legacy
+      if (feeData.maxFeePerGas && feeData.maxPriorityFeePerGas) {
+        txOptions.maxFeePerGas = feeData.maxFeePerGas + (feeData.maxFeePerGas * 20n / 100n);
+        txOptions.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas + (feeData.maxPriorityFeePerGas * 20n / 100n);
+        console.log('💰 Using EIP-1559 with 20% premium:', txOptions);
+      } else if (feeData.gasPrice) {
+        txOptions.gasPrice = feeData.gasPrice + (feeData.gasPrice * 20n / 100n);
+        console.log('💰 Using legacy gas price with 20% premium:', txOptions);
+      }
+
+      console.log('🚀 CALLING CONTRACT.submitReview() - MetaMask should popup NOW...');
+      console.log('📋 Transaction options:', txOptions);
       
-      const tx = await this.signer.sendTransaction(txRequest);
+      // Call the contract function with proper options
+      const tx = await contract.submitReview(...txParams, txOptions);
       
       console.log('✅ Transaction sent successfully!');
       console.log('📡 Transaction hash:', tx.hash);
       console.log('⏳ Waiting for confirmation...');
 
-      // Wait for confirmation  
-      const receipt = await tx.wait(1);
+      // Wait for confirmation with increased timeout
+      const receipt = await tx.wait(2); // Wait for 2 confirmations
       console.log('📦 Transaction receipt:', receipt);
       
       if (receipt && receipt.status === 1) {
         console.log('✅ Transaction confirmed successfully!');
         console.log('🎉 Review submitted to blockchain!');
+        console.log('🔗 Explorer URL:', `https://amoy.polygonscan.com/tx/${tx.hash}`);
         return tx.hash;
       } else {
         console.error('❌ Transaction failed with status:', receipt?.status);
@@ -278,17 +301,19 @@ export class Web3Service {
         throw new Error('Insufficient MATIC for transaction fees');
       } else if (error.message?.includes('Insufficient MATIC balance')) {
         throw error; // Re-throw our custom balance error
-      } else if (error.code === 'NETWORK_ERROR') {
-        throw new Error('Network connection failed - check your internet');
+      } else if (error.code === 'NETWORK_ERROR' || error.code === -32603) {
+        throw new Error('Network RPC error - try switching to a different RPC endpoint');
       } else if (error.message?.includes('Contract verification failed')) {
         throw error; // Re-throw contract verification errors
       } else if (error.code === 'CALL_EXCEPTION') {
-        throw new Error('Contract call failed - the contract may have reverted');
-      } else if (error.message?.includes('gas')) {
-        throw new Error('Gas estimation failed - try increasing gas limit');
+        throw new Error('Contract call failed - the contract may have reverted the transaction');
+      } else if (error.message?.includes('gas') || error.message?.includes('Gas')) {
+        throw new Error('Gas estimation failed - the transaction may fail due to insufficient gas or contract logic');
+      } else if (error.message?.includes('could not coalesce error')) {
+        throw new Error('RPC endpoint error - try refreshing and attempting again');
       } else {
         // For any other error, provide a detailed message
-        throw new Error(`Transaction failed: ${error.message || 'Unknown error'}`);
+        throw new Error(`Blockchain transaction failed: ${error.message || 'Unknown error'}`);
       }
     }
   }
