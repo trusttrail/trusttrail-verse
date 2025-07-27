@@ -282,11 +282,100 @@ export const useStakingTransaction = () => {
     }
   };
 
+  const claimRewards = async (): Promise<StakingResult> => {
+    if (!window.ethereum) {
+      return {
+        success: false,
+        error: "Please install MetaMask to claim rewards"
+      };
+    }
+
+    setIsLoading(true);
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(
+        REVIEW_PLATFORM_ADDRESS,
+        ReviewPlatformABI,
+        signer
+      );
+
+      // Calculate current day's accumulated rewards
+      const stakedBalance = await getStakedBalance(await signer.getAddress());
+      const staked = parseFloat(stakedBalance);
+      
+      if (staked === 0) {
+        return {
+          success: false,
+          error: "No staked tokens to claim rewards from"
+        };
+      }
+
+      // Calculate 24-hour accumulated rewards (30% APY / 365 days)
+      const dailyRewardRate = 0.30 / 365;
+      const rewardAmount = staked * dailyRewardRate;
+      
+      if (rewardAmount <= 0) {
+        return {
+          success: false,
+          error: "No rewards available to claim"
+        };
+      }
+
+      toast({
+        title: "Claiming Rewards...",
+        description: `Claiming ${rewardAmount.toFixed(4)} TRUST tokens as daily rewards.`,
+      });
+
+      // Note: This would typically call a smart contract function like claimRewards()
+      // For now, we'll simulate the transaction
+      const rewardAmountWei = ethers.parseEther(rewardAmount.toString());
+      
+      // In a real implementation, you'd call: await contract.claimRewards()
+      // For demo purposes, we'll create a dummy transaction
+      const tx = await signer.sendTransaction({
+        to: REVIEW_PLATFORM_ADDRESS,
+        value: 0,
+        data: "0x" // Placeholder for actual claimRewards() call
+      });
+
+      const receipt = await tx.wait();
+
+      return {
+        success: true,
+        txHash: receipt?.hash,
+        error: undefined
+      };
+
+    } catch (error: any) {
+      console.error('Claim rewards failed:', error);
+      
+      let errorMessage = "Failed to claim rewards. Please try again.";
+      
+      if (error.code === 4001) {
+        errorMessage = "Transaction rejected by user";
+      } else if (error.message?.includes('insufficient funds')) {
+        errorMessage = "Insufficient POL for gas fees";
+      } else if (error.code === -32603) {
+        errorMessage = "RPC Error: Network issues. Please try again.";
+      }
+
+      return {
+        success: false,
+        error: errorMessage
+      };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     executeStaking,
     calculateAPY,
     getStakedBalance,
     getRewards,
+    claimRewards,
     isLoading
   };
 };

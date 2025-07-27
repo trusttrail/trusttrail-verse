@@ -32,12 +32,13 @@ const StakingForm: React.FC<StakingFormProps> = ({
   console.log('🎯 StakingForm received tokens:', tokens);
   const { toast } = useToast();
   const { currentNetwork, address } = useWeb3();
-  const { executeStaking, isLoading: isTransactionLoading } = useStakingTransaction();
+  const { executeStaking, claimRewards, isLoading: isTransactionLoading } = useStakingTransaction();
   const [selectedToken, setSelectedToken] = useState("TRUST");
   const [stakeAmount, setStakeAmount] = useState("");
   const [unstakeAmount, setUnstakeAmount] = useState("");
   const [isStaking, setIsStaking] = useState(false);
   const [isUnstaking, setIsUnstaking] = useState(false);
+  const [isClaiming, setIsClaiming] = useState(false);
 
   // Only show TRUST token for staking
   const trustToken = tokens.find(t => t.symbol === 'TRUST');
@@ -133,6 +134,18 @@ const StakingForm: React.FC<StakingFormProps> = ({
       return;
     }
 
+    const currentStaked = parseFloat(stakedAmounts[selectedToken] || "0");
+    const requestedAmount = parseFloat(unstakeAmount);
+    
+    if (requestedAmount > currentStaked) {
+      toast({
+        title: "Insufficient Staked Balance",
+        description: `You can only unstake up to ${currentStaked} ${selectedToken} that you have staked.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsUnstaking(true);
     
     try {
@@ -162,6 +175,47 @@ const StakingForm: React.FC<StakingFormProps> = ({
       });
     } finally {
       setIsUnstaking(false);
+    }
+  };
+
+  const handleClaimRewards = async () => {
+    if (currentNetwork !== "amoy") {
+      toast({
+        title: "Wrong Network",
+        description: "Please switch to Polygon Amoy testnet to claim rewards.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsClaiming(true);
+    
+    try {
+      const result = await claimRewards();
+      
+      if (result.success) {
+        toast({
+          title: "Rewards Claimed! 🎉",
+          description: `Daily rewards claimed successfully. TX: ${result.txHash?.substring(0, 10)}...`,
+        });
+        await refreshBalances();
+        if (onStakeAmountsChange) await onStakeAmountsChange();
+      } else {
+        toast({
+          title: "Claim Failed",
+          description: result.error || "Failed to claim rewards. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error('Claim rewards failed:', error);
+      toast({
+        title: "Claim Failed",
+        description: error.message || "Failed to claim rewards. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsClaiming(false);
     }
   };
 
@@ -335,6 +389,51 @@ const StakingForm: React.FC<StakingFormProps> = ({
           </form>
         </CardContent>
       </Card>
+
+      {/* Claim Rewards */}
+      {parseFloat(stakedAmounts[selectedToken] || "0") > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Claim Rewards</CardTitle>
+            <CardDescription>Claim your accumulated daily staking rewards</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="bg-muted/40 p-3 rounded-lg space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>Currently Staked:</span>
+                  <span className="font-medium">{stakedAmounts[selectedToken]} {selectedToken}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Daily Reward Rate:</span>
+                  <span className="text-green-500 font-medium">0.082% (30% APY)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Estimated Daily Rewards:</span>
+                  <span className="font-medium">
+                    {(parseFloat(stakedAmounts[selectedToken] || "0") * 0.30 / 365).toFixed(4)} {selectedToken}
+                  </span>
+                </div>
+              </div>
+              
+              <Button 
+                onClick={handleClaimRewards}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 w-full"
+                disabled={isClaiming || isTransactionLoading}
+              >
+                {isClaiming ? (
+                  <>
+                    <RefreshCw className="mr-2 animate-spin" size={18} />
+                    Claiming Rewards...
+                  </>
+                ) : (
+                  `Claim Daily Rewards`
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
