@@ -105,6 +105,13 @@ export const useStakingTransaction = () => {
           );
         } catch (err: any) {
           console.error('❌ Staking transaction failed:', err);
+          console.error('❌ Error details:', {
+            code: err.code,
+            message: err.message,
+            reason: err.reason,
+            action: err.action,
+            transaction: err.transaction
+          });
           throw err;
         }
       } else {
@@ -146,6 +153,13 @@ export const useStakingTransaction = () => {
           );
         } catch (err: any) {
           console.error('❌ Unstaking transaction failed:', err);
+          console.error('❌ Error details:', {
+            code: err.code,
+            message: err.message,
+            reason: err.reason,
+            action: err.action,
+            transaction: err.transaction
+          });
           throw err;
         }
       }
@@ -156,7 +170,9 @@ export const useStakingTransaction = () => {
       });
 
       // Wait for transaction confirmation
+      console.log('⏳ Waiting for transaction confirmation...', tx.hash);
       const receipt = await tx.wait();
+      console.log('✅ Transaction confirmed:', receipt);
 
       return {
         success: true,
@@ -165,6 +181,14 @@ export const useStakingTransaction = () => {
 
     } catch (error: any) {
       console.error(`${action} failed:`, error);
+      console.error('❌ Complete error object:', {
+        name: error.name,
+        code: error.code,
+        message: error.message,
+        reason: error.reason,
+        action: error.action,
+        stack: error.stack
+      });
       
       let errorMessage = `Failed to ${action} tokens`;
       
