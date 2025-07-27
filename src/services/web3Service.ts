@@ -357,38 +357,31 @@ export class Web3Service {
     if (!this.provider) throw new Error('Wallet not connected');
     
     try {
-      // Match dashboard calculation: 10 TRUST per approved review
-      // This ensures consistency between dashboard and staking sections
-      const { ReviewPlatformABI } = await import('@/contracts/abis/ReviewPlatform');
-      const CONTRACT_ADDRESS = '0xf99ebeb5087ff43c44A1cE86d66Cd367d3c5EcAb';
+      // Use the same calculation as dashboard: query Supabase for approved reviews
+      // This ensures exact consistency between dashboard and staking sections
+      const { supabase } = await import('@/integrations/supabase/client');
       
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, ReviewPlatformABI, this.provider);
-      const reviewIds = await contract.getUserReviews(address);
+      const { data: reviews, error } = await supabase
+        .from('reviews')
+        .select('*')
+        .ilike('wallet_address', address)
+        .eq('status', 'approved'); // Only count approved reviews
       
-      // Filter out staking transactions (they contain STAKE_ or UNSTAKE_ in company name)
-      let actualReviewCount = 0;
-      for (const reviewId of reviewIds) {
-        try {
-          const review = await contract.getReview(reviewId);
-          if (!review.companyName.includes('STAKE_') && !review.companyName.includes('UNSTAKE_')) {
-            actualReviewCount++;
-          }
-        } catch (error) {
-          // If we can't fetch review details, count it as a regular review
-          actualReviewCount++;
-        }
+      if (error) {
+        console.error('❌ Error fetching approved reviews:', error);
+        return '0';
       }
       
-      // Calculate TRUST balance: 10 TRUST per actual review (matching dashboard)
-      const trustBalance = actualReviewCount * 10;
+      const approvedReviewCount = reviews?.length || 0;
+      const trustBalance = approvedReviewCount * 10; // 10 TRUST per approved review
       
-      console.log(`📊 User has ${actualReviewCount} actual reviews on blockchain`);
-      console.log(`🪙 TRUST Balance: ${trustBalance} TRUST (${actualReviewCount} reviews × 10 TRUST)`);
+      console.log(`📊 User has ${approvedReviewCount} approved reviews in database`);
+      console.log(`🪙 TRUST Balance: ${trustBalance} TRUST (${approvedReviewCount} approved reviews × 10 TRUST)`);
       
       return trustBalance.toString();
       
     } catch (error) {
-      console.error('Failed to get TRUST balance from blockchain:', error);
+      console.error('Failed to get TRUST balance from database:', error);
       return '0';
     }
   }
