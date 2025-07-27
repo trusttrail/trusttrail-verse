@@ -198,8 +198,27 @@ export class Web3Service {
         proofHash: proofHash
       });
 
-      // STEP 5: Call contract method directly - this will trigger MetaMask
-      console.log('🚀 STEP 5: CALLING CONTRACT METHOD - MetaMask should popup NOW...');
+      // STEP 5: Estimate gas manually to avoid RPC issues
+      console.log('⛽ STEP 5: Estimating gas manually...');
+      let gasLimit;
+      try {
+        gasLimit = await contract.submitReview.estimateGas(
+          reviewData.companyName,
+          reviewData.category,
+          ipfsHash,
+          proofHash,
+          reviewData.rating
+        );
+        // Add 20% buffer to gas estimate
+        gasLimit = (gasLimit * 120n) / 100n;
+        console.log('⛽ Gas estimated:', gasLimit.toString());
+      } catch (gasError) {
+        console.log('⛽ Gas estimation failed, using fixed amount:', gasError);
+        gasLimit = 500000n; // Fixed gas limit as fallback
+      }
+
+      // STEP 6: Call contract method with manual gas - this will trigger MetaMask
+      console.log('🚀 STEP 6: CALLING CONTRACT METHOD - MetaMask should popup NOW...');
       console.log('🚀 ===============================================================');
       
       const tx = await contract.submitReview(
@@ -207,7 +226,10 @@ export class Web3Service {
         reviewData.category,
         ipfsHash,
         proofHash,
-        reviewData.rating
+        reviewData.rating,
+        {
+          gasLimit: gasLimit
+        }
       );
       
       console.log('✅ ================= TRANSACTION SENT SUCCESSFULLY =================');
