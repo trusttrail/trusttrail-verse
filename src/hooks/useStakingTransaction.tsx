@@ -237,10 +237,9 @@ export const useStakingTransaction = () => {
           const review = await contract.getReview(reviewId);
           const companyName = review.companyName;
           
-          // Look for staking transactions
-          if (companyName.includes('STAKE_POOL_') && companyName.includes('TRUST')) {
-            // Match patterns like "STAKE_POOL_10TRUST", "STAKE_POOL_10.5TRUST", etc.
-            const stakeMatch = companyName.match(/STAKE_POOL_([\d\.]+)TRUST/);
+          // Look for staking transactions first (check exact patterns to avoid duplicates)
+          if (companyName.startsWith('STAKE_POOL_') && companyName.includes('TRUST') && !companyName.startsWith('UNSTAKE_')) {
+            const stakeMatch = companyName.match(/^STAKE_POOL_([\d\.]+)TRUST$/);
             if (stakeMatch) {
               const amount = parseFloat(stakeMatch[1]);
               totalStaked += amount;
@@ -249,10 +248,9 @@ export const useStakingTransaction = () => {
             }
           }
           
-          // Look for unstaking transactions  
-          if (companyName.includes('UNSTAKE_POOL_') && companyName.includes('TRUST')) {
-            // Match patterns like "UNSTAKE_POOL_5TRUST", "UNSTAKE_POOL_5.5TRUST", etc.
-            const unstakeMatch = companyName.match(/UNSTAKE_POOL_([\d\.]+)TRUST/);
+          // Look for unstaking transactions (check exact patterns to avoid duplicates)  
+          if (companyName.startsWith('UNSTAKE_POOL_') && companyName.includes('TRUST')) {
+            const unstakeMatch = companyName.match(/^UNSTAKE_POOL_([\d\.]+)TRUST$/);
             if (unstakeMatch) {
               const amount = parseFloat(unstakeMatch[1]);
               totalUnstaked += amount;
@@ -352,17 +350,43 @@ export const useStakingTransaction = () => {
         description: `Claiming ${rewardAmount.toFixed(4)} TRUST tokens as daily rewards.`,
       });
 
-      // Note: This would typically call a smart contract function like claimRewards()
-      // For now, we'll simulate the transaction
-      const rewardAmountWei = ethers.parseEther(rewardAmount.toString());
+      // Create a real contract transaction for claiming rewards
+      const timestamp = Date.now();
+      const randomId = Math.random().toString(36).substring(7);
       
-      // In a real implementation, you'd call: await contract.claimRewards()
-      // For demo purposes, we'll create a dummy transaction
-      const tx = await signer.sendTransaction({
-        to: REVIEW_PLATFORM_ADDRESS,
-        value: 0,
-        data: "0x" // Placeholder for actual claimRewards() call
-      });
+      const claimData = {
+        companyName: `CLAIM_REWARDS_${rewardAmount.toFixed(4)}TRUST`,
+        category: "CLAIM_REWARDS",
+        ipfsHash: `QmClaim_${timestamp}_${randomId}`,
+        proofHash: `QmClaimProof_${timestamp}_${randomId}`,
+        rating: 5
+      };
+
+      // Use the same retry pattern as staking
+      const rpcRetry = async (attempt = 1): Promise<any> => {
+        try {
+          return await contract.submitReview(
+            claimData.companyName,
+            claimData.category,
+            claimData.ipfsHash,
+            claimData.proofHash,
+            claimData.rating,
+            { 
+              gasLimit: 750000n,
+              gasPrice: ethers.parseUnits('30', 'gwei')
+            }
+          );
+        } catch (err: any) {
+          if (attempt < 3 && err.code === 'UNKNOWN_ERROR' && err.error?.code === -32603) {
+            console.log(`🔄 RPC attempt ${attempt} failed, retrying...`);
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+            return rpcRetry(attempt + 1);
+          }
+          throw err;
+        }
+      };
+      
+      const tx = await rpcRetry();
 
       const receipt = await tx.wait();
 

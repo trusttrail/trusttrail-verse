@@ -220,220 +220,215 @@ const StakingForm: React.FC<StakingFormProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Token Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Select Token to Stake</CardTitle>
-          <CardDescription>Choose from available staking tokens</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Select value={selectedToken} onValueChange={setSelectedToken}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {filteredTokens.map((token) => (
-                <SelectItem key={token.symbol} value={token.symbol}>
-                  <div className="flex items-center gap-3 w-full">
-                    <span>{token.icon}</span>
-                    <div className="flex-1">
-                      <span className="font-medium">{token.symbol}</span>
-                      <span className="text-sm text-muted-foreground ml-2">{token.name}</span>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Left side - Claim Rewards */}
+      <div className="lg:col-span-1">
+        {/* Token Selection */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Token</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Select value={selectedToken} onValueChange={setSelectedToken}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredTokens.map((token) => (
+                  <SelectItem key={token.symbol} value={token.symbol}>
+                    <div className="flex items-center gap-3 w-full">
+                      <span>{token.icon}</span>
+                      <div className="flex-1">
+                        <span className="font-medium">{token.symbol}</span>
+                        <span className="text-sm text-muted-foreground ml-2">{token.name}</span>
+                      </div>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        {stakingAPYs[token.symbol]} APY
+                      </Badge>
                     </div>
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      {stakingAPYs[token.symbol]} APY
-                    </Badge>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          {selectedTokenData && (
-            <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Total Balance</p>
-                <p className="font-medium">{parseFloat(tokenBalances[selectedToken] || "0").toFixed(0)} {selectedToken}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Already Staked</p>
-                <p className="font-medium">{stakedAmounts[selectedToken] || "0"} {selectedToken}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Available to Stake</p>
-                <p className="font-medium text-green-600">
-                  {Math.max(0, parseFloat(tokenBalances[selectedToken] || "0") - parseFloat(stakedAmounts[selectedToken] || "0")).toFixed(0)} {selectedToken}
-                </p>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
 
-      {/* Stake Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Stake Tokens</CardTitle>
-          <CardDescription>Stake your tokens to start earning rewards</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleStake} className="space-y-4">
-            <div>
-              <label htmlFor="stake-amount" className="block text-sm font-medium mb-2">
-                Amount to Stake
-              </label>
-              <div className="relative">
-                <Input
-                  id="stake-amount"
-                  type="number"
-                  placeholder="0.00"
-                  value={stakeAmount}
-                  onChange={(e) => setStakeAmount(e.target.value)}
-                  className="pr-16"
-                  step="0.000001"
-                />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <span className="text-sm text-muted-foreground">{selectedToken}</span>
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                Max: {Math.max(0, parseFloat(tokenBalances[selectedToken] || "0") - parseFloat(stakedAmounts[selectedToken] || "0")).toFixed(0)} {selectedToken}
-              </p>
-            </div>
-            
-            {selectedTokenData && stakeAmount && (
-              <div className="bg-muted/40 p-3 rounded-lg space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>APY:</span>
-                  <span className="text-green-500 font-medium">{stakingAPYs[selectedToken]}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Est. Daily Rewards:</span>
-                  <span>{(parseFloat(stakeAmount) * 0.25 / 365).toFixed(6)} {selectedToken}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Network Fee:</span>
-                  <span>~0.001 MATIC</span>
-                </div>
-              </div>
-            )}
-            
-            <Button 
-              type="submit" 
-              className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 w-full"
-              disabled={isStaking || isTransactionLoading || !stakeAmount}
-            >
-              {isStaking ? (
-                <>
-                  <RefreshCw className="mr-2 animate-spin" size={18} />
-                  Staking...
-                </>
-              ) : (
-                <>
-                  <Coins className="mr-2" size={18} />
-                  Stake {selectedToken}
-                </>
-              )}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* Unstake Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Unstake Tokens</CardTitle>
-          <CardDescription>Withdraw your staked tokens</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleUnstake} className="space-y-4">
-            <div>
-              <label htmlFor="unstake-amount" className="block text-sm font-medium mb-2">
-                Amount to Unstake
-              </label>
-              <div className="relative">
-                <Input
-                  id="unstake-amount"
-                  type="number"
-                  placeholder="0.00"
-                  value={unstakeAmount}
-                  onChange={(e) => setUnstakeAmount(e.target.value)}
-                  className="pr-16"
-                  step="0.000001"
-                />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <span className="text-sm text-muted-foreground">{selectedToken}</span>
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                Staked: {stakedAmounts[selectedToken]} {selectedToken}
-              </p>
-            </div>
-            
-            <Button 
-              type="submit" 
-              variant="outline"
-              className="w-full"
-              disabled={isUnstaking || isTransactionLoading || !unstakeAmount}
-            >
-              {isUnstaking ? (
-                <>
-                  <RefreshCw className="mr-2 animate-spin" size={18} />
-                  Unstaking...
-                </>
-              ) : (
-                `Unstake ${selectedToken}`
-              )}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* Claim Rewards */}
-      {parseFloat(stakedAmounts[selectedToken] || "0") > 0 && (
+        {/* Reward Summary */}
         <Card>
           <CardHeader>
-            <CardTitle>Claim Rewards</CardTitle>
-            <CardDescription>Claim your accumulated daily staking rewards</CardDescription>
+            <CardTitle>Reward Summary</CardTitle>
+            <CardDescription>Your staking rewards overview</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="bg-muted/40 p-3 rounded-lg space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Currently Staked:</span>
-                  <span className="font-medium">{stakedAmounts[selectedToken]} {selectedToken}</span>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Total Balance</p>
+                  <p className="font-medium">{parseFloat(tokenBalances[selectedToken] || "0").toFixed(0)} {selectedToken}</p>
                 </div>
-                <div className="flex justify-between">
-                  <span>Daily Reward Rate:</span>
-                  <span className="text-green-500 font-medium">0.082% (30% APY)</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Estimated Daily Rewards:</span>
-                  <span className="font-medium">
-                    {(parseFloat(stakedAmounts[selectedToken] || "0") * 0.30 / 365).toFixed(4)} {selectedToken}
-                  </span>
+                <div>
+                  <p className="text-muted-foreground">Currently Staked</p>
+                  <p className="font-medium">{stakedAmounts[selectedToken] || "0"} {selectedToken}</p>
                 </div>
               </div>
               
-              <Button 
-                onClick={handleClaimRewards}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 w-full"
-                disabled={isClaiming || isTransactionLoading}
-              >
-                {isClaiming ? (
-                  <>
-                    <RefreshCw className="mr-2 animate-spin" size={18} />
-                    Claiming Rewards...
-                  </>
-                ) : (
-                  `Claim Daily Rewards`
-                )}
-              </Button>
+              {parseFloat(stakedAmounts[selectedToken] || "0") > 0 && (
+                <>
+                  <div className="bg-muted/40 p-3 rounded-lg space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Daily Reward Rate:</span>
+                      <span className="text-green-500 font-medium">0.082% (30% APY)</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Estimated Daily Rewards:</span>
+                      <span className="font-medium">
+                        {(parseFloat(stakedAmounts[selectedToken] || "0") * 0.30 / 365).toFixed(4)} {selectedToken}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    onClick={handleClaimRewards}
+                    className="bg-gradient-to-r from-green-500 to-emerald-500 w-full"
+                    disabled={isClaiming || isTransactionLoading}
+                  >
+                    {isClaiming ? (
+                      <>
+                        <RefreshCw className="mr-2 animate-spin" size={18} />
+                        Claiming Rewards...
+                      </>
+                    ) : (
+                      `Claim Daily Rewards`
+                    )}
+                  </Button>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
-      )}
+      </div>
+
+      {/* Right side - Stake and Unstake */}
+      <div className="lg:col-span-2 space-y-6">
+        {/* Stake Form */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Stake Tokens</CardTitle>
+            <CardDescription>Stake your tokens to start earning rewards</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleStake} className="space-y-4">
+              <div>
+                <label htmlFor="stake-amount" className="block text-sm font-medium mb-2">
+                  Amount to Stake
+                </label>
+                <div className="relative">
+                  <Input
+                    id="stake-amount"
+                    type="number"
+                    placeholder="0.00"
+                    value={stakeAmount}
+                    onChange={(e) => setStakeAmount(e.target.value)}
+                    className="pr-16"
+                    step="0.000001"
+                  />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <span className="text-sm text-muted-foreground">{selectedToken}</span>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Available to Stake: {Math.max(0, parseFloat(tokenBalances[selectedToken] || "0") - parseFloat(stakedAmounts[selectedToken] || "0")).toFixed(0)} {selectedToken}
+                </p>
+              </div>
+              
+              {selectedTokenData && stakeAmount && (
+                <div className="bg-muted/40 p-3 rounded-lg space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>APY:</span>
+                    <span className="text-green-500 font-medium">{stakingAPYs[selectedToken]}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Est. Daily Rewards:</span>
+                    <span>{(parseFloat(stakeAmount) * 0.30 / 365).toFixed(6)} {selectedToken}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Network Fee:</span>
+                    <span>~0.001 POL</span>
+                  </div>
+                </div>
+              )}
+              
+              <Button 
+                type="submit" 
+                className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 w-full"
+                disabled={isStaking || isTransactionLoading || !stakeAmount}
+              >
+                {isStaking ? (
+                  <>
+                    <RefreshCw className="mr-2 animate-spin" size={18} />
+                    Staking...
+                  </>
+                ) : (
+                  <>
+                    <Coins className="mr-2" size={18} />
+                    Stake {selectedToken}
+                  </>
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Unstake Form */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Unstake Tokens</CardTitle>
+            <CardDescription>Withdraw your staked tokens</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleUnstake} className="space-y-4">
+              <div>
+                <label htmlFor="unstake-amount" className="block text-sm font-medium mb-2">
+                  Amount to Unstake
+                </label>
+                <div className="relative">
+                  <Input
+                    id="unstake-amount"
+                    type="number"
+                    placeholder="0.00"
+                    value={unstakeAmount}
+                    onChange={(e) => setUnstakeAmount(e.target.value)}
+                    className="pr-16"
+                    step="0.000001"
+                  />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <span className="text-sm text-muted-foreground">{selectedToken}</span>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Currently Staked: {stakedAmounts[selectedToken]} {selectedToken}
+                </p>
+              </div>
+              
+              <Button 
+                type="submit" 
+                variant="outline"
+                className="w-full"
+                disabled={isUnstaking || isTransactionLoading || !unstakeAmount}
+              >
+                {isUnstaking ? (
+                  <>
+                    <RefreshCw className="mr-2 animate-spin" size={18} />
+                    Unstaking...
+                  </>
+                ) : (
+                  `Unstake ${selectedToken}`
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
