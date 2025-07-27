@@ -199,6 +199,11 @@ export class Web3Service {
       });
 
       // STEP 5: Estimate gas manually to avoid RPC issues
+      // ⚠️ CRITICAL MAINTENANCE NOTE: 
+      // This gas estimation fix resolves "Internal JSON-RPC error" (-32603) on Polygon Amoy
+      // DO NOT REMOVE: Manual gas estimation with fallback prevents transaction failures
+      // If RPC changes, ensure gasLimit fallback remains at 500000n minimum
+      // Last updated: 2025-07-27 - Fixed "could not coalesce error" issues
       console.log('⛽ STEP 5: Estimating gas manually...');
       let gasLimit;
       try {
