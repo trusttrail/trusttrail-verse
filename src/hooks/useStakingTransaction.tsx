@@ -12,13 +12,22 @@ interface StakingResult {
 
 export const useStakingTransaction = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isTransactionPending, setIsTransactionPending] = useState(false); // Prevent multiple transactions
   const { toast } = useToast();
 
   const executeStaking = async (
     amount: string,
     action: 'stake' | 'unstake'
   ): Promise<StakingResult> => {
+    if (isTransactionPending) {
+      return {
+        success: false,
+        error: "Transaction already in progress. Please wait."
+      };
+    }
+
     setIsLoading(true);
+    setIsTransactionPending(true);
     
     try {
       // Check if MetaMask is available
@@ -81,31 +90,23 @@ export const useStakingTransaction = () => {
           gasLimit = 500000n;
         }
 
-        // Apply same RPC reliability fix as review submission
-        const rpcRetry = async (attempt = 1): Promise<any> => {
-          try {
-            return await contract.submitReview(
-              stakeData.companyName,
-              stakeData.category,
-              stakeData.ipfsHash,
-              stakeData.proofHash,
-              stakeData.rating,
-              { 
-                gasLimit: 750000n, // Fixed gas limit for reliability
-                gasPrice: ethers.parseUnits('30', 'gwei') // Fixed gas price
-              }
-            );
-          } catch (err: any) {
-            if (attempt < 3 && err.code === 'UNKNOWN_ERROR' && err.error?.code === -32603) {
-              console.log(`🔄 RPC attempt ${attempt} failed, retrying...`);
-              await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-              return rpcRetry(attempt + 1);
+        // Remove retry mechanism from transaction signing to prevent multiple MetaMask confirmations
+        try {
+          tx = await contract.submitReview(
+            stakeData.companyName,
+            stakeData.category,
+            stakeData.ipfsHash,
+            stakeData.proofHash,
+            stakeData.rating,
+            { 
+              gasLimit: 750000n, // Fixed gas limit for reliability
+              gasPrice: ethers.parseUnits('30', 'gwei') // Fixed gas price
             }
-            throw err;
-          }
-        };
-        
-        tx = await rpcRetry();
+          );
+        } catch (err: any) {
+          console.error('❌ Staking transaction failed:', err);
+          throw err;
+        }
       } else {
         const unstakeData = {
           companyName: `UNSTAKE_POOL_${amount}TRUST`,
@@ -130,31 +131,23 @@ export const useStakingTransaction = () => {
           gasLimit = 500000n;
         }
 
-        // Apply same RPC reliability fix as review submission  
-        const rpcRetry = async (attempt = 1): Promise<any> => {
-          try {
-            return await contract.submitReview(
-              unstakeData.companyName,
-              unstakeData.category,
-              unstakeData.ipfsHash,
-              unstakeData.proofHash,
-              unstakeData.rating,
-              { 
-                gasLimit: 750000n, // Fixed gas limit for reliability
-                gasPrice: ethers.parseUnits('30', 'gwei') // Fixed gas price
-              }
-            );
-          } catch (err: any) {
-            if (attempt < 3 && err.code === 'UNKNOWN_ERROR' && err.error?.code === -32603) {
-              console.log(`🔄 RPC attempt ${attempt} failed, retrying...`);
-              await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-              return rpcRetry(attempt + 1);
+        // Remove retry mechanism from transaction signing to prevent multiple MetaMask confirmations
+        try {
+          tx = await contract.submitReview(
+            unstakeData.companyName,
+            unstakeData.category,
+            unstakeData.ipfsHash,
+            unstakeData.proofHash,
+            unstakeData.rating,
+            { 
+              gasLimit: 750000n, // Fixed gas limit for reliability
+              gasPrice: ethers.parseUnits('30', 'gwei') // Fixed gas price
             }
-            throw err;
-          }
-        };
-        
-        tx = await rpcRetry();
+          );
+        } catch (err: any) {
+          console.error('❌ Unstaking transaction failed:', err);
+          throw err;
+        }
       }
 
       toast({
@@ -193,6 +186,7 @@ export const useStakingTransaction = () => {
       };
     } finally {
       setIsLoading(false);
+      setIsTransactionPending(false);
     }
   };
 
@@ -312,7 +306,15 @@ export const useStakingTransaction = () => {
       };
     }
 
+    if (isTransactionPending) {
+      return {
+        success: false,
+        error: "Transaction already in progress. Please wait."
+      };
+    }
+
     setIsLoading(true);
+    setIsTransactionPending(true);
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -362,39 +364,31 @@ export const useStakingTransaction = () => {
         rating: 5
       };
 
-      // Use the same retry pattern as staking
-      const rpcRetry = async (attempt = 1): Promise<any> => {
-        try {
-          return await contract.submitReview(
-            claimData.companyName,
-            claimData.category,
-            claimData.ipfsHash,
-            claimData.proofHash,
-            claimData.rating,
-            { 
-              gasLimit: 750000n,
-              gasPrice: ethers.parseUnits('30', 'gwei')
-            }
-          );
-        } catch (err: any) {
-          if (attempt < 3 && err.code === 'UNKNOWN_ERROR' && err.error?.code === -32603) {
-            console.log(`🔄 RPC attempt ${attempt} failed, retrying...`);
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-            return rpcRetry(attempt + 1);
+      // Remove retry mechanism from transaction signing to prevent multiple MetaMask confirmations
+      try {
+        const tx = await contract.submitReview(
+          claimData.companyName,
+          claimData.category,
+          claimData.ipfsHash,
+          claimData.proofHash,
+          claimData.rating,
+          { 
+            gasLimit: 750000n,
+            gasPrice: ethers.parseUnits('30', 'gwei')
           }
-          throw err;
-        }
-      };
-      
-      const tx = await rpcRetry();
+        );
+        
+        const receipt = await tx.wait();
 
-      const receipt = await tx.wait();
-
-      return {
-        success: true,
-        txHash: receipt?.hash,
-        error: undefined
-      };
+        return {
+          success: true,
+          txHash: receipt?.hash,
+          error: undefined
+        };
+      } catch (err: any) {
+        console.error('❌ Claim rewards transaction failed:', err);
+        throw err;
+      }
 
     } catch (error: any) {
       console.error('Claim rewards failed:', error);
@@ -415,6 +409,7 @@ export const useStakingTransaction = () => {
       };
     } finally {
       setIsLoading(false);
+      setIsTransactionPending(false);
     }
   };
 
@@ -424,6 +419,7 @@ export const useStakingTransaction = () => {
     getStakedBalance,
     getRewards,
     claimRewards,
-    isLoading
+    isLoading,
+    isTransactionPending
   };
 };

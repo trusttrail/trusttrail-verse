@@ -32,7 +32,7 @@ const StakingForm: React.FC<StakingFormProps> = ({
   console.log('🎯 StakingForm received tokens:', tokens);
   const { toast } = useToast();
   const { currentNetwork, address } = useWeb3();
-  const { executeStaking, claimRewards, isLoading: isTransactionLoading } = useStakingTransaction();
+  const { executeStaking, claimRewards, isLoading: isTransactionLoading, isTransactionPending } = useStakingTransaction();
   const [selectedToken, setSelectedToken] = useState("TRUST");
   const [stakeAmount, setStakeAmount] = useState("");
   const [unstakeAmount, setUnstakeAmount] = useState("");
@@ -290,7 +290,7 @@ const StakingForm: React.FC<StakingFormProps> = ({
                   <Button 
                     onClick={handleClaimRewards}
                     className="bg-gradient-to-r from-green-500 to-emerald-500 w-full"
-                    disabled={isClaiming || isTransactionLoading}
+                    disabled={isClaiming || isTransactionLoading || isTransactionPending}
                   >
                     {isClaiming ? (
                       <>
@@ -361,7 +361,7 @@ const StakingForm: React.FC<StakingFormProps> = ({
               <Button 
                 type="submit" 
                 className="bg-gradient-to-r from-trustpurple-500 to-trustblue-500 w-full"
-                disabled={isStaking || isTransactionLoading || !stakeAmount}
+                disabled={isStaking || isTransactionLoading || isTransactionPending || !stakeAmount}
               >
                 {isStaking ? (
                   <>
@@ -414,7 +414,7 @@ const StakingForm: React.FC<StakingFormProps> = ({
                 type="submit" 
                 variant="outline"
                 className="w-full"
-                disabled={isUnstaking || isTransactionLoading || !unstakeAmount}
+                disabled={isUnstaking || isTransactionLoading || isTransactionPending || !unstakeAmount}
               >
                 {isUnstaking ? (
                   <>
