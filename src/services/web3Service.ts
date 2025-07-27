@@ -357,36 +357,24 @@ export class Web3Service {
     if (!this.provider) throw new Error('Wallet not connected');
     
     try {
-      // Check actual ERC20 token balance first (this shows the real available balance)
-      const tokenInfo = this.getTokenInfo('TRUST');
-      if (tokenInfo) {
-        const contract = new ethers.Contract(tokenInfo.address, this.ERC20_ABI, this.provider);
-        const balance = await contract.balanceOf(address);
-        const realBalance = ethers.formatUnits(balance, tokenInfo.decimals);
-        
-        console.log(`🪙 Real TRUST Balance from ERC20 contract: ${realBalance} TRUST`);
-        
-        // If there's a real balance, use it
-        if (parseFloat(realBalance) > 0) {
-          return realBalance;
-        }
-      }
-      
-      // Fallback: calculate from review count if no real tokens exist
+      // Use blockchain reviews as the source of truth for TRUST balance
+      // This matches the earning mechanism: 5 TRUST per approved review on blockchain
       const { ReviewPlatformABI } = await import('@/contracts/abis/ReviewPlatform');
       const CONTRACT_ADDRESS = '0xf99ebeb5087ff43c44A1cE86d66Cd367d3c5EcAb';
       
       const contract = new ethers.Contract(CONTRACT_ADDRESS, ReviewPlatformABI, this.provider);
       const reviewIds = await contract.getUserReviews(address);
-      const earnedBalance = reviewIds.length * 5;
       
-      console.log(`📊 User has ${reviewIds.length} reviews, earned ${earnedBalance} TRUST`);
-      console.log(`⚠️ Note: Using review-based calculation as fallback`);
+      // Calculate TRUST balance: 5 TRUST per review on blockchain
+      const trustBalance = reviewIds.length * 5;
       
-      return earnedBalance.toString();
+      console.log(`📊 User has ${reviewIds.length} reviews on blockchain`);
+      console.log(`🪙 TRUST Balance: ${trustBalance} TRUST (${reviewIds.length} reviews × 5 TRUST)`);
+      
+      return trustBalance.toString();
       
     } catch (error) {
-      console.error('Failed to get TRUST balance:', error);
+      console.error('Failed to get TRUST balance from blockchain:', error);
       return '0';
     }
   }
