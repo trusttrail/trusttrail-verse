@@ -18,7 +18,7 @@ export class Web3Service {
   private provider: ethers.BrowserProvider | null = null;
   private signer: ethers.Signer | null = null;
 
-  // Official token addresses on Polygon Amoy testnet
+  // Only tokens we actually support and use - removed problematic testnet tokens
   private readonly TOKENS: Record<string, TokenInfo> = {
     POL: {
       symbol: 'POL',
@@ -26,34 +26,6 @@ export class Web3Service {
       address: '0x0000000000000000000000000000000000000000', // Native token
       decimals: 18,
       icon: '🔷'
-    },
-    ETH: {
-      symbol: 'ETH',
-      name: 'Ethereum',
-      address: '0x360ad4f9a9A8EFe9A8DCB5f461c4Cc1047E1Dcf9',
-      decimals: 18,
-      icon: '⟠'
-    },
-    BTC: {
-      symbol: 'BTC',
-      name: 'Bitcoin',
-      address: '0x85E44420b6137bbc75a85CAB5c9A3371af976FdE',
-      decimals: 8,
-      icon: '₿'
-    },
-    USDT: {
-      symbol: 'USDT',
-      name: 'Tether',
-      address: '0x2c852e740B62308c46DD29B982FBb650D063Bd07',
-      decimals: 6,
-      icon: '💚'
-    },
-    USDC: {
-      symbol: 'USDC',
-      name: 'USD Coin',
-      address: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',
-      decimals: 6,
-      icon: '🔵'
     },
     TRUST: {
       symbol: 'TRUST',
@@ -373,23 +345,11 @@ export class Web3Service {
       console.warn('⚠️ Low POL balance detected. User may need to get POL from faucet.');
     }
     
-    // Get TRUST token balance from review rewards
+    // Get TRUST token balance - check both sources for accuracy
     const trustBalance = await this.getTrustTokenBalance(address);
     balances['TRUST'] = trustBalance;
     
-    // Get other token balances (these are mock for testnet)
-    for (const token of this.getTokens()) {
-      if (token.symbol === 'POL' || token.symbol === 'TRUST') continue; // Already fetched
-      
-      try {
-        const balance = await this.getTokenBalance(address, token.symbol);
-        balances[token.symbol] = balance;
-      } catch (error) {
-        console.error(`Failed to get balance for ${token.symbol}:`, error);
-        balances[token.symbol] = '0';
-      }
-    }
-    
+    // Only return POL and TRUST balances - removed problematic tokens that cause console errors
     return balances;
   }
 
@@ -397,36 +357,36 @@ export class Web3Service {
     if (!this.provider) throw new Error('Wallet not connected');
     
     try {
-      // Import the ReviewPlatform ABI
+      // Check actual ERC20 token balance first (this shows the real available balance)
+      const tokenInfo = this.getTokenInfo('TRUST');
+      if (tokenInfo) {
+        const contract = new ethers.Contract(tokenInfo.address, this.ERC20_ABI, this.provider);
+        const balance = await contract.balanceOf(address);
+        const realBalance = ethers.formatUnits(balance, tokenInfo.decimals);
+        
+        console.log(`🪙 Real TRUST Balance from ERC20 contract: ${realBalance} TRUST`);
+        
+        // If there's a real balance, use it
+        if (parseFloat(realBalance) > 0) {
+          return realBalance;
+        }
+      }
+      
+      // Fallback: calculate from review count if no real tokens exist
       const { ReviewPlatformABI } = await import('@/contracts/abis/ReviewPlatform');
-      const CONTRACT_ADDRESS = '0xf99ebeb5087ff43c44A1cE86d66Cd367d3c5EcAb'; // Using the actual deployed contract address
+      const CONTRACT_ADDRESS = '0xf99ebeb5087ff43c44A1cE86d66Cd367d3c5EcAb';
       
       const contract = new ethers.Contract(CONTRACT_ADDRESS, ReviewPlatformABI, this.provider);
-      
-      // Get user's review IDs
       const reviewIds = await contract.getUserReviews(address);
-      console.log(`📊 User has ${reviewIds.length} reviews on blockchain`);
+      const earnedBalance = reviewIds.length * 5;
       
-      // Calculate TRUST balance: 5 TRUST per approved review
-      const trustBalance = reviewIds.length * 5;
+      console.log(`📊 User has ${reviewIds.length} reviews, earned ${earnedBalance} TRUST`);
+      console.log(`⚠️ Note: Using review-based calculation as fallback`);
       
-      console.log(`🪙 TRUST Balance calculated: ${trustBalance} TRUST (${reviewIds.length} reviews × 5 TRUST)`);
-      
-      return trustBalance.toString();
+      return earnedBalance.toString();
       
     } catch (error) {
-      console.error('Failed to get TRUST balance from reviews:', error);
-      // Fallback: try to get from standard ERC20 if contract has minted tokens
-      try {
-        const tokenInfo = this.getTokenInfo('TRUST');
-        if (tokenInfo) {
-          const contract = new ethers.Contract(tokenInfo.address, this.ERC20_ABI, this.provider);
-          const balance = await contract.balanceOf(address);
-          return ethers.formatUnits(balance, tokenInfo.decimals);
-        }
-      } catch (erc20Error) {
-        console.error('Failed to get TRUST balance from ERC20:', erc20Error);
-      }
+      console.error('Failed to get TRUST balance:', error);
       return '0';
     }
   }

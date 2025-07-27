@@ -81,14 +81,31 @@ export const useStakingTransaction = () => {
           gasLimit = 500000n;
         }
 
-        tx = await contract.submitReview(
-          stakeData.companyName,
-          stakeData.category,
-          stakeData.ipfsHash,
-          stakeData.proofHash,
-          stakeData.rating,
-          { gasLimit }
-        );
+        // Apply same RPC reliability fix as review submission
+        const rpcRetry = async (attempt = 1): Promise<any> => {
+          try {
+            return await contract.submitReview(
+              stakeData.companyName,
+              stakeData.category,
+              stakeData.ipfsHash,
+              stakeData.proofHash,
+              stakeData.rating,
+              { 
+                gasLimit: 750000n, // Fixed gas limit for reliability
+                gasPrice: ethers.parseUnits('30', 'gwei') // Fixed gas price
+              }
+            );
+          } catch (err: any) {
+            if (attempt < 3 && err.code === 'UNKNOWN_ERROR' && err.error?.code === -32603) {
+              console.log(`🔄 RPC attempt ${attempt} failed, retrying...`);
+              await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+              return rpcRetry(attempt + 1);
+            }
+            throw err;
+          }
+        };
+        
+        tx = await rpcRetry();
       } else {
         const unstakeData = {
           companyName: `UNSTAKE_POOL_${amount}TRUST`,
@@ -113,14 +130,31 @@ export const useStakingTransaction = () => {
           gasLimit = 500000n;
         }
 
-        tx = await contract.submitReview(
-          unstakeData.companyName,
-          unstakeData.category,
-          unstakeData.ipfsHash,
-          unstakeData.proofHash,
-          unstakeData.rating,
-          { gasLimit }
-        );
+        // Apply same RPC reliability fix as review submission  
+        const rpcRetry = async (attempt = 1): Promise<any> => {
+          try {
+            return await contract.submitReview(
+              unstakeData.companyName,
+              unstakeData.category,
+              unstakeData.ipfsHash,
+              unstakeData.proofHash,
+              unstakeData.rating,
+              { 
+                gasLimit: 750000n, // Fixed gas limit for reliability
+                gasPrice: ethers.parseUnits('30', 'gwei') // Fixed gas price
+              }
+            );
+          } catch (err: any) {
+            if (attempt < 3 && err.code === 'UNKNOWN_ERROR' && err.error?.code === -32603) {
+              console.log(`🔄 RPC attempt ${attempt} failed, retrying...`);
+              await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+              return rpcRetry(attempt + 1);
+            }
+            throw err;
+          }
+        };
+        
+        tx = await rpcRetry();
       }
 
       toast({
