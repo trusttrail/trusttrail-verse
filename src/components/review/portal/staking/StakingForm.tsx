@@ -244,7 +244,7 @@ const StakingForm: React.FC<StakingFormProps> = ({
                 </div>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                Max: {parseFloat(tokenBalances[selectedToken] || "0").toFixed(0)} {selectedToken}
+                Max: {Math.max(0, parseFloat(tokenBalances[selectedToken] || "0") - parseFloat(stakedAmounts[selectedToken] || "0")).toFixed(0)} {selectedToken}
               </p>
             </div>
             
