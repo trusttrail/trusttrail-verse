@@ -222,34 +222,58 @@ export const useStakingTransaction = () => {
         provider
       );
 
-      // Count only staking transactions (STAKE_ in company name)
+      console.log(`🔍 Getting staked balance for ${address}`);
+      
+      // Get all user reviews to find staking transactions
       const reviewIds = await contract.getUserReviews(address);
-      let stakeTransactions = 0;
-      let unstakeTransactions = 0;
+      console.log(`📊 Found ${reviewIds.length} total review transactions`);
+      
+      let totalStaked = 0;
+      let totalUnstaked = 0;
+      const stakingTransactions: Array<{type: string, amount: number, id: string}> = [];
       
       for (const reviewId of reviewIds) {
         try {
           const review = await contract.getReview(reviewId);
-          if (review.companyName.includes('STAKE_')) {
-            // Extract amount from company name like "STAKE_POOL_10TRUST"
-            const match = review.companyName.match(/STAKE_POOL_(\d+)TRUST/);
-            if (match) {
-              stakeTransactions += parseInt(match[1]);
+          const companyName = review.companyName;
+          
+          // Look for staking transactions
+          if (companyName.includes('STAKE_POOL_') && companyName.includes('TRUST')) {
+            // Match patterns like "STAKE_POOL_10TRUST", "STAKE_POOL_10.5TRUST", etc.
+            const stakeMatch = companyName.match(/STAKE_POOL_([\d\.]+)TRUST/);
+            if (stakeMatch) {
+              const amount = parseFloat(stakeMatch[1]);
+              totalStaked += amount;
+              stakingTransactions.push({type: 'STAKE', amount, id: reviewId.toString()});
+              console.log(`✅ STAKE: +${amount} TRUST (Transaction: ${reviewId})`);
             }
-          } else if (review.companyName.includes('UNSTAKE_')) {
-            // Extract amount from company name like "UNSTAKE_POOL_5TRUST"
-            const match = review.companyName.match(/UNSTAKE_POOL_(\d+)TRUST/);
-            if (match) {
-              unstakeTransactions += parseInt(match[1]);
+          }
+          
+          // Look for unstaking transactions  
+          if (companyName.includes('UNSTAKE_POOL_') && companyName.includes('TRUST')) {
+            // Match patterns like "UNSTAKE_POOL_5TRUST", "UNSTAKE_POOL_5.5TRUST", etc.
+            const unstakeMatch = companyName.match(/UNSTAKE_POOL_([\d\.]+)TRUST/);
+            if (unstakeMatch) {
+              const amount = parseFloat(unstakeMatch[1]);
+              totalUnstaked += amount;
+              stakingTransactions.push({type: 'UNSTAKE', amount, id: reviewId.toString()});
+              console.log(`❌ UNSTAKE: -${amount} TRUST (Transaction: ${reviewId})`);
             }
           }
         } catch (error) {
-          console.error('Error reading review:', error);
+          console.error(`Error reading review ${reviewId}:`, error);
         }
       }
 
-      const netStaked = stakeTransactions - unstakeTransactions;
-      return Math.max(0, netStaked).toString();
+      const netStaked = Math.max(0, totalStaked - totalUnstaked);
+      
+      console.log(`📋 Staking Summary:`);
+      console.log(`   Total Staked: ${totalStaked} TRUST`);
+      console.log(`   Total Unstaked: ${totalUnstaked} TRUST`);
+      console.log(`   Net Currently Staked: ${netStaked} TRUST`);
+      console.log(`📝 All staking transactions:`, stakingTransactions);
+      
+      return netStaked.toFixed(0);
     } catch (error) {
       console.error('Error getting staked balance:', error);
       return "0";
