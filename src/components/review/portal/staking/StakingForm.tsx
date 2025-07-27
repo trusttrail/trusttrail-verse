@@ -64,13 +64,15 @@ const StakingForm: React.FC<StakingFormProps> = ({
       return;
     }
 
-    const userBalance = parseFloat(tokenBalances[selectedToken] || "0");
+    const totalBalance = parseFloat(tokenBalances[selectedToken] || "0");
+    const alreadyStaked = parseFloat(stakedAmounts[selectedToken] || "0");
+    const availableBalance = Math.max(0, totalBalance - alreadyStaked);
     const requestedAmount = parseFloat(stakeAmount);
     
-    if (requestedAmount > userBalance) {
+    if (requestedAmount > availableBalance) {
       toast({
-        title: "Insufficient Balance",
-        description: `You don't have enough ${selectedToken}. Available: ${userBalance.toFixed(6)}`,
+        title: "Insufficient Available Balance",
+        description: `You don't have enough ${selectedToken} available to stake. Available: ${availableBalance.toFixed(2)} (Total: ${totalBalance} - Staked: ${alreadyStaked})`,
         variant: "destructive",
       });
       return;
@@ -191,14 +193,20 @@ const StakingForm: React.FC<StakingFormProps> = ({
           </Select>
           
           {selectedTokenData && (
-            <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+            <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
               <div>
-                <p className="text-muted-foreground">Available Balance</p>
+                <p className="text-muted-foreground">Total Balance</p>
                 <p className="font-medium">{parseFloat(tokenBalances[selectedToken] || "0").toFixed(0)} {selectedToken}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Already Staked</p>
                 <p className="font-medium">{stakedAmounts[selectedToken] || "0"} {selectedToken}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Available to Stake</p>
+                <p className="font-medium text-green-600">
+                  {Math.max(0, parseFloat(tokenBalances[selectedToken] || "0") - parseFloat(stakedAmounts[selectedToken] || "0")).toFixed(0)} {selectedToken}
+                </p>
               </div>
             </div>
           )}
