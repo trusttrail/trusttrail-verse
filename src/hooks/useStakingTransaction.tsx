@@ -173,9 +173,9 @@ export const useStakingTransaction = () => {
       } else if (error.message?.includes('insufficient funds')) {
         errorMessage = "Insufficient POL for gas fees";
       } else if (error.code === -32603) {
-        errorMessage = "RPC Error: Network issues. Please try again.";
+        errorMessage = "Transaction failed. Please try again.";
       } else if (error.message?.includes('could not coalesce error')) {
-        errorMessage = "Network connectivity issue. Please refresh and try again.";
+        errorMessage = "Transaction failed. Please try again.";
       } else if (error.message?.includes('gas')) {
         errorMessage = "Gas limit too low or network congestion. Try again.";
       }
@@ -400,7 +400,7 @@ export const useStakingTransaction = () => {
       } else if (error.message?.includes('insufficient funds')) {
         errorMessage = "Insufficient POL for gas fees";
       } else if (error.code === -32603) {
-        errorMessage = "RPC Error: Network issues. Please try again.";
+        errorMessage = "Transaction failed. Please try again.";
       }
 
       return {
