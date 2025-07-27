@@ -17,6 +17,7 @@ interface StakingFormProps {
   refreshBalances: () => Promise<void>;
   stakingAPYs: Record<string, string>;
   stakedAmounts: Record<string, string>;
+  onStakeAmountsChange?: () => Promise<void>;
 }
 
 const StakingForm: React.FC<StakingFormProps> = ({
@@ -24,7 +25,8 @@ const StakingForm: React.FC<StakingFormProps> = ({
   tokenBalances,
   refreshBalances,
   stakingAPYs,
-  stakedAmounts
+  stakedAmounts,
+  onStakeAmountsChange
 }) => {
   console.log('🎯 StakingForm received tokenBalances:', tokenBalances);
   console.log('🎯 StakingForm received tokens:', tokens);
@@ -90,6 +92,7 @@ const StakingForm: React.FC<StakingFormProps> = ({
         });
         setStakeAmount("");
         await refreshBalances();
+        if (onStakeAmountsChange) await onStakeAmountsChange();
       } else {
         toast({
           title: "Staking Failed",
@@ -142,6 +145,7 @@ const StakingForm: React.FC<StakingFormProps> = ({
         });
         setUnstakeAmount("");
         await refreshBalances();
+        if (onStakeAmountsChange) await onStakeAmountsChange();
       } else {
         toast({
           title: "Unstaking Failed",

@@ -15,13 +15,15 @@ interface StakingTabProps {
 
 const StakingTab = ({ isWalletConnected, connectWallet }: StakingTabProps) => {
   const { currentNetwork, tokenBalances, refreshBalances, tokens, address } = useWeb3();
-  const { calculateAPY } = useStakingTransaction();
+  const { calculateAPY, getStakedBalance } = useStakingTransaction();
+  const [stakedAmounts, setStakedAmounts] = React.useState<Record<string, string>>({});
   
   console.log('🔍 StakingTab Debug Info:');
   console.log('  - isWalletConnected:', isWalletConnected);
   console.log('  - Web3 address:', address);
   console.log('  - Token balances:', tokenBalances);
   console.log('  - TRUST tokens available:', tokens.filter(t => t.symbol === 'TRUST'));
+  console.log('  - Staked amounts:', stakedAmounts);
   
   // Refresh balances when wallet connects
   React.useEffect(() => {
@@ -31,14 +33,30 @@ const StakingTab = ({ isWalletConnected, connectWallet }: StakingTabProps) => {
     }
   }, [isWalletConnected, address, refreshBalances]);
 
+  // Function to refresh staked amounts
+  const refreshStakedAmounts = React.useCallback(async () => {
+    if (!address || !isWalletConnected || currentNetwork !== "amoy") return;
+    
+    try {
+      const trustStaked = await getStakedBalance(address);
+      setStakedAmounts({ TRUST: trustStaked });
+      console.log('🏦 Fetched staked amounts:', { TRUST: trustStaked });
+    } catch (error) {
+      console.error('Error fetching staked amounts:', error);
+      setStakedAmounts({ TRUST: "0" });
+    }
+  }, [address, isWalletConnected, currentNetwork, getStakedBalance]);
+
+  // Fetch staked amounts when wallet connects
+  React.useEffect(() => {
+    refreshStakedAmounts();
+  }, [refreshStakedAmounts]);
+
   // Only show TRUST token for staking
   const trustToken = tokens.find(t => t.symbol === 'TRUST');
   const stakingTokens = trustToken ? [trustToken] : [];
 
-  const stakingAPYs: Record<string, string> = {};
-
-  // Staked amounts will be fetched from blockchain in StakingOverview
-  const stakedAmounts: Record<string, string> = {};
+  const stakingAPYs: Record<string, string> = { TRUST: "25%" };
 
   const isValidNetwork = currentNetwork === "amoy";
 
@@ -71,6 +89,7 @@ const StakingTab = ({ isWalletConnected, connectWallet }: StakingTabProps) => {
               refreshBalances={refreshBalances}
               stakingAPYs={stakingAPYs}
               stakedAmounts={stakedAmounts}
+              onStakeAmountsChange={refreshStakedAmounts}
             />
           )}
         </div>
