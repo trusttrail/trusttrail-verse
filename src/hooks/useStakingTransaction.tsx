@@ -222,12 +222,34 @@ export const useStakingTransaction = () => {
         provider
       );
 
-      // Get user's review count as a proxy for staked amount
-      // In a real implementation, you'd have a dedicated staking contract
+      // Count only staking transactions (STAKE_ in company name)
       const reviewIds = await contract.getUserReviews(address);
-      const stakedAmount = reviewIds.length * 5; // 5 TRUST per review as staking
+      let stakeTransactions = 0;
+      let unstakeTransactions = 0;
+      
+      for (const reviewId of reviewIds) {
+        try {
+          const review = await contract.getReview(reviewId);
+          if (review.companyName.includes('STAKE_')) {
+            // Extract amount from company name like "STAKE_POOL_10TRUST"
+            const match = review.companyName.match(/STAKE_POOL_(\d+)TRUST/);
+            if (match) {
+              stakeTransactions += parseInt(match[1]);
+            }
+          } else if (review.companyName.includes('UNSTAKE_')) {
+            // Extract amount from company name like "UNSTAKE_POOL_5TRUST"
+            const match = review.companyName.match(/UNSTAKE_POOL_(\d+)TRUST/);
+            if (match) {
+              unstakeTransactions += parseInt(match[1]);
+            }
+          }
+        } catch (error) {
+          console.error('Error reading review:', error);
+        }
+      }
 
-      return stakedAmount.toString();
+      const netStaked = stakeTransactions - unstakeTransactions;
+      return Math.max(0, netStaked).toString();
     } catch (error) {
       console.error('Error getting staked balance:', error);
       return "0";

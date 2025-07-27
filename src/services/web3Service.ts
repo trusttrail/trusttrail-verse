@@ -357,19 +357,33 @@ export class Web3Service {
     if (!this.provider) throw new Error('Wallet not connected');
     
     try {
-      // Use blockchain reviews as the source of truth for TRUST balance
-      // This matches the earning mechanism: 5 TRUST per approved review on blockchain
+      // Match dashboard calculation: 10 TRUST per approved review
+      // This ensures consistency between dashboard and staking sections
       const { ReviewPlatformABI } = await import('@/contracts/abis/ReviewPlatform');
       const CONTRACT_ADDRESS = '0xf99ebeb5087ff43c44A1cE86d66Cd367d3c5EcAb';
       
       const contract = new ethers.Contract(CONTRACT_ADDRESS, ReviewPlatformABI, this.provider);
       const reviewIds = await contract.getUserReviews(address);
       
-      // Calculate TRUST balance: 5 TRUST per review on blockchain
-      const trustBalance = reviewIds.length * 5;
+      // Filter out staking transactions (they contain STAKE_ or UNSTAKE_ in company name)
+      let actualReviewCount = 0;
+      for (const reviewId of reviewIds) {
+        try {
+          const review = await contract.getReview(reviewId);
+          if (!review.companyName.includes('STAKE_') && !review.companyName.includes('UNSTAKE_')) {
+            actualReviewCount++;
+          }
+        } catch (error) {
+          // If we can't fetch review details, count it as a regular review
+          actualReviewCount++;
+        }
+      }
       
-      console.log(`📊 User has ${reviewIds.length} reviews on blockchain`);
-      console.log(`🪙 TRUST Balance: ${trustBalance} TRUST (${reviewIds.length} reviews × 5 TRUST)`);
+      // Calculate TRUST balance: 10 TRUST per actual review (matching dashboard)
+      const trustBalance = actualReviewCount * 10;
+      
+      console.log(`📊 User has ${actualReviewCount} actual reviews on blockchain`);
+      console.log(`🪙 TRUST Balance: ${trustBalance} TRUST (${actualReviewCount} reviews × 10 TRUST)`);
       
       return trustBalance.toString();
       
