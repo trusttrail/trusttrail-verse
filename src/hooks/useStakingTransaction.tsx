@@ -66,11 +66,11 @@ export const useStakingTransaction = () => {
       let tx;
       
       if (action === 'stake') {
-        // Create a valid review entry for staking
+        // Encode the stake amount in the IPFS hash for tracking
         const stakeReviewData = {
           companyName: "TrustTrail Protocol", // Valid company name
           category: "defi", // Valid category
-          ipfsHash: `QmStaking${timestamp}${randomId}`, // Valid IPFS format
+          ipfsHash: `QmStaking${amount}TRT${timestamp}${randomId}`, // Include amount in hash for tracking
           proofHash: `QmStakeProof${timestamp}${randomId}`, // Valid IPFS format
           rating: 5 // Valid rating 1-5
         };
@@ -78,6 +78,10 @@ export const useStakingTransaction = () => {
         console.log('📝 Creating stake transaction with data:', stakeReviewData);
 
         try {
+          // Get gas price dynamically
+          const gasPrice = await provider.getFeeData();
+          console.log('🔧 Gas fee data:', gasPrice);
+
           tx = await contract.submitReview(
             stakeReviewData.companyName,
             stakeReviewData.category,
@@ -85,8 +89,8 @@ export const useStakingTransaction = () => {
             stakeReviewData.proofHash,
             stakeReviewData.rating,
             { 
-              gasLimit: 300000n, // Reduced gas limit
-              gasPrice: ethers.parseUnits('20', 'gwei') // Reduced gas price
+              gasLimit: 400000n, // Increased gas limit
+              gasPrice: gasPrice.gasPrice || ethers.parseUnits('30', 'gwei') // Use network gas price or fallback
             }
           );
           console.log('✅ Stake transaction submitted:', tx.hash);
@@ -102,11 +106,11 @@ export const useStakingTransaction = () => {
           throw err;
         }
       } else {
-        // Create a valid review entry for unstaking
+        // Encode the unstake amount in the IPFS hash for tracking
         const unstakeReviewData = {
           companyName: "TrustTrail Protocol", // Valid company name
           category: "defi", // Valid category  
-          ipfsHash: `QmUnstaking${timestamp}${randomId}`, // Valid IPFS format
+          ipfsHash: `QmUnstaking${amount}TRT${timestamp}${randomId}`, // Include amount in hash for tracking
           proofHash: `QmUnstakeProof${timestamp}${randomId}`, // Valid IPFS format
           rating: 1 // Different rating to distinguish from stakes
         };
@@ -114,6 +118,10 @@ export const useStakingTransaction = () => {
         console.log('📝 Creating unstake transaction with data:', unstakeReviewData);
 
         try {
+          // Get gas price dynamically
+          const gasPrice = await provider.getFeeData();
+          console.log('🔧 Gas fee data:', gasPrice);
+
           tx = await contract.submitReview(
             unstakeReviewData.companyName,
             unstakeReviewData.category,
@@ -121,8 +129,8 @@ export const useStakingTransaction = () => {
             unstakeReviewData.proofHash,
             unstakeReviewData.rating,
             { 
-              gasLimit: 300000n, // Reduced gas limit
-              gasPrice: ethers.parseUnits('20', 'gwei') // Reduced gas price
+              gasLimit: 400000n, // Increased gas limit
+              gasPrice: gasPrice.gasPrice || ethers.parseUnits('30', 'gwei') // Use network gas price or fallback
             }
           );
           console.log('✅ Unstake transaction submitted:', tx.hash);
@@ -232,19 +240,21 @@ export const useStakingTransaction = () => {
           const ipfsHash = review.ipfsHash;
           const rating = review.rating;
           
-          // NEW: Look for staking transactions using the new format
+          // NEW: Look for staking transactions using the new format with amount parsing
           if (companyName === "TrustTrail Protocol" && ipfsHash.includes('Staking') && rating === 5) {
-            // Use fixed amount for now since we don't encode it in the transaction
-            const stakeAmount = 10; // Fixed stake amount
+            // Parse amount from IPFS hash: QmStaking10TRT1234567890abc
+            const stakeMatch = ipfsHash.match(/QmStaking([\d\.]+)TRT/);
+            const stakeAmount = stakeMatch ? parseFloat(stakeMatch[1]) : 10; // Fallback to 10 if parsing fails
             totalStaked += stakeAmount;
             stakingTransactions.push({type: 'STAKE', amount: stakeAmount, id: reviewId.toString()});
             console.log(`✅ STAKE: +${stakeAmount} TRT (Transaction: ${reviewId})`);
           }
           
-          // NEW: Look for unstaking transactions using the new format
+          // NEW: Look for unstaking transactions using the new format with amount parsing
           if (companyName === "TrustTrail Protocol" && ipfsHash.includes('Unstaking') && rating === 1) {
-            // Use fixed amount for now since we don't encode it in the transaction
-            const unstakeAmount = 10; // Fixed unstake amount
+            // Parse amount from IPFS hash: QmUnstaking5TRT1234567890abc
+            const unstakeMatch = ipfsHash.match(/QmUnstaking([\d\.]+)TRT/);
+            const unstakeAmount = unstakeMatch ? parseFloat(unstakeMatch[1]) : 10; // Fallback to 10 if parsing fails
             totalUnstaked += unstakeAmount;
             stakingTransactions.push({type: 'UNSTAKE', amount: unstakeAmount, id: reviewId.toString()});
             console.log(`❌ UNSTAKE: -${unstakeAmount} TRT (Transaction: ${reviewId})`);
