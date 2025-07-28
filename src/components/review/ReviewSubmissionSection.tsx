@@ -25,15 +25,23 @@ const ReviewSubmissionSection = ({
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
         <Button
-          type="button"
+          type="submit"
           size="lg"
-          disabled={false}
+          disabled={isSubmitting || isTransacting}
           className="w-full sm:w-auto min-w-48"
           onClick={(e) => {
             console.log('🎯 SUBMIT BUTTON CLICKED - FORCING SUBMISSION!');
             console.log('📋 Button state:', { isFormValid, isSubmitting, isTransacting, filesLength });
-            e.preventDefault();
-            onSubmit(e);
+            console.log('📋 Button enabled?', !isSubmitting && !isTransacting);
+            console.log('📋 About to call onSubmit function...');
+            
+            try {
+              e.preventDefault();
+              onSubmit(e);
+              console.log('✅ onSubmit function called successfully');
+            } catch (error) {
+              console.error('❌ Error calling onSubmit:', error);
+            }
           }}
         >
           {isSubmitting || isTransacting ? (
