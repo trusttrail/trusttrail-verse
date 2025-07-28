@@ -278,4 +278,15 @@ contract TrustTrailReviews is AccessControl, ReentrancyGuard, Pausable {
         uint256 balance = rewardToken.balanceOf(address(this));
         require(rewardToken.transfer(msg.sender, balance), "Emergency withdrawal failed");
     }
+    
+    // Add receive and fallback functions to handle Ether transfers
+    receive() external payable {
+        // This function is called when contract receives Ether
+        // For this contract, we don't need to handle Ether, so we can just accept it
+    }
+    
+    fallback() external payable {
+        // This function is called when contract receives data that doesn't match any function
+        // For this contract, we don't need to handle arbitrary calls, so we can just accept them
+    }
 }
