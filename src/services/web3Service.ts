@@ -248,7 +248,7 @@ export class Web3Service {
 
         // STEP 5: Optimized gas settings for Amoy
         console.log('⛽ STEP 5: Using optimized gas settings for Amoy...');
-        const gasLimit = 300000n; // Reduced gas limit - more reasonable for review submission
+        const gasLimit = 500000n; // Increased gas limit for contract with rewards
         console.log('⛽ Gas limit set to:', gasLimit.toString());
 
         // STEP 6: Call contract method - this will trigger MetaMask
