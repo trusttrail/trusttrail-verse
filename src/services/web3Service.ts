@@ -141,7 +141,7 @@ export class Web3Service {
   }
 
   // Retry mechanism for RPC failures
-  private async retryWithFallback<T>(operation: () => Promise<T>, maxRetries: number = 3): Promise<T> {
+  private async retryWithFallback<T>(operation: () => Promise<T>, maxRetries: number = 1): Promise<T> {
     let lastError: any;
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -247,19 +247,25 @@ export class Web3Service {
         });
 
         // STEP 5: Fixed gas limit to avoid RPC estimation issues
-        console.log('⛽ STEP 5: Using fixed gas limit to avoid RPC issues...');
-        const gasLimit = 600000n; // Fixed gas limit that works reliably
+        console.log('⛽ STEP 5: Using optimized gas settings for Amoy...');
+        const gasLimit = 300000n; // Reduced gas limit - more reasonable for review submission
         console.log('⛽ Gas limit set to:', gasLimit.toString());
 
         // STEP 6: Call contract method - this will trigger MetaMask
         console.log('🚀 STEP 6: CALLING CONTRACT METHOD - MetaMask should popup NOW...');
         console.log('🚀 ===============================================================');
         
-        // Fixed gas pricing for Amoy network - avoid unsupported methods
-        console.log('⛽ Using legacy gas pricing for Amoy compatibility...');
-        
-        // Use legacy gas pricing instead of EIP-1559 for Amoy
-        const gasPrice = ethers.parseUnits('30', 'gwei'); // Fixed gas price that works on Amoy
+        // Get current gas price from network and add buffer for faster confirmation
+        let gasPrice: bigint;
+        try {
+          const feeData = await this.provider.getFeeData();
+          gasPrice = feeData.gasPrice ? (feeData.gasPrice * 150n) / 100n : ethers.parseUnits('50', 'gwei');
+          console.log('⛽ Using network gas price with 50% buffer:', ethers.formatUnits(gasPrice, 'gwei'), 'gwei');
+        } catch (gasError) {
+          // Fallback to higher fixed price for faster confirmation
+          gasPrice = ethers.parseUnits('50', 'gwei'); // Increased from 30 to 50 gwei
+          console.log('⛽ Using fallback gas price:', ethers.formatUnits(gasPrice, 'gwei'), 'gwei');
+        }
         
         const tx = await contract.submitReview(
           reviewData.companyName,
