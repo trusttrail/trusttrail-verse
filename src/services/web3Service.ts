@@ -63,7 +63,17 @@ export class Web3Service {
       await window.ethereum.request({ method: 'eth_requestAccounts' });
       this.provider = new ethers.BrowserProvider(window.ethereum);
       this.signer = await this.provider.getSigner();
-      const address = await this.signer.getAddress();
+      
+      // Get address safely - avoid ENS issues on Amoy
+      let address: string;
+      try {
+        address = await this.signer.getAddress();
+      } catch (ensError: any) {
+        console.warn('⚠️ ENS resolution failed, using fallback method:', ensError.message);
+        // Fallback: get address from accounts
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        address = accounts[0];
+      }
       
       // Check if on correct network
       await this.checkNetwork();
@@ -186,10 +196,19 @@ export class Web3Service {
           chainId: network.chainId.toString()
         });
         
-        // STEP 2: Get signer info
+        // STEP 2: Get signer info - avoid ENS issues on Amoy
         console.log('👤 STEP 2: Getting signer info...');
-        const signerAddress = await this.signer.getAddress();
-        console.log('👤 Signer address:', signerAddress);
+        let signerAddress: string;
+        try {
+          signerAddress = await this.signer.getAddress();
+          console.log('👤 Signer address:', signerAddress);
+        } catch (ensError: any) {
+          console.warn('⚠️ Direct signer.getAddress() failed, trying alternative method:', ensError.message);
+          // Fallback: get address from accounts
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          signerAddress = accounts[0];
+          console.log('👤 Fallback signer address:', signerAddress);
+        }
 
         // STEP 3: Setup contract using proper ethers interface
         console.log('📜 STEP 3: Setting up contract interface...');
@@ -225,9 +244,11 @@ export class Web3Service {
         console.log('🚀 STEP 6: CALLING CONTRACT METHOD - MetaMask should popup NOW...');
         console.log('🚀 ===============================================================');
         
-        // Use higher gas price for faster inclusion
-        const feeData = await this.provider.getFeeData();
-        const gasPrice = feeData.gasPrice ? (feeData.gasPrice * 120n) / 100n : undefined;
+        // Fixed gas pricing for Amoy network - avoid unsupported methods
+        console.log('⛽ Using legacy gas pricing for Amoy compatibility...');
+        
+        // Use legacy gas pricing instead of EIP-1559 for Amoy
+        const gasPrice = ethers.parseUnits('30', 'gwei'); // Fixed gas price that works on Amoy
         
         const tx = await contract.submitReview(
           reviewData.companyName,
