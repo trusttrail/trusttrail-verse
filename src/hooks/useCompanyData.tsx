@@ -7,7 +7,24 @@ export interface RealCompany {
   averageRating: number;
   category: string;
   latestReviewDate: string;
+  logo: string;
 }
+
+// Official company logos from trusted sources
+const COMPANY_LOGOS: Record<string, string> = {
+  'Binance': 'https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png',
+  'PancakeSwap': 'https://s2.coinmarketcap.com/static/img/coins/64x64/7186.png',
+  'Ethereum': 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png',
+  'OpenSea': 'https://storage.googleapis.com/opensea-static/Logomark/Logomark-Blue.png',
+  'Dreamstarter.xyz': 'https://pbs.twimg.com/profile_images/1673628171051331584/5Wf5ZMcF_400x400.jpg',
+  'Pump.fun': 'https://pbs.twimg.com/profile_images/1798409590515642368/uHoVg8EH_400x400.jpg',
+  'Uniswap': 'https://s2.coinmarketcap.com/static/img/coins/64x64/7083.png',
+  'Aave': 'https://s2.coinmarketcap.com/static/img/coins/64x64/7278.png',
+  'Compound': 'https://s2.coinmarketcap.com/static/img/coins/64x64/5692.png',
+  'Solana': 'https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png',
+  'Cardano': 'https://s2.coinmarketcap.com/static/img/coins/64x64/2010.png',
+  'Polygon': 'https://s2.coinmarketcap.com/static/img/coins/64x64/3890.png'
+};
 
 export interface RealReview {
   id: string;
@@ -71,7 +88,8 @@ export const useCompanyData = () => {
         reviewCount: company.reviewCount,
         averageRating: Number((company.totalRating / company.reviewCount).toFixed(1)),
         category: company.category,
-        latestReviewDate: company.latestReviewDate
+        latestReviewDate: company.latestReviewDate,
+        logo: COMPANY_LOGOS[company.name] || `https://ui-avatars.com/api/?name=${encodeURIComponent(company.name)}&background=6366f1&color=ffffff&size=64`
       }));
 
       // Sort by review count and rating

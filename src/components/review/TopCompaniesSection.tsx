@@ -73,8 +73,20 @@ const TopCompaniesSection = ({ companies, onViewAll, loading }: TopCompaniesSect
         {companies.slice(0, 4).map((company) => (
           <Card key={company.name} className="hover:shadow-md transition-shadow border-border/50">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg truncate">{company.name}</CardTitle>
-              <CardDescription className="capitalize">{company.category}</CardDescription>
+              <div className="flex items-center gap-3 mb-2">
+                <img 
+                  src={company.logo} 
+                  alt={`${company.name} logo`}
+                  className="w-10 h-10 rounded-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(company.name)}&background=6366f1&color=ffffff&size=40`;
+                  }}
+                />
+                <div className="flex-1">
+                  <CardTitle className="text-lg truncate">{company.name}</CardTitle>
+                  <CardDescription className="capitalize text-sm">{company.category}</CardDescription>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between mb-2">

@@ -49,12 +49,14 @@ const PortalContent = ({
     content: review.content,
     date: review.created_at,
     verified: review.status === 'approved',
+    // Remove all mock interaction data - no upvotes, downvotes, comments, etc.
     upvotes: 0,
     downvotes: 0,
-    gitcoinScore: 85.0,
-    trustScore: 8.5,
+    gitcoinScore: 0,
+    trustScore: 0,
     hasUserVoted: false,
-    userVoteType: null
+    userVoteType: null,
+    comments: [] // No fake comments
   }));
 
   if (showAllCompanies) {
