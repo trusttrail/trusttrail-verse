@@ -12,6 +12,13 @@ contract TrustTrailReviews is AccessControl, ReentrancyGuard, Pausable {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant MODERATOR_ROLE = keccak256("MODERATOR_ROLE");
     
+    // Staking variables
+    mapping(address => uint256) public stakedBalances;
+    mapping(address => uint256) public lastRewardClaim;
+    uint256 public totalStaked;
+    uint256 public constant ANNUAL_REWARD_RATE = 30; // 30% APY
+    uint256 public constant SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
+    
     // Structs
     struct Review {
         address reviewer;
@@ -85,6 +92,11 @@ contract TrustTrailReviews is AccessControl, ReentrancyGuard, Pausable {
     );
     
     event RewardDistributed(address indexed recipient, uint256 amount, string reason);
+    
+    // Staking events
+    event TokensStaked(address indexed staker, uint256 amount, uint256 timestamp);
+    event TokensUnstaked(address indexed staker, uint256 amount, uint256 timestamp);
+    event RewardsClaimed(address indexed staker, uint256 amount, uint256 timestamp);
     
     // Constructor
     constructor(address _rewardToken, address _admin) {
@@ -248,6 +260,71 @@ contract TrustTrailReviews is AccessControl, ReentrancyGuard, Pausable {
         return comments[_commentId];
     }
     
+    // Staking functions
+    function stakeTokens(uint256 _amount) external whenNotPaused nonReentrant {
+        require(_amount > 0, "Amount must be greater than 0");
+        require(rewardToken.balanceOf(msg.sender) >= _amount, "Insufficient token balance");
+        require(rewardToken.allowance(msg.sender, address(this)) >= _amount, "Insufficient allowance");
+        
+        // Transfer tokens from user to contract
+        require(rewardToken.transferFrom(msg.sender, address(this), _amount), "Token transfer failed");
+        
+        // Update staking records
+        stakedBalances[msg.sender] += _amount;
+        totalStaked += _amount;
+        lastRewardClaim[msg.sender] = block.timestamp;
+        
+        emit TokensStaked(msg.sender, _amount, block.timestamp);
+    }
+    
+    function unstakeTokens(uint256 _amount) external whenNotPaused nonReentrant {
+        require(_amount > 0, "Amount must be greater than 0");
+        require(stakedBalances[msg.sender] >= _amount, "Insufficient staked balance");
+        
+        // Update staking records
+        stakedBalances[msg.sender] -= _amount;
+        totalStaked -= _amount;
+        
+        // Transfer tokens back to user
+        require(rewardToken.transfer(msg.sender, _amount), "Token transfer failed");
+        
+        emit TokensUnstaked(msg.sender, _amount, block.timestamp);
+    }
+    
+    function claimRewards() external whenNotPaused nonReentrant {
+        require(stakedBalances[msg.sender] > 0, "No tokens staked");
+        
+        uint256 rewardAmount = calculateRewards(msg.sender);
+        require(rewardAmount > 0, "No rewards to claim");
+        require(rewardToken.balanceOf(address(this)) >= rewardAmount, "Insufficient contract balance");
+        
+        // Update last claim timestamp
+        lastRewardClaim[msg.sender] = block.timestamp;
+        
+        // Transfer rewards to user
+        require(rewardToken.transfer(msg.sender, rewardAmount), "Reward transfer failed");
+        
+        emit RewardsClaimed(msg.sender, rewardAmount, block.timestamp);
+    }
+    
+    function calculateRewards(address _staker) public view returns (uint256) {
+        if (stakedBalances[_staker] == 0) return 0;
+        
+        uint256 timeStaked = block.timestamp - lastRewardClaim[_staker];
+        uint256 annualReward = (stakedBalances[_staker] * ANNUAL_REWARD_RATE) / 100;
+        uint256 reward = (annualReward * timeStaked) / SECONDS_PER_YEAR;
+        
+        return reward;
+    }
+    
+    function getStakedBalance(address _staker) external view returns (uint256) {
+        return stakedBalances[_staker];
+    }
+    
+    function getTotalStaked() external view returns (uint256) {
+        return totalStaked;
+    }
+
     // Admin functions
     function setRewardAmounts(uint256 _reviewReward, uint256 _upvoteReward) external onlyAdmin {
         reviewReward = _reviewReward;

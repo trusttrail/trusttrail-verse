@@ -56,93 +56,41 @@ export const useStakingTransaction = () => {
         description: "Please confirm the transaction in MetaMask",
       });
 
-      // ✅ SIMPLIFIED STAKING using review system with proper validation
-      // Since the contract only supports reviews, we'll use a simplified approach
-      // that creates valid review entries that represent staking operations
+      // ✅ REAL STAKING using proper contract functions
+      const amountInWei = ethers.parseEther(amount);
       
-      const timestamp = Date.now();
-      const randomId = Math.random().toString(36).substring(7);
-      
+      console.log(`📝 ${action === 'stake' ? 'Staking' : 'Unstaking'} ${amount} TRT (${amountInWei.toString()} wei)`);
+
       let tx;
       
       if (action === 'stake') {
-        // Encode the stake amount in the IPFS hash for tracking
-        const stakeReviewData = {
-          companyName: "TrustTrail Protocol", // Valid company name
-          category: "defi", // Valid category
-          ipfsHash: `QmStaking${amount}TRT${timestamp}${randomId}`, // Include amount in hash for tracking
-          proofHash: `QmStakeProof${timestamp}${randomId}`, // Valid IPFS format
-          rating: 5 // Valid rating 1-5
-        };
-
-        console.log('📝 Creating stake transaction with data:', stakeReviewData);
-
         try {
           // Get gas price dynamically
           const gasPrice = await provider.getFeeData();
           console.log('🔧 Gas fee data:', gasPrice);
 
-          tx = await contract.submitReview(
-            stakeReviewData.companyName,
-            stakeReviewData.category,
-            stakeReviewData.ipfsHash,
-            stakeReviewData.proofHash,
-            stakeReviewData.rating,
-            { 
-              gasLimit: 400000n, // Increased gas limit
-              gasPrice: gasPrice.gasPrice || ethers.parseUnits('30', 'gwei') // Use network gas price or fallback
-            }
-          );
+          tx = await contract.stakeTokens(amountInWei, {
+            gasLimit: 300000n,
+            gasPrice: gasPrice.gasPrice || ethers.parseUnits('30', 'gwei')
+          });
           console.log('✅ Stake transaction submitted:', tx.hash);
         } catch (err: any) {
           console.error('❌ Staking transaction failed:', err);
-          console.error('❌ Error details:', {
-            code: err.code,
-            message: err.message,
-            reason: err.reason,
-            action: err.action,
-            transaction: err.transaction
-          });
           throw err;
         }
       } else {
-        // Encode the unstake amount in the IPFS hash for tracking
-        const unstakeReviewData = {
-          companyName: "TrustTrail Protocol", // Valid company name
-          category: "defi", // Valid category  
-          ipfsHash: `QmUnstaking${amount}TRT${timestamp}${randomId}`, // Include amount in hash for tracking
-          proofHash: `QmUnstakeProof${timestamp}${randomId}`, // Valid IPFS format
-          rating: 1 // Different rating to distinguish from stakes
-        };
-
-        console.log('📝 Creating unstake transaction with data:', unstakeReviewData);
-
         try {
-          // Get gas price dynamically
+          // Get gas price dynamically  
           const gasPrice = await provider.getFeeData();
           console.log('🔧 Gas fee data:', gasPrice);
 
-          tx = await contract.submitReview(
-            unstakeReviewData.companyName,
-            unstakeReviewData.category,
-            unstakeReviewData.ipfsHash,
-            unstakeReviewData.proofHash,
-            unstakeReviewData.rating,
-            { 
-              gasLimit: 400000n, // Increased gas limit
-              gasPrice: gasPrice.gasPrice || ethers.parseUnits('30', 'gwei') // Use network gas price or fallback
-            }
-          );
+          tx = await contract.unstakeTokens(amountInWei, {
+            gasLimit: 300000n,
+            gasPrice: gasPrice.gasPrice || ethers.parseUnits('30', 'gwei')
+          });
           console.log('✅ Unstake transaction submitted:', tx.hash);
         } catch (err: any) {
           console.error('❌ Unstaking transaction failed:', err);
-          console.error('❌ Error details:', {
-            code: err.code,
-            message: err.message,
-            reason: err.reason,
-            action: err.action,
-            transaction: err.transaction
-          });
           throw err;
         }
       }
@@ -225,76 +173,13 @@ export const useStakingTransaction = () => {
 
       console.log(`🔍 Getting staked balance for ${address}`);
       
-      // Get all user reviews to find staking transactions
-      const reviewIds = await contract.getUserReviews(address);
-      console.log(`📊 Found ${reviewIds.length} total review transactions`);
+      // Use the real contract function to get staked balance
+      const stakedBalanceWei = await contract.getStakedBalance(address);
+      const stakedBalance = ethers.formatEther(stakedBalanceWei);
       
-      let totalStaked = 0;
-      let totalUnstaked = 0;
-      const stakingTransactions: Array<{type: string, amount: number, id: string}> = [];
+      console.log(`📊 Real staked balance: ${stakedBalance} TRT`);
       
-      for (const reviewId of reviewIds) {
-        try {
-          const review = await contract.getReview(reviewId);
-          const companyName = review.companyName;
-          const ipfsHash = review.ipfsHash;
-          const rating = review.rating;
-          
-          // NEW: Look for staking transactions using the new format with amount parsing
-          if (companyName === "TrustTrail Protocol" && ipfsHash.includes('Staking') && rating === 5) {
-            // Parse amount from IPFS hash: QmStaking10TRT1234567890abc
-            const stakeMatch = ipfsHash.match(/QmStaking([\d\.]+)TRT/);
-            const stakeAmount = stakeMatch ? parseFloat(stakeMatch[1]) : 10; // Fallback to 10 if parsing fails
-            totalStaked += stakeAmount;
-            stakingTransactions.push({type: 'STAKE', amount: stakeAmount, id: reviewId.toString()});
-            console.log(`✅ STAKE: +${stakeAmount} TRT (Transaction: ${reviewId})`);
-          }
-          
-          // NEW: Look for unstaking transactions using the new format with amount parsing
-          if (companyName === "TrustTrail Protocol" && ipfsHash.includes('Unstaking') && rating === 1) {
-            // Parse amount from IPFS hash: QmUnstaking5TRT1234567890abc
-            const unstakeMatch = ipfsHash.match(/QmUnstaking([\d\.]+)TRT/);
-            const unstakeAmount = unstakeMatch ? parseFloat(unstakeMatch[1]) : 10; // Fallback to 10 if parsing fails
-            totalUnstaked += unstakeAmount;
-            stakingTransactions.push({type: 'UNSTAKE', amount: unstakeAmount, id: reviewId.toString()});
-            console.log(`❌ UNSTAKE: -${unstakeAmount} TRT (Transaction: ${reviewId})`);
-          }
-          
-          // LEGACY: Support old format for backwards compatibility
-          if (companyName.startsWith('STAKE_POOL_') && companyName.includes('TRT') && !companyName.startsWith('UNSTAKE_')) {
-            const stakeMatch = companyName.match(/^STAKE_POOL_([\d\.]+)TRT$/);
-            if (stakeMatch) {
-              const amount = parseFloat(stakeMatch[1]);
-              totalStaked += amount;
-              stakingTransactions.push({type: 'STAKE', amount, id: reviewId.toString()});
-              console.log(`✅ LEGACY STAKE: +${amount} TRT (Transaction: ${reviewId})`);
-            }
-          }
-          
-          // LEGACY: Support old unstaking format
-          if (companyName.startsWith('UNSTAKE_POOL_') && companyName.includes('TRT')) {
-            const unstakeMatch = companyName.match(/^UNSTAKE_POOL_([\d\.]+)TRT$/);
-            if (unstakeMatch) {
-              const amount = parseFloat(unstakeMatch[1]);
-              totalUnstaked += amount;
-              stakingTransactions.push({type: 'UNSTAKE', amount, id: reviewId.toString()});
-              console.log(`❌ LEGACY UNSTAKE: -${amount} TRT (Transaction: ${reviewId})`);
-            }
-          }
-        } catch (error) {
-          console.error(`Error reading review ${reviewId}:`, error);
-        }
-      }
-
-      const netStaked = Math.max(0, totalStaked - totalUnstaked);
-      
-      console.log(`📋 Staking Summary:`);
-      console.log(`   Total Staked: ${totalStaked} TRT`);
-      console.log(`   Total Unstaked: ${totalUnstaked} TRT`);
-      console.log(`   Net Currently Staked: ${netStaked} TRT`);
-      console.log(`📝 All staking transactions:`, stakingTransactions);
-      
-      return netStaked.toFixed(0);
+      return parseFloat(stakedBalance).toFixed(0);
     } catch (error) {
       console.error('Error getting staked balance:', error);
       return "0";
@@ -381,31 +266,14 @@ export const useStakingTransaction = () => {
         description: `Claiming ${rewardAmount.toFixed(4)} TRT tokens as daily rewards.`,
       });
 
-      // Create a real contract transaction for claiming rewards
-      const timestamp = Date.now();
-      const randomId = Math.random().toString(36).substring(7);
-      
-      const claimData = {
-        companyName: "TrustTrail Protocol", // Valid company name
-        category: "defi", // Valid category
-        ipfsHash: `QmClaim${timestamp}${randomId}`, // Valid IPFS format
-        proofHash: `QmClaimProof${timestamp}${randomId}`, // Valid IPFS format
-        rating: 3 // Different rating to distinguish from stakes/unstakes
-      };
-
-      // Remove retry mechanism from transaction signing to prevent multiple MetaMask confirmations
+      // Use the real contract claimRewards function
       try {
-        const tx = await contract.submitReview(
-          claimData.companyName,
-          claimData.category,
-          claimData.ipfsHash,
-          claimData.proofHash,
-          claimData.rating,
-          { 
-            gasLimit: 300000n, // Reduced gas limit
-            gasPrice: ethers.parseUnits('20', 'gwei') // Reduced gas price
-          }
-        );
+        const gasPrice = await provider.getFeeData();
+        
+        const tx = await contract.claimRewards({
+          gasLimit: 300000n,
+          gasPrice: gasPrice.gasPrice || ethers.parseUnits('20', 'gwei')
+        });
         
         const receipt = await tx.wait();
 
