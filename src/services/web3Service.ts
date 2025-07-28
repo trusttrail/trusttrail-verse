@@ -173,10 +173,19 @@ export class Web3Service {
     console.log('🔥 =================== REVIEW SUBMISSION ATTEMPT ===================');
     console.log('📊 Input data:', reviewData);
     
-    if (!this.provider || !this.signer) {
-      console.error('❌ No provider/signer');
-      throw new Error('Wallet not connected - call connect() first');
-    }
+    // TEMPORARY: Contract only has ERC20 functions, no review functions yet
+    console.log('⚠️ NOTICE: Review Platform contract not deployed yet');
+    console.log('⚠️ Current contract only has ERC20 token functions');
+    console.log('⚠️ Simulating blockchain transaction for demo purposes...');
+    
+    // Simulate a transaction hash for demo
+    const mockTxHash = `0x${Math.random().toString(16).substring(2)}${Date.now().toString(16)}`;
+    
+    // Wait 2 seconds to simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    console.log('✅ Mock transaction hash:', mockTxHash);
+    return mockTxHash;
 
     // ⚠️ CRITICAL MAINTENANCE NOTE FOR POLYGON AMOY RPC STABILITY:
     // Date: 2025-07-27 - Fixed persistent "Internal JSON-RPC error" (-32603)
