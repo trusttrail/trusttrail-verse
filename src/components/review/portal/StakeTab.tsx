@@ -215,10 +215,28 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
               <CardDescription>Your current TRT token balances</CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Debug info card */}
+              <div className="mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                <p><strong>Debug Info:</strong></p>
+                <p>isWalletConnected: {String(isWalletConnected)}</p>
+                <p>isValidNetwork: {String(isValidNetwork)}</p>
+                <p>tokenBalances keys: {Object.keys(tokenBalances).join(', ')}</p>
+                <p>trtBalance variable: "{trtBalance}"</p>
+                <p>address: {address || 'none'}</p>
+              </div>
+              
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-muted-foreground">Available Balance</p>
-                  <p className="font-medium text-lg">{trtBalance} TRT</p>
+                  <p className="font-medium text-lg">
+                    {/* Debug: Explicit logging here */}
+                    {(() => {
+                      console.log('🎯 UI RENDER - trtBalance value:', trtBalance, typeof trtBalance);
+                      console.log('🎯 UI RENDER - tokenBalances:', tokenBalances);
+                      console.log('🎯 UI RENDER - tokenBalances["TRT"]:', tokenBalances["TRT"]);
+                      return trtBalance;
+                    })()} TRT
+                  </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Staked Balance</p>
