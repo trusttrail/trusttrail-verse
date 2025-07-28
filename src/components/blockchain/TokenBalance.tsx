@@ -12,24 +12,24 @@ export const TokenBalance: React.FC = () => {
     return null;
   }
 
-  const trustBalance = tokenBalances["TRUST"] || "0";
+  const trtBalance = tokenBalances["TRT"] || "0";
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Coins className="h-5 w-5" />
-          TRUST Token Balance
+          TRT Token Balance
         </CardTitle>
         <CardDescription>
-          Your TrustTrail platform reward tokens on Polygon Amoy
+          Your TRUSTTRAIL platform reward tokens on Polygon Amoy
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-2xl font-bold">{parseFloat(trustBalance).toFixed(2)}</p>
-            <p className="text-sm text-muted-foreground">TRUST</p>
+            <p className="text-2xl font-bold">{parseFloat(trtBalance).toFixed(2)}</p>
+            <p className="text-sm text-muted-foreground">TRT</p>
           </div>
           <Button
             variant="outline"

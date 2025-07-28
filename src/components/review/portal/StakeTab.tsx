@@ -17,7 +17,7 @@ interface StakeTabProps {
 const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
   const { toast } = useToast();
   const { web3Service, currentNetwork } = useWeb3();
-  const [selectedToken, setSelectedToken] = useState("TRUST");
+  const [selectedToken, setSelectedToken] = useState("TRT");
   const [stakeAmount, setStakeAmount] = useState("");
   const [unstakeAmount, setUnstakeAmount] = useState("");
   const [isStaking, setIsStaking] = useState(false);
@@ -25,13 +25,13 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
 
   const stakingTokens = [
     {
-      symbol: "TRUST",
-      name: "Trust Token",
+      symbol: "TRT",
+      name: "TRUSTTRAIL",
       balance: "1,234.56",
       staked: "500.00",
       apy: "25.5%",
       icon: "🔷",
-      address: "0x186389f359713852366b4eA1eb9BC947f68F74ca"
+      address: "0x69B332336f0DEC19d5423Ea3A5ed783489b9f24cCE"
     },
     {
       symbol: "ETH",

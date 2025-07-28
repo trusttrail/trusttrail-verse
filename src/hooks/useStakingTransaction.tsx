@@ -141,7 +141,7 @@ export const useStakingTransaction = () => {
 
       toast({
         title: "Transaction Submitted",
-        description: `${action === 'stake' ? 'Staking' : 'Unstaking'} ${amount} TRUST tokens...`,
+        description: `${action === 'stake' ? 'Staking' : 'Unstaking'} ${amount} TRT tokens...`,
       });
 
       // Wait for transaction confirmation
@@ -238,7 +238,7 @@ export const useStakingTransaction = () => {
             const stakeAmount = 10; // Fixed stake amount
             totalStaked += stakeAmount;
             stakingTransactions.push({type: 'STAKE', amount: stakeAmount, id: reviewId.toString()});
-            console.log(`✅ STAKE: +${stakeAmount} TRUST (Transaction: ${reviewId})`);
+            console.log(`✅ STAKE: +${stakeAmount} TRT (Transaction: ${reviewId})`);
           }
           
           // NEW: Look for unstaking transactions using the new format
@@ -247,28 +247,28 @@ export const useStakingTransaction = () => {
             const unstakeAmount = 10; // Fixed unstake amount
             totalUnstaked += unstakeAmount;
             stakingTransactions.push({type: 'UNSTAKE', amount: unstakeAmount, id: reviewId.toString()});
-            console.log(`❌ UNSTAKE: -${unstakeAmount} TRUST (Transaction: ${reviewId})`);
+            console.log(`❌ UNSTAKE: -${unstakeAmount} TRT (Transaction: ${reviewId})`);
           }
           
           // LEGACY: Support old format for backwards compatibility
-          if (companyName.startsWith('STAKE_POOL_') && companyName.includes('TRUST') && !companyName.startsWith('UNSTAKE_')) {
-            const stakeMatch = companyName.match(/^STAKE_POOL_([\d\.]+)TRUST$/);
+          if (companyName.startsWith('STAKE_POOL_') && companyName.includes('TRT') && !companyName.startsWith('UNSTAKE_')) {
+            const stakeMatch = companyName.match(/^STAKE_POOL_([\d\.]+)TRT$/);
             if (stakeMatch) {
               const amount = parseFloat(stakeMatch[1]);
               totalStaked += amount;
               stakingTransactions.push({type: 'STAKE', amount, id: reviewId.toString()});
-              console.log(`✅ LEGACY STAKE: +${amount} TRUST (Transaction: ${reviewId})`);
+              console.log(`✅ LEGACY STAKE: +${amount} TRT (Transaction: ${reviewId})`);
             }
           }
           
           // LEGACY: Support old unstaking format
-          if (companyName.startsWith('UNSTAKE_POOL_') && companyName.includes('TRUST')) {
-            const unstakeMatch = companyName.match(/^UNSTAKE_POOL_([\d\.]+)TRUST$/);
+          if (companyName.startsWith('UNSTAKE_POOL_') && companyName.includes('TRT')) {
+            const unstakeMatch = companyName.match(/^UNSTAKE_POOL_([\d\.]+)TRT$/);
             if (unstakeMatch) {
               const amount = parseFloat(unstakeMatch[1]);
               totalUnstaked += amount;
               stakingTransactions.push({type: 'UNSTAKE', amount, id: reviewId.toString()});
-              console.log(`❌ LEGACY UNSTAKE: -${amount} TRUST (Transaction: ${reviewId})`);
+              console.log(`❌ LEGACY UNSTAKE: -${amount} TRT (Transaction: ${reviewId})`);
             }
           }
         } catch (error) {
@@ -279,9 +279,9 @@ export const useStakingTransaction = () => {
       const netStaked = Math.max(0, totalStaked - totalUnstaked);
       
       console.log(`📋 Staking Summary:`);
-      console.log(`   Total Staked: ${totalStaked} TRUST`);
-      console.log(`   Total Unstaked: ${totalUnstaked} TRUST`);
-      console.log(`   Net Currently Staked: ${netStaked} TRUST`);
+      console.log(`   Total Staked: ${totalStaked} TRT`);
+      console.log(`   Total Unstaked: ${totalUnstaked} TRT`);
+      console.log(`   Net Currently Staked: ${netStaked} TRT`);
       console.log(`📝 All staking transactions:`, stakingTransactions);
       
       return netStaked.toFixed(0);
@@ -368,7 +368,7 @@ export const useStakingTransaction = () => {
 
       toast({
         title: "Claiming Rewards...",
-        description: `Claiming ${rewardAmount.toFixed(4)} TRUST tokens as daily rewards.`,
+        description: `Claiming ${rewardAmount.toFixed(4)} TRT tokens as daily rewards.`,
       });
 
       // Create a real contract transaction for claiming rewards

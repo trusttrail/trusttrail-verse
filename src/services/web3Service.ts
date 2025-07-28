@@ -27,10 +27,10 @@ export class Web3Service {
       decimals: 18,
       icon: '🔷'
     },
-    TRUST: {
-      symbol: 'TRUST',
-      name: 'TrustTrail Token',
-      address: '0x186389f359713852366b4eA1eb9BC947f68F74ca',
+    TRT: {
+      symbol: 'TRT',
+      name: 'TRUSTTRAIL',
+      address: '0x69B332336f0DEC19d5423Ea3A5ed783489b9f24cCE',
       decimals: 18,
       icon: '🛡️'
     }
@@ -193,7 +193,7 @@ export class Web3Service {
 
         // STEP 3: Setup contract using proper ethers interface
         console.log('📜 STEP 3: Setting up contract interface...');
-        const CONTRACT_ADDRESS = "0xf99ebeb5087ff43c44A1cE86d66Cd367d3c5EcAb";
+        const CONTRACT_ADDRESS = "0x69B332336f0DEC19d5423Ea3A5ed783489b9f24cCE";
         
         // Import the ABI
         const { ReviewPlatformABI } = await import('@/contracts/abis/ReviewPlatform');
@@ -345,11 +345,11 @@ export class Web3Service {
       console.warn('⚠️ Low POL balance detected. User may need to get POL from faucet.');
     }
     
-    // Get TRUST token balance - check both sources for accuracy
-    const trustBalance = await this.getTrustTokenBalance(address);
-    balances['TRUST'] = trustBalance;
+    // Get TRT token balance - check both sources for accuracy
+    const trtBalance = await this.getTrustTokenBalance(address);
+    balances['TRT'] = trtBalance;
     
-    // Only return POL and TRUST balances - removed problematic tokens that cause console errors
+    // Only return POL and TRT balances - removed problematic tokens that cause console errors
     return balances;
   }
 
@@ -373,15 +373,15 @@ export class Web3Service {
       }
       
       const approvedReviewCount = reviews?.length || 0;
-      const trustBalance = approvedReviewCount * 10; // 10 TRUST per approved review
+      const trtBalance = approvedReviewCount * 10; // 10 TRT per approved review
       
       console.log(`📊 User has ${approvedReviewCount} approved reviews in database`);
-      console.log(`🪙 TRUST Balance: ${trustBalance} TRUST (${approvedReviewCount} approved reviews × 10 TRUST)`);
+      console.log(`🪙 TRT Balance: ${trtBalance} TRT (${approvedReviewCount} approved reviews × 10 TRT)`);
       
-      return trustBalance.toString();
+      return trtBalance.toString();
       
     } catch (error) {
-      console.error('Failed to get TRUST balance from database:', error);
+      console.error('Failed to get TRT balance from database:', error);
       return '0';
     }
   }
@@ -389,12 +389,12 @@ export class Web3Service {
   async estimateSwap(fromToken: string, toToken: string, amount: string): Promise<string> {
     // Mock exchange rates for demo - in production, this would call a DEX API
     const rates: Record<string, Record<string, number>> = {
-      POL: { ETH: 0.0015, BTC: 0.000025, USDT: 0.85, USDC: 0.85, TRUST: 1200 },
-      ETH: { POL: 650, BTC: 0.065, USDT: 2500, USDC: 2500, TRUST: 1800000 },
-      BTC: { POL: 40000, ETH: 15.4, USDT: 95000, USDC: 95000, TRUST: 28000000 },
-      USDT: { POL: 1.18, ETH: 0.0004, BTC: 0.00001, USDC: 1.0, TRUST: 1400 },
-      USDC: { POL: 1.18, ETH: 0.0004, BTC: 0.00001, USDT: 1.0, TRUST: 1400 },
-      TRUST: { POL: 0.00083, ETH: 0.00000056, BTC: 0.000000036, USDT: 0.00071, USDC: 0.00071 }
+      POL: { ETH: 0.0015, BTC: 0.000025, USDT: 0.85, USDC: 0.85, TRT: 1200 },
+      ETH: { POL: 650, BTC: 0.065, USDT: 2500, USDC: 2500, TRT: 1800000 },
+      BTC: { POL: 40000, ETH: 15.4, USDT: 95000, USDC: 95000, TRT: 28000000 },
+      USDT: { POL: 1.18, ETH: 0.0004, BTC: 0.00001, USDC: 1.0, TRT: 1400 },
+      USDC: { POL: 1.18, ETH: 0.0004, BTC: 0.00001, USDT: 1.0, TRT: 1400 },
+      TRT: { POL: 0.00083, ETH: 0.00000056, BTC: 0.000000036, USDT: 0.00071, USDC: 0.00071 }
     };
 
     const rate = rates[fromToken]?.[toToken] || 1;
