@@ -15,7 +15,14 @@ interface StakeTabProps {
 
 const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
   const { toast } = useToast();
-  const { tokenBalances, address, currentNetwork, refreshBalances } = useWeb3();
+  const web3Data = useWeb3();
+  const { tokenBalances, address, currentNetwork, refreshBalances } = web3Data;
+  
+  // Force log the Web3 data
+  console.log('🎯 STAKETAB - Raw Web3 data:', web3Data);
+  console.log('🎯 STAKETAB - tokenBalances specifically:', tokenBalances);
+  console.log('🎯 STAKETAB - address:', address);
+  console.log('🎯 STAKETAB - currentNetwork:', currentNetwork);
   const { 
     executeStaking, 
     calculateAPY, 
@@ -251,6 +258,10 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
                   </Badge>
                 </div>
               </div>
+              <Button onClick={refreshBalances} variant="outline" size="sm" className="mb-4">
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Force Refresh Balances
+              </Button>
             </CardContent>
           </Card>
 
