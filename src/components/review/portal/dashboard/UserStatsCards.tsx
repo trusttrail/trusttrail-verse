@@ -63,7 +63,7 @@ const UserStatsCards = ({ userStats }: UserStatsCardsProps) => {
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">$TRUST Earned</p>
+              <p className="text-sm font-medium text-muted-foreground">TRT Earned</p>
               <p className="text-2xl font-bold">{userStats.totalRewards}</p>
             </div>
             <div className="bg-purple-100 dark:bg-purple-900/20 p-2 rounded-full">

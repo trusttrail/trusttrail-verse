@@ -35,14 +35,21 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
   const trtBalance = tokenBalances["TRT"] || "0";
   const calculatedAPY = calculateAPY();
 
-  // Debug logging
+  // Enhanced debug logging
   console.log('🔍 StakeTab Debug - TRT Balance:', {
     tokenBalances,
     trtBalance,
     address,
     isWalletConnected,
-    isValidNetwork
+    isValidNetwork,
+    stakedBalance,
+    rewards
   });
+
+  // Force re-render when balance data changes
+  useEffect(() => {
+    console.log('🔄 StakeTab data changed:', { trtBalance, stakedBalance, rewards });
+  }, [trtBalance, stakedBalance, rewards]);
 
   // Load staked balance and rewards when wallet is connected
   useEffect(() => {
