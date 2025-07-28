@@ -173,19 +173,10 @@ export class Web3Service {
     console.log('🔥 =================== REVIEW SUBMISSION ATTEMPT ===================');
     console.log('📊 Input data:', reviewData);
     
-    // TEMPORARY: Contract only has ERC20 functions, no review functions yet
-    console.log('⚠️ NOTICE: Review Platform contract not deployed yet');
-    console.log('⚠️ Current contract only has ERC20 token functions');
-    console.log('⚠️ Simulating blockchain transaction for demo purposes...');
-    
-    // Simulate a transaction hash for demo
-    const mockTxHash = `0x${Math.random().toString(16).substring(2)}${Date.now().toString(16)}`;
-    
-    // Wait 2 seconds to simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    console.log('✅ Mock transaction hash:', mockTxHash);
-    return mockTxHash;
+    if (!this.provider || !this.signer) {
+      console.error('❌ No provider/signer');
+      throw new Error('Wallet not connected - call connect() first');
+    }
 
     // ⚠️ CRITICAL MAINTENANCE NOTE FOR POLYGON AMOY RPC STABILITY:
     // Date: 2025-07-27 - Fixed persistent "Internal JSON-RPC error" (-32603)
@@ -255,7 +246,7 @@ export class Web3Service {
           proofHash: proofHash
         });
 
-        // STEP 5: Fixed gas limit to avoid RPC estimation issues
+        // STEP 5: Optimized gas settings for Amoy
         console.log('⛽ STEP 5: Using optimized gas settings for Amoy...');
         const gasLimit = 300000n; // Reduced gas limit - more reasonable for review submission
         console.log('⛽ Gas limit set to:', gasLimit.toString());
