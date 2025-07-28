@@ -8,7 +8,7 @@ import CategoriesTab from "@/components/review/portal/CategoriesTab";
 import BusinessesTab from "@/components/review/portal/BusinessesTab";
 import UserDashboard from "@/components/review/portal/UserDashboard";
 import AnalyticsTab from "@/components/review/portal/AnalyticsTab";
-import StakingTab from "@/components/review/portal/StakingTab";
+import StakeTab from "@/components/review/portal/StakeTab";
 import NFTMarketplaceTab from "@/components/review/portal/NFTMarketplaceTab";
 import { sampleCategories, sampleCompanies } from '@/data/companyData';
 
@@ -125,7 +125,7 @@ const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connectWallet 
       </TabsContent>
 
       <TabsContent value="staking">
-        <StakingTab 
+        <StakeTab 
           isWalletConnected={isWalletConnected}
           connectWallet={connectWallet}
         />
