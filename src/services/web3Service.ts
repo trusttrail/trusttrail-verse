@@ -214,11 +214,22 @@ export class Web3Service {
         console.log('📜 STEP 3: Setting up contract interface...');
         const CONTRACT_ADDRESS = "0x69B332336f0DEC19d5423Ea3A5ed783489b9f24cCE";
         
+        // Validate contract address format to prevent ENS resolution
+        if (!ethers.isAddress(CONTRACT_ADDRESS)) {
+          throw new Error(`Invalid contract address format: ${CONTRACT_ADDRESS}`);
+        }
+        
+        console.log('✅ Contract address validated:', CONTRACT_ADDRESS);
+        
         // Import the ABI
         const { ReviewPlatformABI } = await import('@/contracts/abis/ReviewPlatform');
         
-        // Create contract instance with signer
-        const contract = new ethers.Contract(CONTRACT_ADDRESS, ReviewPlatformABI, this.signer);
+        // Create contract instance with signer - ensure no ENS resolution
+        const contract = new ethers.Contract(
+          CONTRACT_ADDRESS.toLowerCase(), // Ensure lowercase to prevent ENS issues
+          ReviewPlatformABI, 
+          this.signer
+        );
         console.log('✅ Contract instance created');
 
         // STEP 4: Prepare review data
