@@ -30,7 +30,7 @@ export class Web3Service {
     TRT: {
       symbol: 'TRT',
       name: 'TRUSTTRAIL',
-      address: 'PASTE_YOUR_NEW_CONTRACT_ADDRESS_HERE', // Replace with actual deployed address
+      address: '0xf2eb21508Caf3DD7e5F13CC4d849b45dd5f91a11', // New deployed contract address
       decimals: 18,
       icon: '🛡️'
     }
@@ -212,7 +212,7 @@ export class Web3Service {
 
         // STEP 3: Setup contract using proper ethers interface
         console.log('📜 STEP 3: Setting up contract interface...');
-        const CONTRACT_ADDRESS = "PASTE_YOUR_NEW_CONTRACT_ADDRESS_HERE"; // Replace with actual deployed address
+        const CONTRACT_ADDRESS = "0xf2eb21508Caf3DD7e5F13CC4d849b45dd5f91a11"; // New deployed contract address
         
         // Validate contract address format to prevent ENS resolution
         if (!ethers.isAddress(CONTRACT_ADDRESS)) {

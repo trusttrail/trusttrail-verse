@@ -31,7 +31,7 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
       staked: "500.00",
       apy: "25.5%",
       icon: "🔷",
-      address: "PASTE_YOUR_NEW_CONTRACT_ADDRESS_HERE" // Replace with actual deployed address
+      address: "0xf2eb21508Caf3DD7e5F13CC4d849b45dd5f91a11" // New deployed contract address
     },
     {
       symbol: "ETH",
