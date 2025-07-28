@@ -36,23 +36,25 @@ const RecentReviewsSection = ({ reviews }: RecentReviewsSectionProps) => {
   const { databaseReviews, loading, refreshing, fetchRecentReviews } = useRecentReviews();
   const { shareReview } = useReviewSharing();
 
-  // Convert database reviews to the expected format
+  // Only use database reviews (real data) - no sample/mock reviews
   const convertedDatabaseReviews = convertDatabaseReviews(databaseReviews, shareReview);
 
-  // Combine database reviews with sample reviews
-  const enhancedReviews = enhanceReviews(reviews, shareReview);
-
-  // Combine and sort all reviews by date
-  const allReviews = [...convertedDatabaseReviews, ...enhancedReviews]
+  // Sort reviews by date (most recent first)
+  const allReviews = convertedDatabaseReviews
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+  // Remove duplicates based on review ID
+  const uniqueReviews = allReviews.filter((review, index, arr) => 
+    arr.findIndex(r => r.id === review.id) === index
+  );
+
   // Cap to 5 recent reviews by default, show all when showAll is true
-  const displayedReviews = showAll ? allReviews : allReviews.slice(0, 5);
+  const displayedReviews = showAll ? uniqueReviews : uniqueReviews.slice(0, 5);
 
   return (
     <section className="px-4 sm:px-6" data-testid="recent-reviews">
       <ReviewsHeader
-        totalReviews={allReviews.length}
+        totalReviews={uniqueReviews.length}
         showAll={showAll}
         loading={loading}
         refreshing={refreshing}

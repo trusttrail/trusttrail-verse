@@ -11,34 +11,43 @@ interface ReviewCardContentProps {
 }
 
 const ReviewCardContent = ({ companyName, content, verified, gitcoinScore, companyLogo }: ReviewCardContentProps) => {
-  // Company logo mapping for fallback
+  // Company logo mapping using official sources (CoinMarketCap & Twitter)
   const getCompanyLogo = (name: string) => {
     const logoMap: { [key: string]: string } = {
-      "QuickSwap": "https://pbs.twimg.com/profile_images/1673628171051331584/5Wf5ZMcF_400x400.jpg",
-      "OpenSea": "https://pbs.twimg.com/profile_images/1560719020905521152/8KHPoIV-_400x400.jpg",
-      "Axie Infinity": "https://pbs.twimg.com/profile_images/1598680199088066560/9J0QZQFX_400x400.png",
-      "Uniswap": "https://pbs.twimg.com/profile_images/1692919071088746496/fWpUdRws_400x400.jpg",
-      "SushiSwap": "https://pbs.twimg.com/profile_images/1756351012000231424/7hsDLRm3_400x400.jpg",
-      "PancakeSwap": "https://pbs.twimg.com/profile_images/1677928725626437633/XHOxBFRD_400x400.jpg"
+      'Binance': 'https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png',
+      'PancakeSwap': 'https://s2.coinmarketcap.com/static/img/coins/64x64/7186.png',
+      'Ethereum': 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png',
+      'OpenSea': 'https://storage.googleapis.com/opensea-static/Logomark/Logomark-Blue.png',
+      'Dreamstarter.xyz': 'https://pbs.twimg.com/profile_images/1673628171051331584/5Wf5ZMcF_400x400.jpg',
+      'Pump.fun': 'https://pbs.twimg.com/profile_images/1798409590515642368/uHoVg8EH_400x400.jpg',
+      'Uniswap': 'https://s2.coinmarketcap.com/static/img/coins/64x64/7083.png',
+      'Aave': 'https://s2.coinmarketcap.com/static/img/coins/64x64/7278.png',
+      'Compound': 'https://s2.coinmarketcap.com/static/img/coins/64x64/5692.png',
+      'Solana': 'https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png',
+      'Cardano': 'https://s2.coinmarketcap.com/static/img/coins/64x64/2010.png',
+      'Polygon': 'https://s2.coinmarketcap.com/static/img/coins/64x64/3890.png',
+      'SushiSwap': 'https://s2.coinmarketcap.com/static/img/coins/64x64/6758.png',
+      'QuickSwap': 'https://pbs.twimg.com/profile_images/1673628171051331584/5Wf5ZMcF_400x400.jpg',
+      'Axie Infinity': 'https://s2.coinmarketcap.com/static/img/coins/64x64/6783.png'
     };
-    return logoMap[name] || companyLogo;
+    return logoMap[name] || companyLogo || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6366f1&color=ffffff&size=32`;
   };
 
-  const displayLogo = companyLogo || getCompanyLogo(companyName);
+  const displayLogo = getCompanyLogo(companyName);
 
   return (
     <>
       <div className="flex flex-col sm:flex-row sm:items-center mb-3 gap-2">
         <div className="flex items-center gap-2">
           {displayLogo && (
-            <img 
-              src={displayLogo} 
-              alt={`${companyName} logo`}
-              className="w-6 h-6 rounded-full object-cover flex-shrink-0"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+          <img 
+            src={displayLogo} 
+            alt={`${companyName} logo`}
+            className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+            onError={(e) => {
+              e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(companyName)}&background=6366f1&color=ffffff&size=32`;
+            }}
+          />
           )}
           <span className="text-sm text-trustpurple-400 font-medium">{companyName}</span>
         </div>

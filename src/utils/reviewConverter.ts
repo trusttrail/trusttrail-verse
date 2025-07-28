@@ -114,16 +114,15 @@ export const convertDatabaseReviews = (
     // Get actual Gitcoin score - don't generate fake ones
     const actualGitcoinScore = getActualGitcoinScore(dbReview.wallet_address);
     
-    // Generate consistent engagement metrics based on review ID
-    const reviewSeed = parseInt(dbReview.id.replace(/-/g, '').substring(0, 8), 16) || (Date.now() + index);
-    const upvotes = Math.floor((reviewSeed % 50) + 5);
-    const downvotes = Math.floor((reviewSeed % 10) + 1);
-    const commentCount = Math.floor((reviewSeed % 3));
+    // NO MOCK DATA - use 0 for all voting metrics since we don't have real voting system yet
+    const upvotes = 0;
+    const downvotes = 0;
+    const commentCount = 0;
     
     // Calculate days since review
     const reviewAge = Math.floor((Date.now() - new Date(dbReview.created_at).getTime()) / (1000 * 60 * 60 * 24));
     
-    // Calculate proper trust score
+    // Calculate proper trust score based on real data only
     const trustScore = calculateTrustScore(upvotes, downvotes, commentCount, reviewAge, actualGitcoinScore);
     
     return {
@@ -134,25 +133,12 @@ export const convertDatabaseReviews = (
       title: dbReview.title,
       content: dbReview.content,
       date: dbReview.created_at,
-      verified: true, // All reviews are now considered verified by default
-      upvotes,
-      downvotes,
+      verified: dbReview.status === 'approved',
+      upvotes: 0, // Real data only - no votes yet
+      downvotes: 0, // Real data only - no votes yet
       gitcoinScore: actualGitcoinScore, // Use actual score or undefined
       trustScore,
-      comments: [
-        {
-          id: 1,
-          author: "CryptoUser123",
-          content: "Thanks for this detailed review! Very helpful.",
-          date: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: 2,
-          author: "BlockchainExplorer", 
-          content: "I had a similar experience with this company.",
-          date: new Date(Date.now() - Math.random() * 14 * 24 * 60 * 60 * 1000).toISOString(),
-        }
-      ].slice(0, commentCount),
+      comments: [], // Real data only - no comments yet
       shareReview: () => shareReviewHandler({
         companyName: dbReview.company_name,
         title: dbReview.title
@@ -170,25 +156,25 @@ export const enhanceReviews = (
     const actualGitcoinScore = review.reviewerAddress ? 
       getActualGitcoinScore(review.reviewerAddress) : null;
     
-    // Use existing metrics or generate consistent ones
-    const upvotes = review.upvotes || Math.floor(Math.random() * 50) + 5;
-    const downvotes = review.downvotes || Math.floor(Math.random() * 10) + 1;
-    const commentCount = review.comments ? review.comments.length : 0;
+    // NO MOCK DATA - use real values only
+    const upvotes = 0; // Real data only
+    const downvotes = 0; // Real data only
+    const commentCount = 0; // Real data only
     
     // Calculate days since review
     const reviewAge = Math.floor((Date.now() - new Date(review.date).getTime()) / (1000 * 60 * 60 * 24));
     
-    // Calculate proper trust score
+    // Calculate proper trust score based on real data only
     const trustScore = calculateTrustScore(upvotes, downvotes, commentCount, reviewAge, actualGitcoinScore);
     
     return {
       ...review,
-      upvotes,
-      downvotes,
+      upvotes: 0, // Real data only
+      downvotes: 0, // Real data only
       gitcoinScore: actualGitcoinScore, // Use actual score or undefined
       trustScore,
-      verified: true, // All reviews are now considered verified by default
-      comments: review.comments || [],
+      verified: review.verified || false,
+      comments: [], // Real data only - no fake comments
       shareReview: () => shareReviewHandler(review)
     };
   });
