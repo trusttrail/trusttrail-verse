@@ -12,7 +12,15 @@ export const useWalletAuthLogic = (
   setExistingUser: (val: boolean) => void
 ) => {
   const { user, isAuthenticated } = useAuth();
-  const { clearNotifications } = useRecentActivity();
+  
+  // Safe access to useRecentActivity with fallback
+  let clearNotifications = () => {};
+  try {
+    const recentActivity = useRecentActivity();
+    clearNotifications = recentActivity.clearNotifications;
+  } catch (error) {
+    console.warn('RecentActivity provider not available yet, using fallback');
+  }
   
   const {
     sanitizeAndValidateWallet,
