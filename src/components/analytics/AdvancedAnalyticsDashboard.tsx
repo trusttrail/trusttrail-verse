@@ -14,6 +14,7 @@ import HeatMapChart from "./charts/HeatMapChart";
 import { useCompanyData } from "@/hooks/useCompanyData";
 
 const AdvancedAnalyticsDashboard = () => {
+  const { companies } = useCompanyData();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isQueryActive, setIsQueryActive] = useState(false);
@@ -36,15 +37,15 @@ const AdvancedAnalyticsDashboard = () => {
 
   // Generate analytics data from existing company data
   const analyticsData = useMemo(() => {
-    const scatterData = sampleCompanies.map(company => ({
-      rating: company.rating,
+    const scatterData = companies.map(company => ({
+      rating: company.averageRating,
       reviewCount: company.reviewCount,
       company: company.name,
       category: company.category,
-      trustScore: company.rating * 20
+      trustScore: company.averageRating * 20
     }));
 
-    const categoryData = sampleCompanies.reduce((acc, company) => {
+    const categoryData = companies.reduce((acc, company) => {
       const existing = acc.find(item => item.name === company.category);
       if (existing) {
         existing.value += company.reviewCount;
@@ -69,7 +70,7 @@ const AdvancedAnalyticsDashboard = () => {
       };
     });
 
-    const topCompaniesData = sampleCompanies
+    const topCompaniesData = companies
       .sort((a, b) => b.reviewCount - a.reviewCount)
       .slice(0, 10)
       .map(company => ({
@@ -87,7 +88,7 @@ const AdvancedAnalyticsDashboard = () => {
     ];
 
     const heatMapData = [];
-    const categories = [...new Set(sampleCompanies.map(c => c.category))].slice(0, 6);
+    const categories = [...new Set(companies.map(c => c.category))].slice(0, 6);
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     
     categories.forEach(category => {
@@ -109,16 +110,16 @@ const AdvancedAnalyticsDashboard = () => {
     }));
 
     // New Category Trust Score Analysis with proper type definition
-    const categoryTrustData = sampleCompanies.reduce((acc, company) => {
+    const categoryTrustData = companies.reduce((acc, company) => {
       const existing = acc.find(item => item.category === company.category);
       if (existing) {
-        existing.totalRating += company.rating;
+        existing.totalRating += company.averageRating;
         existing.count += 1;
         existing.totalReviews += company.reviewCount;
       } else {
         acc.push({
           category: company.category,
-          totalRating: company.rating,
+          totalRating: company.averageRating,
           count: 1,
           totalReviews: company.reviewCount,
           avgRating: 0,
@@ -154,11 +155,9 @@ const AdvancedAnalyticsDashboard = () => {
       stackedAreaData,
       categoryTrustData
     };
-  }, []);
+  }, [companies]);
 
   // Filter data based on search query
-  const { companies } = useCompanyData();
-
   const filteredAnalyticsData = useMemo(() => {
     if (companies.length === 0) {
       return {
@@ -167,7 +166,9 @@ const AdvancedAnalyticsDashboard = () => {
         timeSeriesData: [],
         topCompaniesData: [],
         ratingDistributionData: [],
-        heatMapData: []
+        heatMapData: [],
+        stackedAreaData: [],
+        categoryTrustData: []
       };
     }
     if (!isQueryActive || !searchQuery.trim()) {
@@ -220,10 +221,10 @@ const AdvancedAnalyticsDashboard = () => {
   }, [analyticsData, searchQuery, isQueryActive]);
 
   const kpiData = useMemo(() => {
-    const totalReviews = sampleCompanies.reduce((sum, company) => sum + company.reviewCount, 0);
-    const avgRating = sampleCompanies.reduce((sum, company) => sum + company.rating, 0) / sampleCompanies.length;
-    const totalCompanies = sampleCompanies.length;
-    const activeCategories = new Set(sampleCompanies.map(c => c.category)).size;
+    const totalReviews = companies.reduce((sum, company) => sum + company.reviewCount, 0);
+    const avgRating = companies.length > 0 ? companies.reduce((sum, company) => sum + company.averageRating, 0) / companies.length : 0;
+    const totalCompanies = companies.length;
+    const activeCategories = new Set(companies.map(c => c.category)).size;
 
     return {
       totalReviews,
@@ -231,7 +232,7 @@ const AdvancedAnalyticsDashboard = () => {
       totalCompanies,
       activeCategories
     };
-  }, []);
+  }, [companies]);
 
   const handleSearch = () => {
     setIsQueryActive(true);
