@@ -1,13 +1,15 @@
 
 import React from 'react';
 import PortalContent from "@/components/review/PortalContent";
+import { RealCompany, RealReview } from "@/hooks/useCompanyData";
 
 interface HomeTabProps {
   categories: any[];
-  topCompanies: any[];
-  recentReviews: any[];
+  topCompanies: RealCompany[];
+  recentReviews: RealReview[];
   onWriteReviewClick: () => void;
   onExploreClick: () => void;
+  loading?: boolean;
 }
 
 const HomeTab = ({
@@ -16,6 +18,7 @@ const HomeTab = ({
   recentReviews,
   onWriteReviewClick,
   onExploreClick,
+  loading,
 }: HomeTabProps) => (
   <PortalContent
     categories={categories}
@@ -23,6 +26,7 @@ const HomeTab = ({
     recentReviews={recentReviews}
     onWriteReviewClick={onWriteReviewClick}
     onExploreClick={onExploreClick}
+    loading={loading}
   />
 );
 

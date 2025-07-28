@@ -10,7 +10,8 @@ import UserDashboard from "@/components/review/portal/UserDashboard";
 import AnalyticsTab from "@/components/review/portal/AnalyticsTab";
 import StakeTab from "@/components/review/portal/StakeTab";
 import NFTMarketplaceTab from "@/components/review/portal/NFTMarketplaceTab";
-import { sampleCategories, sampleCompanies } from '@/data/companyData';
+import { sampleCategories } from '@/data/companyData';
+import { useCompanyData } from '@/hooks/useCompanyData';
 
 interface PortalTabsProps {
   activeTab: string;
@@ -21,6 +22,7 @@ interface PortalTabsProps {
 
 const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connectWallet }: PortalTabsProps) => {
   const [searchParams] = useSearchParams();
+  const { companies, recentReviews, loading } = useCompanyData();
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -42,41 +44,6 @@ const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connectWallet 
     setActiveTab("businesses");
   };
 
-  const recentReviews = [
-    {
-      id: 1,
-      companyName: "Uniswap",
-      reviewerAddress: "0x1234...5678",
-      rating: 5,
-      title: "Excellent DeFi platform",
-      content: "Uniswap has revolutionized decentralized trading with its innovative AMM model.",
-      date: "2024-01-15",
-      verified: true,
-      upvotes: 42,
-      downvotes: 3,
-      gitcoinScore: 92.5,
-      trustScore: 9.1,
-      hasUserVoted: false,
-      userVoteType: null
-    },
-    {
-      id: 2,
-      companyName: "Aave",
-      reviewerAddress: "0x9876...4321",
-      rating: 4,
-      title: "Solid lending protocol",
-      content: "Aave provides reliable lending and borrowing services with competitive rates.",
-      date: "2024-01-10",
-      verified: true,
-      upvotes: 28,
-      downvotes: 2,
-      gitcoinScore: 88.3,
-      trustScore: 8.7,
-      hasUserVoted: false,
-      userVoteType: null
-    }
-  ];
-
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 mb-8">
@@ -93,10 +60,11 @@ const PortalTabs = ({ activeTab, setActiveTab, isWalletConnected, connectWallet 
       <TabsContent value="summary">
         <HomeTab
           categories={sampleCategories}
-          topCompanies={sampleCompanies.slice(0, 8)}
+          topCompanies={companies}
           recentReviews={recentReviews}
           onWriteReviewClick={handleWriteReviewClick}
           onExploreClick={handleExploreClick}
+          loading={loading}
         />
       </TabsContent>
 

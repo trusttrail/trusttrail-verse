@@ -11,7 +11,7 @@ import CustomLineChart from "./charts/LineChart";
 import CustomBarChart from "./charts/BarChart";
 import CustomAreaChart from "./charts/AreaChart";
 import HeatMapChart from "./charts/HeatMapChart";
-import { sampleCompanies } from "@/data/companyData";
+import { useCompanyData } from "@/hooks/useCompanyData";
 
 const AdvancedAnalyticsDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -77,12 +77,13 @@ const AdvancedAnalyticsDashboard = () => {
         value: company.reviewCount
       }));
 
+    // Rating distribution
     const ratingDistributionData = [
-      { name: "5 Stars", value: sampleCompanies.filter(c => c.rating >= 4.5).length, color: "#22c55e" },
-      { name: "4-4.5 Stars", value: sampleCompanies.filter(c => c.rating >= 4 && c.rating < 4.5).length, color: "#84cc16" },
-      { name: "3-4 Stars", value: sampleCompanies.filter(c => c.rating >= 3 && c.rating < 4).length, color: "#f59e0b" },
-      { name: "2-3 Stars", value: sampleCompanies.filter(c => c.rating >= 2 && c.rating < 3).length, color: "#f97316" },
-      { name: "Below 2 Stars", value: sampleCompanies.filter(c => c.rating < 2).length, color: "#ef4444" }
+      { name: "5 Stars", value: companies.filter(c => c.averageRating >= 4.5).length, color: "#22c55e" },
+      { name: "4-4.5 Stars", value: companies.filter(c => c.averageRating >= 4 && c.averageRating < 4.5).length, color: "#84cc16" },
+      { name: "3-4 Stars", value: companies.filter(c => c.averageRating >= 3 && c.averageRating < 4).length, color: "#f59e0b" },
+      { name: "2-3 Stars", value: companies.filter(c => c.averageRating >= 2 && c.averageRating < 3).length, color: "#f97316" },
+      { name: "Below 2 Stars", value: companies.filter(c => c.averageRating < 2).length, color: "#ef4444" }
     ];
 
     const heatMapData = [];
@@ -156,7 +157,19 @@ const AdvancedAnalyticsDashboard = () => {
   }, []);
 
   // Filter data based on search query
+  const { companies } = useCompanyData();
+
   const filteredAnalyticsData = useMemo(() => {
+    if (companies.length === 0) {
+      return {
+        scatterData: [],
+        categoryData: [],
+        timeSeriesData: [],
+        topCompaniesData: [],
+        ratingDistributionData: [],
+        heatMapData: []
+      };
+    }
     if (!isQueryActive || !searchQuery.trim()) {
       return analyticsData;
     }
