@@ -39,7 +39,8 @@ import { useAnalyticsData } from "@/hooks/useAnalyticsData";
 const RealTimeAnalyticsDashboard = () => {
   const { overview, categoryData, dailyData, companyData, loading, refreshData } = useAnalyticsData();
 
-  const chartConfig = {
+  // Chart configs for different chart types
+  const lineChartConfig = {
     reviews: {
       label: "Reviews",
       color: "#7b58f6",
@@ -49,6 +50,15 @@ const RealTimeAnalyticsDashboard = () => {
       color: "#2c9fff",
     },
   };
+
+  // Dynamic config for pie chart based on actual category data
+  const pieChartConfig = categoryData.reduce((config, item) => {
+    config[item.category] = {
+      label: item.category.charAt(0).toUpperCase() + item.category.slice(1),
+      color: item.color,
+    };
+    return config;
+  }, {} as any);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -239,7 +249,7 @@ const RealTimeAnalyticsDashboard = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ChartContainer config={chartConfig} className="h-[400px] w-full">
+                  <ChartContainer config={lineChartConfig} className="h-[400px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <ComposedChart data={dailyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
@@ -305,7 +315,7 @@ const RealTimeAnalyticsDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   {categoryData.length > 1 ? (
-                    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                    <ChartContainer config={pieChartConfig} className="h-[400px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
@@ -313,9 +323,11 @@ const RealTimeAnalyticsDashboard = () => {
                             cx="50%"
                             cy="50%"
                             innerRadius={60}
-                            outerRadius={120}
-                            paddingAngle={5}
+                            outerRadius={140}
+                            paddingAngle={2}
                             dataKey="reviewCount"
+                            stroke="#fff"
+                            strokeWidth={2}
                           >
                             {categoryData.map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={entry.color} />
@@ -323,19 +335,28 @@ const RealTimeAnalyticsDashboard = () => {
                           </Pie>
                           <Tooltip content={<CustomPieTooltip />} />
                           <Legend 
+                            verticalAlign="bottom" 
+                            height={80}
                             wrapperStyle={{ paddingTop: '20px' }}
-                            formatter={(value, entry) => (
-                              <span style={{ color: entry.color }} className="text-sm font-medium">
-                                {value} ({Math.round((categoryData.find(c => c.category === value)?.reviewCount || 0) / overview.totalReviews * 100)}%)
-                              </span>
-                            )}
+                            formatter={(value, entry) => {
+                              const categoryItem = categoryData.find(c => c.category === value);
+                              const percentage = categoryItem ? Math.round((categoryItem.reviewCount / overview.totalReviews) * 100) : 0;
+                              return (
+                                <span style={{ color: entry.color || '#666', fontWeight: '500' }}>
+                                  {value.charAt(0).toUpperCase() + value.slice(1)} ({percentage}%)
+                                </span>
+                              );
+                            }}
                           />
                         </PieChart>
                       </ResponsiveContainer>
                     </ChartContainer>
                   ) : (
-                    <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                      More categories needed for chart
+                    <div className="h-[400px] flex items-center justify-center text-muted-foreground">
+                      <div className="text-center">
+                        <div className="text-lg font-medium mb-2">Not enough categories</div>
+                        <p className="text-sm">Need at least 2 categories to display pie chart</p>
+                      </div>
                     </div>
                   )}
                 </CardContent>

@@ -51,8 +51,8 @@ const DonutChart = ({ data, title, description }: DonutChartProps) => {
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
     const percentage = ((value / total) * 100).toFixed(0);
 
-    // Only show label if percentage is greater than 5% to avoid clutter
-    if (parseFloat(percentage) < 5) return null;
+    // Only show label if percentage is greater than 3% to avoid clutter
+    if (parseFloat(percentage) < 3) return null;
 
     return (
       <text 
@@ -61,9 +61,9 @@ const DonutChart = ({ data, title, description }: DonutChartProps) => {
         fill="white" 
         textAnchor={x > cx ? 'start' : 'end'} 
         dominantBaseline="central"
-        fontSize={12}
-        fontWeight="bold"
-        stroke="rgba(0,0,0,0.5)"
+        fontSize={11}
+        fontWeight="600"
+        stroke="rgba(0,0,0,0.8)"
         strokeWidth={0.5}
       >
         {`${percentage}%`}
