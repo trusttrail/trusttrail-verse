@@ -53,13 +53,50 @@ const RealTimeAnalyticsDashboard = () => {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
-          <p className="font-medium">{new Date(label).toLocaleDateString()}</p>
+        <div className="bg-background border border-border rounded-lg p-4 shadow-lg max-w-xs">
+          <p className="font-medium text-foreground mb-2">{new Date(label).toLocaleDateString()}</p>
           {payload.map((entry: any, index: number) => (
-            <p key={index} className="text-sm" style={{ color: entry.color }}>
-              {entry.name}: {entry.value}
-            </p>
+            <div key={index} className="flex items-center justify-between py-1">
+              <div className="flex items-center gap-2">
+                <div 
+                  className="w-3 h-3 rounded-full" 
+                  style={{ backgroundColor: entry.color }}
+                />
+                <span className="text-sm font-medium">{entry.name}:</span>
+              </div>
+              <span className="text-sm font-bold" style={{ color: entry.color }}>
+                {entry.name === 'Avg Rating' ? `${entry.value}/5 ⭐` : `${entry.value} reviews`}
+              </span>
+            </div>
           ))}
+          <div className="mt-2 pt-2 border-t border-border text-xs text-muted-foreground">
+            {payload.length > 1 ? 'Daily metrics from blockchain data' : 'Verified review data'}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const CustomPieTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0];
+      return (
+        <div className="bg-background border border-border rounded-lg p-4 shadow-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <div 
+              className="w-3 h-3 rounded-full" 
+              style={{ backgroundColor: data.payload.color }}
+            />
+            <span className="font-medium capitalize">{data.payload.category}</span>
+          </div>
+          <div className="space-y-1 text-sm">
+            <p><span className="font-medium">{data.value}</span> reviews ({Math.round((data.value / overview.totalReviews) * 100)}%)</p>
+            <p>Average Rating: <span className="font-medium">{data.payload.avgRating}/5 ⭐</span></p>
+          </div>
+          <div className="mt-2 pt-2 border-t border-border text-xs text-muted-foreground">
+            Web3 sector classification
+          </div>
         </div>
       );
     }
@@ -103,8 +140,9 @@ const RealTimeAnalyticsDashboard = () => {
           <CardContent className="pb-4">
             <div className="text-3xl font-bold text-foreground">{overview.totalReviews}</div>
             <p className="text-xs text-muted-foreground mt-2">
-              Approved reviews from smart contract
+              ✅ Blockchain-verified reviews only
             </p>
+            <Badge variant="outline" className="text-xs mt-1">Live Data</Badge>
           </CardContent>
         </Card>
 
@@ -114,10 +152,14 @@ const RealTimeAnalyticsDashboard = () => {
             <Star className="h-5 w-5 text-yellow-500" />
           </CardHeader>
           <CardContent className="pb-4">
-            <div className="text-3xl font-bold text-foreground">{overview.avgRating}</div>
+            <div className="flex items-center gap-1">
+              <span className="text-3xl font-bold text-foreground">{overview.avgRating}</span>
+              <span className="text-lg text-yellow-500">⭐</span>
+            </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Across all verified reviews
+              📊 Calculated from all verified reviews
             </p>
+            <Badge variant="outline" className="text-xs mt-1">Out of 5</Badge>
           </CardContent>
         </Card>
 
@@ -129,8 +171,9 @@ const RealTimeAnalyticsDashboard = () => {
           <CardContent className="pb-4">
             <div className="text-3xl font-bold text-foreground">{overview.totalCompanies}</div>
             <p className="text-xs text-muted-foreground mt-2">
-              Reviewed on platform
+              🏢 Unique companies with reviews
             </p>
+            <Badge variant="outline" className="text-xs mt-1">Web3 Projects</Badge>
           </CardContent>
         </Card>
 
@@ -142,8 +185,9 @@ const RealTimeAnalyticsDashboard = () => {
           <CardContent className="pb-4">
             <div className="text-3xl font-bold text-foreground">{overview.totalCategories}</div>
             <p className="text-xs text-muted-foreground mt-2">
-              Active Web3 sectors
+              🎯 Different Web3 sectors covered
             </p>
+            <Badge variant="outline" className="text-xs mt-1">Categories</Badge>
           </CardContent>
         </Card>
       </div>
@@ -177,9 +221,21 @@ const RealTimeAnalyticsDashboard = () => {
             {dailyData.length > 0 ? (
               <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
                 <CardHeader className="pb-4">
-                  <CardTitle className="text-xl">Review Activity Over Time</CardTitle>
-                  <CardDescription>
-                    Daily review submissions and average ratings from smart contract
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    📈 Review Activity Over Time
+                  </CardTitle>
+                  <CardDescription className="space-y-1">
+                    <p>Daily review submissions and average ratings from blockchain transactions</p>
+                    <div className="flex items-center gap-4 text-sm mt-2">
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 rounded bg-[#7b58f6]"></div>
+                        <span>Purple bars = Review Count (left axis)</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 rounded bg-[#2c9fff]"></div>
+                        <span>Blue line = Average Rating (right axis)</span>
+                      </div>
+                    </div>
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -197,12 +253,15 @@ const RealTimeAnalyticsDashboard = () => {
                           yAxisId="left" 
                           className="text-xs fill-muted-foreground"
                           tick={{ fontSize: 12 }}
+                          label={{ value: 'Review Count', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' } }}
                         />
                         <YAxis 
                           yAxisId="right" 
                           orientation="right" 
                           className="text-xs fill-muted-foreground"
                           tick={{ fontSize: 12 }}
+                          domain={[0, 5]}
+                          label={{ value: 'Average Rating (0-5)', angle: 90, position: 'insideRight', style: { textAnchor: 'middle' } }}
                         />
                         <Tooltip content={<CustomTooltip />} />
                         <Legend />
@@ -234,8 +293,15 @@ const RealTimeAnalyticsDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
                 <CardHeader className="pb-4">
-                  <CardTitle className="text-xl">Reviews by Category</CardTitle>
-                  <CardDescription>Distribution across Web3 sectors</CardDescription>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    🥧 Reviews by Category
+                  </CardTitle>
+                  <CardDescription className="space-y-1">
+                    <p>Distribution of reviews across different Web3 sectors</p>
+                    <div className="text-sm text-muted-foreground mt-2">
+                      💡 <strong>Hover over chart segments</strong> to see detailed breakdown including percentages and ratings
+                    </div>
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {categoryData.length > 1 ? (
@@ -255,8 +321,15 @@ const RealTimeAnalyticsDashboard = () => {
                               <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                           </Pie>
-                          <Tooltip />
-                          <Legend />
+                          <Tooltip content={<CustomPieTooltip />} />
+                          <Legend 
+                            wrapperStyle={{ paddingTop: '20px' }}
+                            formatter={(value, entry) => (
+                              <span style={{ color: entry.color }} className="text-sm font-medium">
+                                {value} ({Math.round((categoryData.find(c => c.category === value)?.reviewCount || 0) / overview.totalReviews * 100)}%)
+                              </span>
+                            )}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </ChartContainer>
@@ -270,8 +343,15 @@ const RealTimeAnalyticsDashboard = () => {
 
               <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
                 <CardHeader className="pb-4">
-                  <CardTitle className="text-xl">Category Breakdown</CardTitle>
-                  <CardDescription>Detailed view of review distribution</CardDescription>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    📊 Category Breakdown
+                  </CardTitle>
+                  <CardDescription className="space-y-1">
+                    <p>Detailed metrics for each Web3 sector with review counts, ratings, and percentages</p>
+                    <div className="text-sm text-muted-foreground mt-2">
+                      🏷️ <strong>Color dots</strong> match the pie chart • <strong>Reviews</strong> = total count • <strong>Stars</strong> = average rating • <strong>%</strong> = share of total
+                    </div>
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {categoryData.map((category, index) => (
@@ -304,8 +384,15 @@ const RealTimeAnalyticsDashboard = () => {
           <TabsContent value="companies" className="space-y-6">
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
               <CardHeader className="pb-4">
-                <CardTitle className="text-xl">Top Reviewed Companies</CardTitle>
-                <CardDescription>Companies with the most verified reviews</CardDescription>
+                <CardTitle className="text-xl flex items-center gap-2">
+                  🏆 Top Reviewed Companies
+                </CardTitle>
+                <CardDescription className="space-y-1">
+                  <p>Companies ranked by number of verified blockchain reviews</p>
+                  <div className="text-sm text-muted-foreground mt-2">
+                    🥇 <strong>Ranking</strong> by review count • ⭐ <strong>Star ratings</strong> show average scores • 💬 <strong>Review count</strong> from smart contracts
+                  </div>
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
