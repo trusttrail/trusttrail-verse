@@ -65,6 +65,34 @@ export const useStakingTransaction = () => {
       
       if (action === 'stake') {
         try {
+          // First check if user has approved the contract to spend tokens
+          const tokenContract = new ethers.Contract(
+            REVIEW_PLATFORM_ADDRESS, // Using same address as it's also the token contract
+            ['function allowance(address owner, address spender) view returns (uint256)', 'function approve(address spender, uint256 amount) returns (bool)'],
+            signer
+          );
+          
+          const currentAllowance = await tokenContract.allowance(await signer.getAddress(), REVIEW_PLATFORM_ADDRESS);
+          console.log('🔍 Current allowance:', ethers.formatEther(currentAllowance));
+          
+          if (currentAllowance < amountInWei) {
+            console.log('📝 Need to approve token spending first');
+            toast({
+              title: "Approving Token Spending...",
+              description: "Please confirm the approval transaction in MetaMask first",
+            });
+            
+            const approveTx = await tokenContract.approve(REVIEW_PLATFORM_ADDRESS, amountInWei);
+            console.log('⏳ Waiting for approval confirmation...', approveTx.hash);
+            await approveTx.wait();
+            console.log('✅ Token approval confirmed');
+            
+            toast({
+              title: "Approval Confirmed",
+              description: "Now proceeding with staking transaction...",
+            });
+          }
+
           // Get gas price dynamically
           const gasPrice = await provider.getFeeData();
           console.log('🔧 Gas fee data:', gasPrice);
