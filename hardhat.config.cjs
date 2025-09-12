@@ -35,11 +35,21 @@ module.exports = {
       gasMultiplier: 1.2,
       timeout: 60000,
     },
+    opSepolia: {
+      url: process.env.OP_SEPOLIA_RPC_URL || "https://sepolia.optimism.io",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 11155420,
+      gas: "auto",
+      gasPrice: "auto",
+      gasMultiplier: 1.2,
+      timeout: 60000,
+    },
   },
   etherscan: {
     apiKey: {
       polygonAmoy: process.env.POLYGONSCAN_API_KEY || "",
       polygon: process.env.POLYGONSCAN_API_KEY || "",
+      opSepolia: process.env.OPTIMISM_API_KEY || "",
     },
   },
   paths: {

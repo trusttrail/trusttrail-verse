@@ -8,7 +8,7 @@ import { useWeb3 } from '@/hooks/useWeb3';
 export const TokenBalance: React.FC = () => {
   const { tokenBalances, refreshBalances, isLoading, address, currentNetwork } = useWeb3();
 
-  if (!address || currentNetwork !== "amoy") {
+  if (!address || !["amoy", "opSepolia"].includes(currentNetwork)) {
     return null;
   }
 
@@ -22,7 +22,7 @@ export const TokenBalance: React.FC = () => {
           TRT Token Balance
         </CardTitle>
         <CardDescription>
-          Your TRUSTTRAIL platform reward tokens on Polygon Amoy
+          Your TRUSTTRAIL platform reward tokens on {currentNetwork === "amoy" ? "Polygon Amoy" : "OP Sepolia"}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

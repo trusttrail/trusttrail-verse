@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { AMOY_CHAIN_ID, AMOY_NETWORK_NAME } from "@/constants/network";
+import { AMOY_CHAIN_ID, AMOY_NETWORK_NAME, OP_SEPOLIA_CHAIN_ID, OP_SEPOLIA_NETWORK_NAME } from "@/constants/network";
 import { useToast } from "@/hooks/use-toast";
 
 export const useWalletNetwork = (
@@ -13,6 +13,11 @@ export const useWalletNetwork = (
 
   useEffect(() => {
     if (!window.ethereum) return;
+
+    const supportedNetworks = {
+      [AMOY_CHAIN_ID]: { id: 'amoy', name: AMOY_NETWORK_NAME },
+      [OP_SEPOLIA_CHAIN_ID]: { id: 'opSepolia', name: OP_SEPOLIA_NETWORK_NAME },
+    };
     
     const handleAccountsChanged = (accounts: string[]) => {
       if (accounts.length === 0) {
@@ -33,20 +38,21 @@ export const useWalletNetwork = (
     };
 
     const handleChainChanged = (chainId: string) => {
-      if (chainId !== AMOY_CHAIN_ID) {
+      const network = supportedNetworks[chainId];
+      if (network) {
+        setIsWalletConnected(true);
+        setCurrentNetwork(network.id);
+        toast({
+          title: "Network Changed",
+          description: `Connected to ${network.name}.`,
+        });
+      } else {
         setIsWalletConnected(false);
         setCurrentNetwork("wrong");
         toast({
           title: "Wrong Network",
-          description: `Wallet disconnected. Please switch to ${AMOY_NETWORK_NAME} and reconnect.`,
+          description: `Wallet disconnected. Please switch to a supported testnet and reconnect.`,
           variant: "destructive",
-        });
-      } else {
-        setIsWalletConnected(true);
-        setCurrentNetwork("amoy");
-        toast({
-          title: "Network Changed",
-          description: `Connected to ${AMOY_NETWORK_NAME}.`,
         });
       }
     };

@@ -19,27 +19,32 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
   const { toast } = useToast();
   const [actualNetwork, setActualNetwork] = useState<string>("amoy");
 
-  // Network options for display (only Polygon Amoy is functional)
+  // Network options for display
   const networks = [
     { id: "ethereum", name: "Ethereum Mainnet", icon: "⟠", supported: false },
     { id: "polygon", name: "Polygon Mainnet", icon: "🟣", supported: false },
     { id: "amoy", name: "Polygon Amoy (Testnet)", icon: "🟣", supported: true },
+    { id: "opSepolia", name: "OP Sepolia (Testnet)", icon: "🔴", supported: true },
     { id: "arbitrum", name: "Arbitrum One", icon: "🔵", supported: false },
     { id: "optimism", name: "Optimism", icon: "🔴", supported: false },
     { id: "base", name: "Base", icon: "🔵", supported: false },
   ];
 
-  // Listen for "amoy" (Polygon Amoy testnet) chainId: 80002 / 0x13882
+  // Listen for supported testnets
   useEffect(() => {
-    const desiredChainId = '0x13882'; // Polygon Amoy
+    const supportedNetworks = {
+      '0x13882': 'amoy',      // Polygon Amoy
+      '0xaa36a7': 'opSepolia' // OP Sepolia
+    };
     
     const checkNetwork = async () => {
       if (window.ethereum) {
         try {
           const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-          console.log('Current chain ID:', chainId, 'Expected:', desiredChainId);
-          if (chainId === desiredChainId) {
-            setActualNetwork("amoy");
+          console.log('Current chain ID:', chainId);
+          const networkId = supportedNetworks[chainId];
+          if (networkId) {
+            setActualNetwork(networkId);
           } else {
             setActualNetwork("wrong");
           }
@@ -55,17 +60,19 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
     if (window.ethereum) {
       const handleChainChanged = (chainId: string) => {
         console.log('Chain changed to:', chainId);
-        if (chainId === desiredChainId) {
-          setActualNetwork("amoy");
+        const networkId = supportedNetworks[chainId];
+        if (networkId) {
+          setActualNetwork(networkId);
+          const networkName = networks.find(n => n.id === networkId)?.name || networkId;
           toast({
             title: "Network Changed",
-            description: "Connected to Polygon Amoy Testnet",
+            description: `Connected to ${networkName}`,
           });
         } else {
           setActualNetwork("wrong");
           toast({
             title: "Wrong Network",
-            description: "Please switch to Polygon Amoy Testnet",
+            description: "Please switch to a supported testnet (Polygon Amoy or OP Sepolia)",
             variant: "destructive",
           });
         }
@@ -82,41 +89,50 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
     if (!supported) {
       toast({
         title: "Network Not Supported",
-        description: `Currently only Polygon Amoy Testnet is supported.`,
+        description: `Currently only Polygon Amoy and OP Sepolia testnets are supported.`,
         variant: "destructive",
       });
       return;
     }
     
-    if (networkId === "amoy" && window.ethereum) {
+    if (window.ethereum) {
+      const networkConfigs = {
+        amoy: {
+          chainId: '0x13882',
+          chainName: 'Polygon Amoy Testnet',
+          nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
+          rpcUrls: ['https://rpc-amoy.polygon.technology/'],
+          blockExplorerUrls: ['https://amoy.polygonscan.com/']
+        },
+        opSepolia: {
+          chainId: '0xaa36a7',
+          chainName: 'OP Sepolia Testnet',
+          nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+          rpcUrls: ['https://sepolia.optimism.io'],
+          blockExplorerUrls: ['https://sepolia-optimism.etherscan.io/']
+        }
+      };
+
+      const config = networkConfigs[networkId as keyof typeof networkConfigs];
+      if (!config) return;
+
       try {
         await window.ethereum.request({
           method: 'wallet_switchEthereumChain',
-          params: [{ chainId: '0x13882' }],
+          params: [{ chainId: config.chainId }],
         });
       } catch (switchError: any) {
         if (switchError.code === 4902) {
-          // Network not added, add it
           try {
             await window.ethereum.request({
               method: 'wallet_addEthereumChain',
-              params: [{
-                chainId: '0x13882',
-                chainName: 'Polygon Amoy Testnet',
-                nativeCurrency: {
-                  name: 'MATIC',
-                  symbol: 'MATIC',
-                  decimals: 18
-                },
-                rpcUrls: ['https://rpc-amoy.polygon.technology/'],
-                blockExplorerUrls: ['https://amoy.polygonscan.com/']
-              }]
+              params: [config]
             });
           } catch (addError) {
             console.error('Failed to add network:', addError);
             toast({
               title: "Failed to Add Network",
-              description: "Could not add Polygon Amoy Testnet to MetaMask",
+              description: `Could not add ${config.chainName} to MetaMask`,
               variant: "destructive",
             });
           }
@@ -124,7 +140,7 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
           console.error('Failed to switch network:', switchError);
           toast({
             title: "Failed to Switch Network",
-            description: "Could not switch to Polygon Amoy Testnet",
+            description: `Could not switch to ${config.chainName}`,
             variant: "destructive",
           });
         }
@@ -134,8 +150,9 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
     onChange(networkId);
   };
 
-  const isWrongNetwork = actualNetwork !== "amoy";
-  const selectedNetwork = networks.find(n => n.id === "amoy") || networks[2];
+  const supportedNetworkIds = ["amoy", "opSepolia"];
+  const isWrongNetwork = !supportedNetworkIds.includes(actualNetwork);
+  const selectedNetwork = networks.find(n => n.id === actualNetwork) || networks.find(n => n.id === "amoy") || networks[2];
 
   return (
     <DropdownMenu>
@@ -154,7 +171,7 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
       <DropdownMenuContent className="w-56 bg-popover border-border z-[200]">
         {isWrongNetwork && (
           <div className="px-3 py-2 text-sm text-destructive border-b border-border mb-1">
-            Please switch to Polygon Amoy Testnet in MetaMask
+            Please switch to a supported testnet (Polygon Amoy or OP Sepolia)
           </div>
         )}
         {networks.map((network) => (
