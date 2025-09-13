@@ -76,9 +76,9 @@ const WalletConnect = ({
   };
 
   // Get the correct explorer URL for current network
-  const getExplorerUrl = () => {
-    const currentNetwork = web3Service.getCurrentNetwork();
-    const contracts = web3Service.getContractAddresses();
+  const getExplorerUrl = async () => {
+    const currentNetwork = await web3Service.getCurrentNetwork();
+    const contracts = await web3Service.getContractAddresses();
     return `${contracts.explorerUrl}address/${address}`;
   };
 
@@ -114,12 +114,13 @@ const WalletConnect = ({
               variant="outline" 
               className="w-full justify-between" 
               size="sm"
-              asChild
+              onClick={async () => {
+                const url = await getExplorerUrl();
+                window.open(url, '_blank', 'noopener noreferrer');
+              }}
             >
-              <a href={getExplorerUrl()} target="_blank" rel="noopener noreferrer">
-                View on Explorer
-                <ExternalLink size={14} />
-              </a>
+              View on Explorer
+              <ExternalLink size={14} />
             </Button>
             
             <Button 

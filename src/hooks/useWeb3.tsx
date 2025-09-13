@@ -35,7 +35,7 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
       const walletAddress = await web3Service.connect();
       setAddress(walletAddress);
       setIsConnected(true);
-      setCurrentNetwork(web3Service.getCurrentNetwork());
+      setCurrentNetwork(await web3Service.getCurrentNetwork());
       
       // Get all token balances
       await refreshBalances();
@@ -82,7 +82,7 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
             
             setAddress(accounts[0]);
             setIsConnected(true);
-            setCurrentNetwork(web3Service.getCurrentNetwork());
+            setCurrentNetwork(await web3Service.getCurrentNetwork());
             
             // Now refresh balances after Web3Service is properly connected
             console.log('🔄 Web3Service connected, fetching balances...');
@@ -106,7 +106,7 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
     isLoading,
     tokenBalances,
     refreshBalances,
-    tokens: web3Service.getTokens()
+    tokens: [] // Will be populated when network is determined
   };
 
   return (

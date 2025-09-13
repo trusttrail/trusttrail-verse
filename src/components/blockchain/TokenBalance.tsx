@@ -12,24 +12,27 @@ export const TokenBalance: React.FC = () => {
     return null;
   }
 
-  const trtBalance = tokenBalances["TRT"] || "0";
+  // Get the correct token symbol for each network
+  const tokenSymbol = currentNetwork === "amoy" ? "TRT" : "TRUST";
+  const tokenBalance = tokenBalances[tokenSymbol] || "0";
+  const networkName = currentNetwork === "amoy" ? "Polygon Amoy" : "OP Sepolia";
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Coins className="h-5 w-5" />
-          TRT Token Balance
+          {tokenSymbol} Token Balance
         </CardTitle>
         <CardDescription>
-          Your TRUSTTRAIL platform reward tokens on {currentNetwork === "amoy" ? "Polygon Amoy" : "OP Sepolia"}
+          Your TRUSTTRAIL platform reward tokens on {networkName}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-2xl font-bold">{parseFloat(trtBalance).toFixed(2)}</p>
-            <p className="text-sm text-muted-foreground">TRT</p>
+            <p className="text-2xl font-bold">{parseFloat(tokenBalance).toFixed(2)}</p>
+            <p className="text-sm text-muted-foreground">{tokenSymbol}</p>
           </div>
           <Button
             variant="outline"

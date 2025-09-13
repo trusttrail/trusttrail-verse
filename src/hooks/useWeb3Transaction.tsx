@@ -140,8 +140,8 @@ export const useWeb3Transaction = () => {
     }
   };
 
-  const getExplorerUrl = (txHash: string): string => {
-    return web3Service.getExplorerUrl(txHash);
+  const getExplorerUrl = async (txHash: string): Promise<string> => {
+    return await web3Service.getExplorerUrl(txHash);
   };
 
   return {

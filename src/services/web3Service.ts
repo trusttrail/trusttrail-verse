@@ -18,23 +18,49 @@ export class Web3Service {
   private provider: ethers.BrowserProvider | null = null;
   private signer: ethers.Signer | null = null;
 
-  // Only tokens we actually support and use - removed problematic testnet tokens
-  private readonly TOKENS: Record<string, TokenInfo> = {
-    POL: {
-      symbol: 'POL',
-      name: 'Polygon',
-      address: '0x0000000000000000000000000000000000000000', // Native token
-      decimals: 18,
-      icon: '🔷'
-    },
-    TRT: {
-      symbol: 'TRT',
-      name: 'TRUSTTRAIL',
-      address: '0x3d27504B6B18Da549D6F18928c3fa8A35675aB8A', // New deployed contract address
-      decimals: 18,
-      icon: '🛡️'
+  // Network-specific tokens - updated dynamically based on current network
+  private async getTokensForNetwork(): Promise<Record<string, TokenInfo>> {
+    const network = await this.getCurrentNetwork();
+    const { CONTRACT_ADDRESSES } = await import('@/constants/network');
+    
+    if (network === 'amoy') {
+      return {
+        POL: {
+          symbol: 'POL',
+          name: 'Polygon',
+          address: '0x0000000000000000000000000000000000000000',
+          decimals: 18,
+          icon: '🔷'
+        },
+        TRT: {
+          symbol: 'TRT',
+          name: 'TRUSTTRAIL',
+          address: CONTRACT_ADDRESSES.amoy.REWARD_TOKEN,
+          decimals: 18,
+          icon: '🛡️'
+        }
+      };
+    } else if (network === 'opSepolia') {
+      return {
+        ETH: {
+          symbol: 'ETH',
+          name: 'Ethereum',
+          address: '0x0000000000000000000000000000000000000000',
+          decimals: 18,
+          icon: '⚡'
+        },
+        TRUST: {
+          symbol: 'TRUST',
+          name: 'TRUST',
+          address: CONTRACT_ADDRESSES.opSepolia.REWARD_TOKEN,
+          decimals: 18,
+          icon: '🛡️'
+        }
+      };
     }
-  };
+    
+    return {};
+  }
 
   private readonly ERC20_ABI = [
     'function balanceOf(address owner) view returns (uint256)',
@@ -89,17 +115,18 @@ export class Web3Service {
     if (!this.provider) throw new Error('Wallet not connected');
     
     const network = await this.provider.getNetwork();
-    const amoyChainId = 80002n; // Polygon Amoy testnet chain ID
+    const supportedChainIds = [80002n, 11155420n]; // Amoy and OP Sepolia
     
-    if (network.chainId !== amoyChainId) {
+    if (!supportedChainIds.includes(network.chainId)) {
+      // Default to switching to Amoy if on unsupported network
       try {
         await window.ethereum.request({
           method: 'wallet_switchEthereumChain',
-          params: [{ chainId: '0x13882' }], // 80002 in hex
+          params: [{ chainId: '0x13882' }], // 80002 in hex (Amoy)
         });
       } catch (switchError: any) {
         if (switchError.code === 4902) {
-          // Network not added, add it
+          // Network not added, add Amoy
           await window.ethereum.request({
             method: 'wallet_addEthereumChain',
             params: [{
@@ -121,18 +148,40 @@ export class Web3Service {
     }
   }
 
-  getCurrentNetwork(): string {
-    return "amoy";
+  async getCurrentNetwork(): Promise<string> {
+    if (!this.provider) return "unknown";
+    
+    const network = await this.provider.getNetwork();
+    const chainId = network.chainId;
+    
+    if (chainId === 80002n) return "amoy";
+    if (chainId === 11155420n) return "opSepolia";
+    
+    return "unknown";
   }
 
-  getContractAddresses() {
+  async getContractAddresses() {
+    const network = await this.getCurrentNetwork();
+    const { CONTRACT_ADDRESSES } = await import('@/constants/network');
+    
+    const addresses = CONTRACT_ADDRESSES[network as keyof typeof CONTRACT_ADDRESSES];
+    if (!addresses) throw new Error(`Unsupported network: ${network}`);
+    
     return {
-      explorerUrl: 'https://amoy.polygonscan.com/',
+      reviewPlatform: addresses.REVIEW_PLATFORM,
+      rewardToken: addresses.REWARD_TOKEN,
+      explorerUrl: network === 'amoy' 
+        ? 'https://amoy.polygonscan.com/' 
+        : 'https://sepolia-optimism.etherscan.io/',
     };
   }
 
-  getExplorerUrl(txHash: string): string {
-    return `https://amoy.polygonscan.com/tx/${txHash}`;
+  async getExplorerUrl(txHash: string): Promise<string> {
+    const network = await this.getCurrentNetwork();
+    const baseUrl = network === 'amoy' 
+      ? 'https://amoy.polygonscan.com/tx/' 
+      : 'https://sepolia-optimism.etherscan.io/tx/';
+    return `${baseUrl}${txHash}`;
   }
 
   isContractsDeployed(): boolean {
@@ -212,7 +261,8 @@ export class Web3Service {
 
         // STEP 3: Setup contract using proper ethers interface
         console.log('📜 STEP 3: Setting up contract interface...');
-        const CONTRACT_ADDRESS = "0x3d27504B6B18Da549D6F18928c3fa8A35675aB8A"; // New deployed contract address
+        const contractAddresses = await this.getContractAddresses();
+        const CONTRACT_ADDRESS = contractAddresses.reviewPlatform;
         
         // Validate contract address format to prevent ENS resolution
         if (!ethers.isAddress(CONTRACT_ADDRESS)) {
@@ -310,7 +360,7 @@ export class Web3Service {
         
         if (receipt.status === 1) {
           console.log('🎉 SUCCESS! Review submitted to blockchain!');
-          console.log('🔗 View on explorer:', `https://amoy.polygonscan.com/tx/${tx.hash}`);
+          console.log('🔗 View on explorer:', await this.getExplorerUrl(tx.hash));
           return tx.hash;
         } else {
           throw new Error('Transaction failed with status 0');
@@ -341,53 +391,73 @@ export class Web3Service {
     });
   }
 
-  getTokens(): TokenInfo[] {
-    return Object.values(this.TOKENS);
+  async getTokens(): Promise<TokenInfo[]> {
+    const tokens = await this.getTokensForNetwork();
+    return Object.values(tokens);
   }
 
-  getTokenInfo(symbol: string): TokenInfo | undefined {
-    return this.TOKENS[symbol.toUpperCase()];
+  async getTokenInfo(symbol: string): Promise<TokenInfo | undefined> {
+    const tokens = await this.getTokensForNetwork();
+    return tokens[symbol.toUpperCase()];
   }
 
   async getTokenBalance(address: string, tokenSymbol?: string): Promise<string> {
     if (!this.provider) throw new Error('Wallet not connected');
+    
+    const network = await this.getCurrentNetwork();
+    const nativeToken = network === 'amoy' ? 'POL' : 'ETH';
 
     try {
-      if (!tokenSymbol || tokenSymbol === 'POL') {
-        // Get native POL balance
+      if (!tokenSymbol || tokenSymbol === nativeToken) {
+        // Get native token balance
         const balance = await this.provider.getBalance(address);
         return ethers.formatEther(balance);
       }
 
-      const tokenInfo = this.getTokenInfo(tokenSymbol);
+      const tokenInfo = await this.getTokenInfo(tokenSymbol);
       if (!tokenInfo) throw new Error(`Token ${tokenSymbol} not found`);
 
       const contract = new ethers.Contract(tokenInfo.address, this.ERC20_ABI, this.provider);
       const balance = await contract.balanceOf(address);
       return ethers.formatUnits(balance, tokenInfo.decimals);
     } catch (error) {
-      console.error(`Failed to get ${tokenSymbol || 'POL'} balance:`, error);
+      console.error(`Failed to get ${tokenSymbol || nativeToken} balance:`, error);
       return '0';
     }
   }
 
   async getAllTokenBalances(address: string): Promise<Record<string, string>> {
     const balances: Record<string, string> = {};
+    const network = await this.getCurrentNetwork();
     
-    // Ensure we have POL balance for gas fees
-    const polBalance = await this.getTokenBalance(address, 'POL');
-    balances['POL'] = polBalance;
-    
-    // Check if user has sufficient POL for transactions
-    if (parseFloat(polBalance) < 0.01) {
-      console.warn('⚠️ Low POL balance detected. User may need to get POL from faucet.');
+    if (network === 'amoy') {
+      // Get POL balance for gas fees
+      const polBalance = await this.getTokenBalance(address, 'POL');
+      balances['POL'] = polBalance;
+      
+      // Check if user has sufficient POL for transactions
+      if (parseFloat(polBalance) < 0.01) {
+        console.warn('⚠️ Low POL balance detected. User may need to get POL from faucet.');
+      }
+      
+      // Get TRT token balance
+      const trtBalance = await this.getTrustTokenBalance(address);
+      balances['TRT'] = trtBalance;
+    } else if (network === 'opSepolia') {
+      // Get ETH balance for gas fees
+      const ethBalance = await this.getTokenBalance(address, 'ETH');
+      balances['ETH'] = ethBalance;
+      
+      // Check if user has sufficient ETH for transactions
+      if (parseFloat(ethBalance) < 0.01) {
+        console.warn('⚠️ Low ETH balance detected. User may need to get ETH from faucet.');
+      }
+      
+      // Get TRUST token balance
+      const trustBalance = await this.getTrustTokenBalance(address);
+      balances['TRUST'] = trustBalance;
     }
     
-    // Get TRT token balance - check both sources for accuracy
-    const trtBalance = await this.getTrustTokenBalance(address);
-    balances['TRT'] = trtBalance;
-    
-    // Only return POL and TRT balances - removed problematic tokens that cause console errors
     return balances;
   }
 

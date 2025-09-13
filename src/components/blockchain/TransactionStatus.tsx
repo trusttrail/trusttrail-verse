@@ -91,10 +91,13 @@ export const TransactionStatus: React.FC<TransactionStatusProps> = ({
         <Button
           variant="outline"
           className="w-full"
-          onClick={() => window.open(web3Service.getExplorerUrl(txHash), '_blank')}
+          onClick={async () => {
+            const explorerUrl = await web3Service.getExplorerUrl(txHash);
+            window.open(explorerUrl, '_blank');
+          }}
         >
           <ExternalLink size={16} className="mr-2" />
-          View on Polygonscan
+          View on Explorer
         </Button>
       </CardContent>
     </Card>

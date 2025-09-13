@@ -10,11 +10,11 @@ export const OP_SEPOLIA_NETWORK_NAME = 'OP Sepolia (Testnet)';
 export const CONTRACT_ADDRESSES = {
   amoy: {
     REVIEW_PLATFORM: '0x3d27504B6B18Da549D6F18928c3fa8A35675aB8A',
-    REWARD_TOKEN: '', // Add after token deployment
+    REWARD_TOKEN: '0x3d27504B6B18Da549D6F18928c3fa8A35675aB8A', // TRT token contract
   },
   opSepolia: {
-    REVIEW_PLATFORM: '', // Add after deployment on OP Sepolia
-    REWARD_TOKEN: '', // Add after token deployment
+    REVIEW_PLATFORM: '0x1665691897705F7bA63C62067F189993A1d44AD5', // OP Sepolia TrustTrail contract
+    REWARD_TOKEN: '0x1665691897705F7bA63C62067F189993A1d44AD5', // TRUST token contract
   }
 };
 
