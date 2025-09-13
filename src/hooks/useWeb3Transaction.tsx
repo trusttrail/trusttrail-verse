@@ -94,7 +94,7 @@ export const useWeb3Transaction = () => {
       
       toast({
         title: "Transaction Successful! 🎉",
-        description: `Review submitted to Amoy testnet. Tx: ${txHash.substring(0, 10)}...`,
+        description: `Review submitted to blockchain. Tx: ${txHash.substring(0, 10)}...`,
       });
 
       console.log('✅ Review transaction completed successfully:', txHash);
@@ -116,13 +116,13 @@ export const useWeb3Transaction = () => {
       if (error.message?.includes('rejected') || error.code === 4001) {
         errorMessage = "Transaction was cancelled in MetaMask.";
       } else if (error.message?.includes('insufficient')) {
-        errorMessage = "Insufficient MATIC balance. Get some from the faucet.";
+        errorMessage = "Insufficient gas balance. Get some from the faucet.";
       } else if (error.message?.includes('Connection failed')) {
         errorMessage = error.message;
       } else if (error.message?.includes('RPC Error') || error.message?.includes('Network connectivity issue')) {
         errorMessage = "RPC connection issues. Please refresh the page and try again.";
       } else if (error.message?.includes('network')) {
-        errorMessage = "Network error. Please check your connection to Amoy testnet.";
+        errorMessage = "Network error. Please check your connection to supported testnet.";
       } else {
         errorMessage = `Transaction error: ${error.message || 'Unknown error'}`;
       }

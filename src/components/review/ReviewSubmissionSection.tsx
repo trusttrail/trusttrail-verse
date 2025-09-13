@@ -76,7 +76,7 @@ const ReviewSubmissionSection = ({
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Please confirm the transaction in your MetaMask wallet. A small POL fee will be required for the Polygon Amoy network.
+            Please confirm the transaction in your MetaMask wallet. A small gas fee will be required for the network transaction.
           </AlertDescription>
         </Alert>
       )}

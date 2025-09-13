@@ -49,10 +49,10 @@ const StakingForm: React.FC<StakingFormProps> = ({
   const handleStake = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (currentNetwork !== "amoy") {
+    if (currentNetwork !== "amoy" && currentNetwork !== "opSepolia") {
       toast({
         title: "Wrong Network",
-        description: "Please switch to Polygon Amoy testnet to stake tokens.",
+        description: "Please switch to a supported testnet (Polygon Amoy or OP Sepolia) to stake tokens.",
         variant: "destructive",
       });
       return;
@@ -116,10 +116,10 @@ const StakingForm: React.FC<StakingFormProps> = ({
   const handleUnstake = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (currentNetwork !== "amoy") {
+    if (currentNetwork !== "amoy" && currentNetwork !== "opSepolia") {
       toast({
         title: "Wrong Network",
-        description: "Please switch to Polygon Amoy testnet to unstake tokens.",
+        description: "Please switch to a supported testnet (Polygon Amoy or OP Sepolia) to unstake tokens.",
         variant: "destructive",
       });
       return;
@@ -179,10 +179,10 @@ const StakingForm: React.FC<StakingFormProps> = ({
   };
 
   const handleClaimRewards = async () => {
-    if (currentNetwork !== "amoy") {
+    if (currentNetwork !== "amoy" && currentNetwork !== "opSepolia") {
       toast({
         title: "Wrong Network",
-        description: "Please switch to Polygon Amoy testnet to claim rewards.",
+        description: "Please switch to a supported testnet (Polygon Amoy or OP Sepolia) to claim rewards.",
         variant: "destructive",
       });
       return;

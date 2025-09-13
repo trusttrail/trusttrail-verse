@@ -118,33 +118,7 @@ export class Web3Service {
     const supportedChainIds = [80002n, 11155420n]; // Amoy and OP Sepolia
     
     if (!supportedChainIds.includes(network.chainId)) {
-      // Default to switching to Amoy if on unsupported network
-      try {
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: '0x13882' }], // 80002 in hex (Amoy)
-        });
-      } catch (switchError: any) {
-        if (switchError.code === 4902) {
-          // Network not added, add Amoy
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [{
-              chainId: '0x13882',
-              chainName: 'Polygon Amoy Testnet',
-              nativeCurrency: {
-                name: 'POL',
-                symbol: 'POL',
-                decimals: 18
-              },
-              rpcUrls: ['https://rpc-amoy.polygon.technology/'],
-              blockExplorerUrls: ['https://amoy.polygonscan.com/']
-            }]
-          });
-        } else {
-          throw switchError;
-        }
-      }
+      throw new Error(`Unsupported network. Please switch to Polygon Amoy or OP Sepolia testnet.`);
     }
   }
 

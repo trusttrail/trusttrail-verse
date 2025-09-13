@@ -38,7 +38,7 @@ const Hero = () => {
             </h1>
             
             <p className="text-lg sm:text-xl lg:text-2xl text-muted-foreground mb-10 max-w-4xl mx-auto leading-relaxed px-4">
-              Experience the future of decentralized reviews on Polygon. Earn $NOCAP tokens 
+              Experience the future of decentralized reviews on Polygon & Optimism. Earn rewards 
               based on your Trust score and review quality, while building reputation through 
               Gitcoin Passport identity verification to create a secure, bot-free Web3 ecosystem.
             </p>
@@ -71,7 +71,7 @@ const Hero = () => {
               </div>
               <h3 className="font-semibold text-xl mb-4 text-center">Blockchain Secured</h3>
               <p className="text-muted-foreground text-center leading-relaxed">
-                Every review is permanently recorded on Polygon blockchain for transparency and immutability, building an unalterable trust network
+                Every review is permanently recorded on Polygon & Optimism blockchains for transparency and immutability, building an unalterable trust network
               </p>
             </div>
 

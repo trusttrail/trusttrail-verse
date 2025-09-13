@@ -56,7 +56,7 @@ export const useWalletState = () => {
     if (network !== "amoy" && network !== "op-sepolia") {
       toast({
         title: "Network Not Supported",
-        description: `Only Polygon Amoy and OP Sepolia testnets are supported.`,
+        description: `Only Polygon & Optimism testnets are supported.`,
         variant: "destructive",
       });
       return;

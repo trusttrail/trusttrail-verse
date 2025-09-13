@@ -38,7 +38,7 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
   const [stakedBalance, setStakedBalance] = useState("0");
   const [rewards, setRewards] = useState({ daily: "0", weekly: "0", monthly: "0" });
 
-  const isValidNetwork = currentNetwork === "amoy";
+  const isValidNetwork = currentNetwork === "amoy" || currentNetwork === "opSepolia";
   const trtBalance = tokenBalances["TRT"] || "0";
   const calculatedAPY = calculateAPY();
 
@@ -108,7 +108,7 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
     if (!isValidNetwork) {
       toast({
         title: "Wrong Network",
-        description: "Please switch to Polygon Amoy testnet to stake tokens.",
+        description: "Please switch to a supported testnet (Polygon Amoy or OP Sepolia) to stake tokens.",
         variant: "destructive",
       });
       return;
@@ -156,7 +156,7 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
     if (!isValidNetwork) {
       toast({
         title: "Wrong Network",
-        description: "Please switch to Polygon Amoy testnet to unstake tokens.",
+        description: "Please switch to a supported testnet (Polygon Amoy or OP Sepolia) to unstake tokens.",
         variant: "destructive",
       });
       return;
@@ -210,7 +210,7 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
   return (
     <div>
       <h2 className="text-2xl md:text-3xl font-bold mb-2">TRT Token Staking</h2>
-      <p className="text-muted-foreground mb-8">Stake your TRT tokens to earn {calculatedAPY} APY on Polygon Amoy</p>
+      <p className="text-muted-foreground mb-8">Stake your tokens to earn {calculatedAPY} APY on supported networks</p>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Staking Interface */}
@@ -273,7 +273,7 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
               ) : !isValidNetwork ? (
                 <div className="text-center py-6">
                   <AlertTriangle className="mx-auto text-yellow-500 mb-4" size={48} />
-                  <p className="mb-4 text-muted-foreground">Please switch to Polygon Amoy testnet</p>
+                  <p className="mb-4 text-muted-foreground">Please switch to a supported testnet</p>
                   <Badge variant="destructive">Wrong Network</Badge>
                 </div>
               ) : (

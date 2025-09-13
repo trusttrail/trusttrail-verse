@@ -35,7 +35,7 @@ const StakingTab = ({ isWalletConnected, connectWallet }: StakingTabProps) => {
 
   // Function to refresh staked amounts
   const refreshStakedAmounts = React.useCallback(async () => {
-    if (!address || !isWalletConnected || currentNetwork !== "amoy") return;
+    if (!address || !isWalletConnected || (currentNetwork !== "amoy" && currentNetwork !== "opSepolia")) return;
     
     try {
       const trustStaked = await getStakedBalance(address);
@@ -58,12 +58,12 @@ const StakingTab = ({ isWalletConnected, connectWallet }: StakingTabProps) => {
 
   const stakingAPYs: Record<string, string> = { TRUST: "25%" };
 
-  const isValidNetwork = currentNetwork === "amoy";
+  const isValidNetwork = currentNetwork === "amoy" || currentNetwork === "opSepolia";
 
   return (
     <div>
       <h2 className="text-2xl md:text-3xl font-bold mb-2">Token Staking</h2>
-      <p className="text-muted-foreground mb-8">Stake your tokens to earn rewards on Polygon Amoy</p>
+      <p className="text-muted-foreground mb-8">Stake your tokens to earn rewards on supported networks</p>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Staking Interface */}
@@ -79,7 +79,7 @@ const StakingTab = ({ isWalletConnected, connectWallet }: StakingTabProps) => {
           ) : !isValidNetwork ? (
             <div className="text-center py-6">
               <AlertTriangle className="mx-auto text-yellow-500 mb-4" size={48} />
-              <p className="mb-4 text-muted-foreground">Please switch to Polygon Amoy testnet</p>
+              <p className="mb-4 text-muted-foreground">Please switch to a supported testnet</p>
               <Badge variant="destructive">Wrong Network</Badge>
             </div>
           ) : (

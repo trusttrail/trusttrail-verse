@@ -40,9 +40,9 @@ export const useStakingTransaction = () => {
       const signer = await provider.getSigner();
       const network = await provider.getNetwork();
 
-      // Verify network
-      if (network.chainId !== 80002n) {
-        throw new Error('Please switch to Polygon Amoy testnet');
+      // Verify network - support both Amoy and OP Sepolia
+      if (network.chainId !== 80002n && network.chainId !== 11155420n) {
+        throw new Error('Please switch to a supported testnet (Polygon Amoy or OP Sepolia)');
       }
 
       const contract = new ethers.Contract(

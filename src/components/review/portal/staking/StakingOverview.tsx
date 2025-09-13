@@ -64,7 +64,7 @@ const StakingOverview: React.FC<StakingOverviewProps> = ({
             </div>
           ) : !isValidNetwork ? (
             <div className="text-center py-6">
-              <p className="text-muted-foreground">Switch to Polygon Amoy to view positions</p>
+              <p className="text-muted-foreground">Switch to a supported network to view positions</p>
             </div>
           ) : trustToken ? (
             <div className="space-y-4">
@@ -104,7 +104,7 @@ const StakingOverview: React.FC<StakingOverviewProps> = ({
             </div>
           ) : !isValidNetwork ? (
             <div className="text-center py-6">
-              <p className="text-muted-foreground">Switch to Polygon Amoy to view rewards</p>
+              <p className="text-muted-foreground">Switch to a supported network to view rewards</p>
             </div>
           ) : (
             <>
