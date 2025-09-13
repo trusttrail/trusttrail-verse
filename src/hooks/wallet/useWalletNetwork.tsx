@@ -16,7 +16,7 @@ export const useWalletNetwork = (
 
     const supportedNetworks = {
       [AMOY_CHAIN_ID]: { id: 'amoy', name: AMOY_NETWORK_NAME },
-      [OP_SEPOLIA_CHAIN_ID]: { id: 'opSepolia', name: OP_SEPOLIA_NETWORK_NAME },
+      [OP_SEPOLIA_CHAIN_ID]: { id: 'op-sepolia', name: OP_SEPOLIA_NETWORK_NAME },
     };
     
     const handleAccountsChanged = (accounts: string[]) => {
@@ -48,7 +48,7 @@ export const useWalletNetwork = (
         });
       } else {
         setIsWalletConnected(false);
-        setCurrentNetwork("wrong");
+        setCurrentNetwork("unsupported");
         toast({
           title: "Wrong Network",
           description: `Wallet disconnected. Please switch to a supported testnet and reconnect.`,

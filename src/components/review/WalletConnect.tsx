@@ -60,11 +60,6 @@ const WalletConnect = ({
   const handleDisconnect = () => {
     onDisconnect();
     setIsOpen(false);
-    
-    toast({
-      title: "Wallet Disconnected",
-      description: "Your wallet has been disconnected successfully",
-    });
   };
 
   const handleConnectClick = () => {

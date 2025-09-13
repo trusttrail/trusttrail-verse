@@ -53,18 +53,19 @@ export const useWalletState = () => {
   };
 
   const handleNetworkChange = (network: string) => {
-    if (network !== "amoy") {
+    if (network !== "amoy" && network !== "op-sepolia") {
       toast({
         title: "Network Not Supported",
-        description: `Currently only Polygon Amoy testnet is supported in the testnet dApp.`,
+        description: `Only Polygon Amoy and OP Sepolia testnets are supported.`,
         variant: "destructive",
       });
       return;
     }
-    setCurrentNetwork("amoy");
+    setCurrentNetwork(network);
+    const networkName = network === "amoy" ? "Polygon Amoy" : "OP Sepolia";
     toast({
       title: "Network Changed",
-      description: `Switched to Polygon Amoy testnet.`,
+      description: `Switched to ${networkName} testnet.`,
     });
   };
 

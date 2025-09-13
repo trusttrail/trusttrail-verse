@@ -1,6 +1,6 @@
 
 import { useToast } from '@/hooks/use-toast';
-import { AMOY_CHAIN_ID, AMOY_NETWORK_NAME } from "@/constants/network";
+import { AMOY_CHAIN_ID, AMOY_NETWORK_NAME, OP_SEPOLIA_CHAIN_ID, OP_SEPOLIA_NETWORK_NAME } from "@/constants/network";
 
 export const useWalletConnection = (
   setIsWalletConnected: (val: boolean) => void,
@@ -27,10 +27,10 @@ export const useWalletConnection = (
 
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
         console.log('Current chain ID:', chainId);
-        console.log('Expected chain ID:', AMOY_CHAIN_ID);
+        console.log('Supported chain IDs:', AMOY_CHAIN_ID, OP_SEPOLIA_CHAIN_ID);
 
         if (chainId === AMOY_CHAIN_ID) {
-          console.log('✅ Correct network detected');
+          console.log('✅ Polygon Amoy network detected');
           setIsWalletConnected(true);
           setCurrentNetwork("amoy");
           localStorage.setItem('connected_wallet_address', address);
@@ -38,10 +38,19 @@ export const useWalletConnection = (
           // Return the address so wallet auth logic can check if it's new/existing
           console.log('Returning address for auth check:', address);
           return address;
+        } else if (chainId === OP_SEPOLIA_CHAIN_ID) {
+          console.log('✅ OP Sepolia network detected');
+          setIsWalletConnected(true);
+          setCurrentNetwork("op-sepolia");
+          localStorage.setItem('connected_wallet_address', address);
+          
+          // Return the address so wallet auth logic can check if it's new/existing
+          console.log('Returning address for auth check:', address);
+          return address;
         } else {
-          console.log('❌ Wrong network detected');
+          console.log('❌ Unsupported network detected');
           setIsWalletConnected(false);
-          setCurrentNetwork("wrong");
+          setCurrentNetwork("unsupported");
         }
       } else {
         console.log('No wallet accounts found');
@@ -83,24 +92,27 @@ export const useWalletConnection = (
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
         console.log('Connected wallet chain ID:', chainId);
 
-        if (chainId !== AMOY_CHAIN_ID) {
-          console.log('❌ Wrong network after connection');
+        if (chainId !== AMOY_CHAIN_ID && chainId !== OP_SEPOLIA_CHAIN_ID) {
+          console.log('❌ Unsupported network after connection');
           setIsWalletConnected(false);
-          setCurrentNetwork("wrong");
+          setCurrentNetwork("unsupported");
           toast({
-            title: "Wrong Network",
-            description: `Please switch to ${AMOY_NETWORK_NAME} in your MetaMask wallet to connect.`,
+            title: "Unsupported Network",
+            description: `Please switch to ${AMOY_NETWORK_NAME} or ${OP_SEPOLIA_NETWORK_NAME} to continue.`,
             variant: "destructive",
           });
           return null;
         } else {
-          console.log('✅ Correct network after connection');
+          const networkName = chainId === AMOY_CHAIN_ID ? "amoy" : "op-sepolia";
+          const displayName = chainId === AMOY_CHAIN_ID ? AMOY_NETWORK_NAME : OP_SEPOLIA_NETWORK_NAME;
+          
+          console.log(`✅ Supported network detected: ${displayName}`);
           setIsWalletConnected(true);
-          setCurrentNetwork("amoy");
+          setCurrentNetwork(networkName);
           
           toast({
             title: "Wallet Connected",
-            description: `Connected to ${address.substring(0, 6)}...${address.substring(address.length - 4)}`,
+            description: `Connected to ${displayName} with ${address.substring(0, 6)}...${address.substring(address.length - 4)}`,
           });
           
           // Return the address so wallet auth logic can determine if it's new/existing
