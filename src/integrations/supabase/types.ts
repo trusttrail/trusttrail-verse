@@ -41,6 +41,33 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          table_name: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          table_name: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          table_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -170,6 +197,13 @@ export type Database = {
       prevent_wallet_enumeration: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      secure_wallet_lookup: {
+        Args: { target_address: string }
+        Returns: {
+          profile_id: string
+          wallet_addr: string
+        }[]
       }
       validate_wallet_query: {
         Args: Record<PropertyKey, never>
