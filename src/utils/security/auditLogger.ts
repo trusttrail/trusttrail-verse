@@ -1,10 +1,10 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Security audit logging utilities
+ * Enhanced security audit logging for sensitive operations
  * 
- * SECURITY: All sensitive operations should be logged for monitoring
- * and security analysis. This helps detect potential security breaches.
+ * SECURITY: All wallet address access and sensitive operations are logged
+ * for compliance, monitoring, and security investigation purposes.
  */
 
 export interface AuditLogEntry {
@@ -15,12 +15,12 @@ export interface AuditLogEntry {
 }
 
 /**
- * Log a security-related action for audit purposes
+ * Log security-sensitive operations to the audit trail
  * 
  * @param entry - The audit log entry to record
- * @returns Promise that resolves when the log entry is saved
+ * @returns Promise<boolean> - Success status
  */
-export const logSecurityAction = async (entry: AuditLogEntry): Promise<void> => {
+export const logSecurityEvent = async (entry: AuditLogEntry): Promise<boolean> => {
   try {
     const { error } = await supabase
       .from('audit_logs')
@@ -28,60 +28,71 @@ export const logSecurityAction = async (entry: AuditLogEntry): Promise<void> => 
         action: entry.action,
         table_name: entry.table_name,
         details: entry.details || {},
-        user_id: entry.user_id
+        created_at: new Date().toISOString()
       });
 
     if (error) {
-      console.error('❌ Failed to log security action:', error);
-      // Don't throw - logging failure shouldn't break the main operation
-    } else {
-      console.log('📝 Security action logged:', entry.action);
+      console.error('🚨 Failed to log security event:', error);
+      return false;
     }
+
+    console.log('🔒 Security event logged:', entry.action);
+    return true;
   } catch (error) {
-    console.error('❌ Exception in security logging:', error);
-    // Don't throw - logging failure shouldn't break the main operation
+    console.error('🚨 Exception logging security event:', error);
+    return false;
   }
 };
 
 /**
- * Log suspicious wallet access attempts
+ * Log wallet address access attempts
  * 
  * @param walletAddress - The wallet address being accessed
- * @param context - Additional context about the access attempt
+ * @param operation - The type of operation (lookup, create, etc.)
+ * @param success - Whether the operation was successful
  */
 export const logWalletAccess = async (
-  walletAddress: string, 
-  context: Record<string, any> = {}
+  walletAddress: string,
+  operation: string,
+  success: boolean,
+  additionalDetails?: Record<string, any>
 ): Promise<void> => {
-  await logSecurityAction({
-    action: 'wallet_access_attempt',
+  await logSecurityEvent({
+    action: `wallet_${operation}`,
     table_name: 'wallet_profiles',
     details: {
       wallet_address: walletAddress,
-      timestamp: new Date().toISOString(),
+      operation,
+      success,
+      timestamp: Date.now(),
       user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server',
-      ...context
+      ...additionalDetails
     }
   });
 };
 
 /**
- * Log authentication events
+ * Log suspicious activity patterns
  * 
- * @param event - The authentication event type
- * @param details - Additional details about the event
+ * @param suspiciousActivity - Description of the suspicious activity
+ * @param context - Additional context about the activity
  */
-export const logAuthEvent = async (
-  event: string,
-  details: Record<string, any> = {}
+export const logSuspiciousActivity = async (
+  suspiciousActivity: string,
+  context: Record<string, any>
 ): Promise<void> => {
-  await logSecurityAction({
-    action: `auth_${event}`,
-    table_name: 'auth_events',
+  await logSecurityEvent({
+    action: 'suspicious_activity',
+    table_name: 'security',
     details: {
-      event_type: event,
-      timestamp: new Date().toISOString(),
-      ...details
+      activity: suspiciousActivity,
+      context,
+      severity: 'high',
+      requires_investigation: true,
+      timestamp: Date.now()
     }
   });
+
+  // In a production system, this could trigger alerts
+  console.warn('🚨 SUSPICIOUS ACTIVITY DETECTED:', suspiciousActivity, context);
 };

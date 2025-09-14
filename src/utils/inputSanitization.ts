@@ -13,9 +13,9 @@ export {
 
 // Export security audit logging
 export { 
-  logSecurityAction, 
+  logSecurityEvent, 
   logWalletAccess, 
-  logAuthEvent 
+  logSuspiciousActivity 
 } from './security/auditLogger';
 export { validateFileType, validateFileSize } from './sanitization/fileSanitizer';
 export { 
