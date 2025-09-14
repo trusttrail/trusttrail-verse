@@ -310,19 +310,20 @@ export class Web3Service {
             console.log('⛽ Ethereum Sepolia fallback gas settings');
           }
         } else if (currentNetwork === 'opSepolia') {
-          // OP Sepolia specific optimized settings
+          // OP Sepolia specific settings - use higher gas price similar to Amoy
           try {
             const feeData = await this.provider.getFeeData();
-            // OP Sepolia typically has very low base fees, but we need sufficient priority fees
-            gasPrice = feeData.gasPrice ? (feeData.gasPrice * 150n) / 100n : ethers.parseUnits('0.001', 'gwei');
-            gasLimit = 500000n; // Higher gas limit for OP Sepolia due to L2 overhead
+            // Use similar gas pricing to Amoy but adjusted for OP Sepolia
+            gasPrice = feeData.gasPrice ? (feeData.gasPrice * 200n) / 100n : ethers.parseUnits('2', 'gwei');
+            gasLimit = 800000n; // Higher gas limit for OP Sepolia L2 operations
             console.log('⛽ OP Sepolia gas settings:', {
               gasPrice: ethers.formatUnits(gasPrice, 'gwei') + ' gwei',
               gasLimit: gasLimit.toString()
             });
           } catch (gasError) {
-            gasPrice = ethers.parseUnits('0.001', 'gwei');
-            gasLimit = 500000n;
+            console.log('⛽ OP Sepolia gas error, using fallback:', gasError);
+            gasPrice = ethers.parseUnits('2', 'gwei');
+            gasLimit = 800000n;
             console.log('⛽ OP Sepolia fallback gas settings');
           }
         } else {
@@ -346,30 +347,13 @@ export class Web3Service {
         console.log('🚀 STEP 6: CALLING CONTRACT METHOD - MetaMask should popup NOW...');
         console.log('🚀 ===============================================================');
         
-        // Network-specific transaction options
+        // Network-specific transaction options - use simple gas pricing for all networks
         const txOptions: any = {
           gasLimit: gasLimit,
           gasPrice: gasPrice
         };
         
-        // For OP Sepolia, we might need to handle EIP-1559
-        if (currentNetwork === 'opSepolia') {
-          try {
-            const feeData = await this.provider.getFeeData();
-            if (feeData.maxFeePerGas && feeData.maxPriorityFeePerGas) {
-              // Use EIP-1559 for OP Sepolia if available
-              delete txOptions.gasPrice;
-              txOptions.maxFeePerGas = feeData.maxFeePerGas;
-              txOptions.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
-              console.log('⛽ Using EIP-1559 for OP Sepolia:', {
-                maxFeePerGas: ethers.formatUnits(feeData.maxFeePerGas, 'gwei') + ' gwei',
-                maxPriorityFeePerGas: ethers.formatUnits(feeData.maxPriorityFeePerGas, 'gwei') + ' gwei'
-              });
-            }
-          } catch (eip1559Error) {
-            console.log('⛽ EIP-1559 not available, using legacy gas pricing');
-          }
-        }
+        console.log('⛽ Final transaction options:', txOptions);
         
         const tx = await contract.submitReview(
           reviewData.companyName,
@@ -424,6 +408,13 @@ export class Web3Service {
         
       } catch (error: any) {
         console.error('❌ Transaction attempt failed:', error);
+        console.error('❌ Error details:', {
+          code: error.code,
+          message: error.message,
+          reason: error.reason,
+          data: error.data,
+          receipt: error.receipt
+        });
         
         // Re-throw user rejections immediately
         if (error.code === 4001 || error.code === 'ACTION_REJECTED') {

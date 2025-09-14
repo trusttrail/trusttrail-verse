@@ -9,11 +9,12 @@ export const useWeb3Transaction = () => {
   const [lastTxHash, setLastTxHash] = useState<string>('');
 
   const submitReviewTransaction = async (reviewData: any, walletAddress?: string): Promise<string | null> => {
-    console.log('🎯 STARTING TRANSACTION PROCESS...');
+    console.log('🎯 ================ STARTING TRANSACTION PROCESS ================');
     console.log('📊 Review data received:', reviewData);
     console.log('👤 Wallet address:', walletAddress);
     console.log('🔍 MetaMask available:', !!window.ethereum);
     console.log('🔍 MetaMask isMetaMask:', window.ethereum?.isMetaMask);
+    console.log('🌐 Current URL:', window.location.href);
 
     // Check if we have wallet address from the calling component
     if (!walletAddress) {
@@ -43,6 +44,22 @@ export const useWeb3Transaction = () => {
       console.log('🎯 Starting Web3 transaction for review submission');
       console.log('📊 Review data:', reviewData);
       console.log('👤 Connected address:', walletAddress);
+      console.log('🌐 Network check - Getting current network...');
+      
+      // Check current network before proceeding
+      try {
+        const currentAccounts = await window.ethereum.request({ method: 'eth_accounts' });
+        const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+        console.log('🌐 Current accounts:', currentAccounts);
+        console.log('🌐 Current chain ID:', currentChainId);
+        console.log('🌐 Expected OP Sepolia chain ID: 0xaa37dc');
+        
+        if (currentChainId !== '0xaa37dc') {
+          console.warn('⚠️ Not on OP Sepolia network. Current:', currentChainId);
+        }
+      } catch (networkError) {
+        console.error('❌ Network check failed:', networkError);
+      }
       
       // Show initial toast
       toast({
