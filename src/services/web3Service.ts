@@ -262,27 +262,44 @@ export class Web3Service {
         }
 
         // STEP 3: Setup contract using proper ethers interface
-        console.log('📜 STEP 3: Setting up contract interface...');
+        console.log('📜 =================== STEP 3: CONTRACT SETUP ===================');
+        console.log('📜 Setting up contract interface and validation...');
         const contractAddresses = await this.getContractAddresses();
         const CONTRACT_ADDRESS = contractAddresses.reviewPlatform;
         
-        // Validate contract address format to prevent ENS resolution
-        if (!ethers.isAddress(CONTRACT_ADDRESS)) {
-          throw new Error(`Invalid contract address format: ${CONTRACT_ADDRESS}`);
+        console.log('📜 Raw contract address from config:', CONTRACT_ADDRESS);
+        console.log('📜 Contract address type:', typeof CONTRACT_ADDRESS);
+        console.log('📜 Contract address length:', CONTRACT_ADDRESS?.length);
+        
+        // Clean and validate contract address
+        let cleanAddress = CONTRACT_ADDRESS;
+        if (typeof CONTRACT_ADDRESS === 'string') {
+          // Remove any whitespace and ensure proper format
+          cleanAddress = CONTRACT_ADDRESS.trim().toLowerCase();
+          console.log('📜 Cleaned contract address:', cleanAddress);
         }
         
-        console.log('✅ Contract address validated:', CONTRACT_ADDRESS);
+        // More robust address validation
+        const addressRegex = /^0x[a-fA-F0-9]{40}$/;
+        if (!addressRegex.test(cleanAddress)) {
+          console.error('❌ Contract address failed regex validation:', cleanAddress);
+          throw new Error(`Invalid contract address format: ${cleanAddress}`);
+        }
+        
+        console.log('✅ Contract address validation passed:', cleanAddress);
         
         // Import the ABI
         const { ReviewPlatformABI } = await import('@/contracts/abis/ReviewPlatform');
         
         // Create contract instance with signer - ensure no ENS resolution
+        console.log('📜 Creating contract instance...');
         const contract = new ethers.Contract(
-          CONTRACT_ADDRESS.toLowerCase(), // Ensure lowercase to prevent ENS issues
+          cleanAddress, // Use the cleaned address
           ReviewPlatformABI, 
           this.signer
         );
-        console.log('✅ Contract instance created');
+        console.log('✅ Contract instance created successfully');
+        console.log('📜 Contract target address:', await contract.getAddress());
 
         // STEP 4: Prepare review data
         console.log('🔨 STEP 4: Preparing review data...');
