@@ -7,10 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.12 (cd3cf9e)"
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
@@ -165,6 +165,10 @@ export type Database = {
       }
       is_user_admin: {
         Args: { check_user_id?: string }
+        Returns: boolean
+      }
+      validate_wallet_query: {
+        Args: Record<PropertyKey, never>
         Returns: boolean
       }
     }
