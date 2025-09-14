@@ -1,6 +1,6 @@
 
 import { useToast } from '@/hooks/use-toast';
-import { AMOY_CHAIN_ID, AMOY_NETWORK_NAME, OP_SEPOLIA_CHAIN_ID, OP_SEPOLIA_NETWORK_NAME } from "@/constants/network";
+import { AMOY_CHAIN_ID, AMOY_NETWORK_NAME, ETH_SEPOLIA_CHAIN_ID, ETH_SEPOLIA_NETWORK_NAME, OP_SEPOLIA_CHAIN_ID, OP_SEPOLIA_NETWORK_NAME } from "@/constants/network";
 
 export const useWalletConnection = (
   setIsWalletConnected: (val: boolean) => void,
@@ -27,7 +27,7 @@ export const useWalletConnection = (
 
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
         console.log('Current chain ID:', chainId);
-        console.log('Supported chain IDs:', AMOY_CHAIN_ID, OP_SEPOLIA_CHAIN_ID);
+        console.log('Supported chain IDs:', AMOY_CHAIN_ID, ETH_SEPOLIA_CHAIN_ID, OP_SEPOLIA_CHAIN_ID);
 
         if (chainId === AMOY_CHAIN_ID) {
           console.log('✅ Polygon Amoy network detected');
@@ -35,16 +35,22 @@ export const useWalletConnection = (
           setCurrentNetwork("amoy");
           localStorage.setItem('connected_wallet_address', address);
           
-          // Return the address so wallet auth logic can check if it's new/existing
+          console.log('Returning address for auth check:', address);
+          return address;
+        } else if (chainId === ETH_SEPOLIA_CHAIN_ID) {
+          console.log('✅ Ethereum Sepolia network detected');
+          setIsWalletConnected(true);
+          setCurrentNetwork("ethSepolia");
+          localStorage.setItem('connected_wallet_address', address);
+          
           console.log('Returning address for auth check:', address);
           return address;
         } else if (chainId === OP_SEPOLIA_CHAIN_ID) {
           console.log('✅ OP Sepolia network detected');
           setIsWalletConnected(true);
-          setCurrentNetwork("op-sepolia");
+          setCurrentNetwork("opSepolia");
           localStorage.setItem('connected_wallet_address', address);
           
-          // Return the address so wallet auth logic can check if it's new/existing
           console.log('Returning address for auth check:', address);
           return address;
         } else {
@@ -92,19 +98,30 @@ export const useWalletConnection = (
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
         console.log('Connected wallet chain ID:', chainId);
 
-        if (chainId !== AMOY_CHAIN_ID && chainId !== OP_SEPOLIA_CHAIN_ID) {
+        if (chainId !== AMOY_CHAIN_ID && chainId !== ETH_SEPOLIA_CHAIN_ID && chainId !== OP_SEPOLIA_CHAIN_ID) {
           console.log('❌ Unsupported network after connection');
           setIsWalletConnected(false);
           setCurrentNetwork("unsupported");
           toast({
             title: "Unsupported Network",
-            description: `Please switch to ${AMOY_NETWORK_NAME} or ${OP_SEPOLIA_NETWORK_NAME} to continue.`,
+            description: `Please switch to ${AMOY_NETWORK_NAME}, ${ETH_SEPOLIA_NETWORK_NAME}, or ${OP_SEPOLIA_NETWORK_NAME} to continue.`,
             variant: "destructive",
           });
           return null;
         } else {
-          const networkName = chainId === AMOY_CHAIN_ID ? "amoy" : "op-sepolia";
-          const displayName = chainId === AMOY_CHAIN_ID ? AMOY_NETWORK_NAME : OP_SEPOLIA_NETWORK_NAME;
+          let networkName: string;
+          let displayName: string;
+          
+          if (chainId === AMOY_CHAIN_ID) {
+            networkName = "amoy";
+            displayName = AMOY_NETWORK_NAME;
+          } else if (chainId === ETH_SEPOLIA_CHAIN_ID) {
+            networkName = "ethSepolia";
+            displayName = ETH_SEPOLIA_NETWORK_NAME;
+          } else {
+            networkName = "opSepolia";
+            displayName = OP_SEPOLIA_NETWORK_NAME;
+          }
           
           console.log(`✅ Supported network detected: ${displayName}`);
           setIsWalletConnected(true);

@@ -53,7 +53,7 @@ export const useWalletState = () => {
   };
 
   const handleNetworkChange = (network: string) => {
-    if (network !== "amoy" && network !== "op-sepolia") {
+    if (!["amoy", "ethSepolia", "opSepolia"].includes(network)) {
       toast({
         title: "Network Not Supported",
         description: `Only Polygon & Optimism testnets are supported.`,

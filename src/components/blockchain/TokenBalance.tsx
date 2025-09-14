@@ -8,7 +8,7 @@ import { useWeb3 } from '@/hooks/useWeb3';
 export const TokenBalance: React.FC = () => {
   const { tokenBalances, refreshBalances, isLoading, address, currentNetwork } = useWeb3();
 
-  if (!address || !["amoy", "opSepolia"].includes(currentNetwork)) {
+  if (!address || !["amoy", "ethSepolia", "opSepolia"].includes(currentNetwork)) {
     return null;
   }
 

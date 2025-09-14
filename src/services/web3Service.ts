@@ -115,7 +115,7 @@ export class Web3Service {
     if (!this.provider) throw new Error('Wallet not connected');
     
     const network = await this.provider.getNetwork();
-    const supportedChainIds = [80002n, 11155420n]; // Amoy and OP Sepolia
+    const supportedChainIds = [80002n, 11155111n, 11155420n]; // Amoy, ETH Sepolia, and OP Sepolia
     
     if (!supportedChainIds.includes(network.chainId)) {
       throw new Error(`Unsupported network. Please switch to Polygon Amoy or OP Sepolia testnet.`);
@@ -129,6 +129,7 @@ export class Web3Service {
     const chainId = network.chainId;
     
     if (chainId === 80002n) return "amoy";
+    if (chainId === 11155111n) return "ethSepolia"; 
     if (chainId === 11155420n) return "opSepolia";
     
     return "unknown";
@@ -141,20 +142,27 @@ export class Web3Service {
     const addresses = CONTRACT_ADDRESSES[network as keyof typeof CONTRACT_ADDRESSES];
     if (!addresses) throw new Error(`Unsupported network: ${network}`);
     
+    const explorerUrls = {
+      amoy: 'https://amoy.polygonscan.com/',
+      ethSepolia: 'https://sepolia.etherscan.io/',
+      opSepolia: 'https://sepolia-optimism.etherscan.io/'
+    };
+
     return {
       reviewPlatform: addresses.REVIEW_PLATFORM,
       rewardToken: addresses.REWARD_TOKEN,
-      explorerUrl: network === 'amoy' 
-        ? 'https://amoy.polygonscan.com/' 
-        : 'https://sepolia-optimism.etherscan.io/',
+      explorerUrl: explorerUrls[network as keyof typeof explorerUrls] || explorerUrls.amoy,
     };
   }
 
   async getExplorerUrl(txHash: string): Promise<string> {
     const network = await this.getCurrentNetwork();
-    const baseUrl = network === 'amoy' 
-      ? 'https://amoy.polygonscan.com/tx/' 
-      : 'https://sepolia-optimism.etherscan.io/tx/';
+    const baseUrls = {
+      amoy: 'https://amoy.polygonscan.com/tx/',
+      ethSepolia: 'https://sepolia.etherscan.io/tx/',
+      opSepolia: 'https://sepolia-optimism.etherscan.io/tx/'
+    };
+    const baseUrl = baseUrls[network as keyof typeof baseUrls] || baseUrls.amoy;
     return `${baseUrl}${txHash}`;
   }
 
@@ -278,7 +286,7 @@ export class Web3Service {
         let gasPrice: bigint;
         let gasLimit: bigint;
         
-        if (currentNetwork === 'opSepolia') {
+        if (currentNetwork === 'ethSepolia' || currentNetwork === 'opSepolia') {
           // OP Sepolia optimized settings - lower gas prices
           try {
             const feeData = await this.provider.getFeeData();
@@ -445,7 +453,7 @@ export class Web3Service {
       // Get TRT token balance
       const trtBalance = await this.getTrustTokenBalance(address);
       balances['TRT'] = trtBalance;
-    } else if (network === 'opSepolia') {
+    } else if (network === 'ethSepolia' || network === 'opSepolia') {
       // Get ETH balance for gas fees
       const ethBalance = await this.getTokenBalance(address, 'ETH');
       balances['ETH'] = ethBalance;
@@ -555,7 +563,7 @@ export class Web3Service {
       
       // Get network-specific gas settings for minting
       const network = await this.getCurrentNetwork();
-      let gasLimit = network === 'opSepolia' ? 200000n : 300000n;
+      let gasLimit = ['ethSepolia', 'opSepolia'].includes(network) ? 200000n : 300000n;
       
       // Attempt to mint tokens
       const mintTx = await tokenContract.mint(recipientAddress, amount, {

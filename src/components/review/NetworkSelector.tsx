@@ -24,6 +24,7 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
     { id: "ethereum", name: "Ethereum Mainnet", icon: "⟠", supported: false },
     { id: "polygon", name: "Polygon Mainnet", icon: "🟣", supported: false },
     { id: "amoy", name: "Polygon Amoy (Testnet)", icon: "🟣", supported: true },
+    { id: "ethSepolia", name: "Ethereum Sepolia (Testnet)", icon: "⟠", supported: true },
     { id: "opSepolia", name: "OP Sepolia (Testnet)", icon: "🔴", supported: true },
     { id: "arbitrum", name: "Arbitrum One", icon: "🔵", supported: false },
     { id: "optimism", name: "Optimism", icon: "🔴", supported: false },
@@ -33,8 +34,9 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
   // Listen for supported testnets
   useEffect(() => {
     const supportedNetworks = {
-      '0x13882': 'amoy',      // Polygon Amoy
-      '0xaa36a7': 'opSepolia' // OP Sepolia
+      '0x13882': 'amoy',        // Polygon Amoy
+      '0xaa36a7': 'ethSepolia', // Ethereum Sepolia
+      '0xaa37dc': 'opSepolia'   // OP Sepolia  
     };
     
     const checkNetwork = async () => {
@@ -71,8 +73,8 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
         } else {
           setActualNetwork("wrong");
           toast({
-            title: "Wrong Network",
-            description: "Please switch to a supported testnet (Polygon Amoy or OP Sepolia)",
+            title: "Wrong Network", 
+            description: "Please switch to a supported testnet (Polygon Amoy, Ethereum Sepolia, or OP Sepolia)",
             variant: "destructive",
           });
         }
@@ -89,7 +91,7 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
     if (!supported) {
       toast({
         title: "Network Not Supported",
-        description: `Currently only Polygon Amoy and OP Sepolia testnets are supported.`,
+        description: `Currently only Polygon Amoy, Ethereum Sepolia, and OP Sepolia testnets are supported.`,
         variant: "destructive",
       });
       return;
@@ -104,9 +106,16 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
           rpcUrls: ['https://rpc-amoy.polygon.technology/'],
           blockExplorerUrls: ['https://amoy.polygonscan.com/']
         },
-        opSepolia: {
+        ethSepolia: {
           chainId: '0xaa36a7',
-          chainName: 'OP Sepolia Testnet',
+          chainName: 'Ethereum Sepolia Testnet',
+          nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+          rpcUrls: ['https://sepolia.infura.io/v3/'],
+          blockExplorerUrls: ['https://sepolia.etherscan.io/']
+        },
+        opSepolia: {
+          chainId: '0xaa37dc',
+          chainName: 'OP Sepolia Testnet', 
           nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
           rpcUrls: ['https://sepolia.optimism.io'],
           blockExplorerUrls: ['https://sepolia-optimism.etherscan.io/']
@@ -150,7 +159,7 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
     onChange(networkId);
   };
 
-  const supportedNetworkIds = ["amoy", "opSepolia"];
+  const supportedNetworkIds = ["amoy", "ethSepolia", "opSepolia"];
   const isWrongNetwork = !supportedNetworkIds.includes(actualNetwork);
   const selectedNetwork = networks.find(n => n.id === actualNetwork) || networks.find(n => n.id === "amoy") || networks[2];
 
@@ -171,7 +180,7 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
       <DropdownMenuContent className="w-56 bg-popover border-border z-[200]">
         {isWrongNetwork && (
           <div className="px-3 py-2 text-sm text-destructive border-b border-border mb-1">
-            Please switch to a supported testnet (Polygon Amoy or OP Sepolia)
+            Please switch to a supported testnet (Polygon Amoy, Ethereum Sepolia, or OP Sepolia)
           </div>
         )}
         {networks.map((network) => (

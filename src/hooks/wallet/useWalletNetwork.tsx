@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { AMOY_CHAIN_ID, AMOY_NETWORK_NAME, OP_SEPOLIA_CHAIN_ID, OP_SEPOLIA_NETWORK_NAME } from "@/constants/network";
+import { AMOY_CHAIN_ID, AMOY_NETWORK_NAME, ETH_SEPOLIA_CHAIN_ID, ETH_SEPOLIA_NETWORK_NAME, OP_SEPOLIA_CHAIN_ID, OP_SEPOLIA_NETWORK_NAME } from "@/constants/network";
 import { useToast } from "@/hooks/use-toast";
 
 export const useWalletNetwork = (
@@ -16,7 +16,8 @@ export const useWalletNetwork = (
 
     const supportedNetworks = {
       [AMOY_CHAIN_ID]: { id: 'amoy', name: AMOY_NETWORK_NAME },
-      [OP_SEPOLIA_CHAIN_ID]: { id: 'op-sepolia', name: OP_SEPOLIA_NETWORK_NAME },
+      [ETH_SEPOLIA_CHAIN_ID]: { id: 'ethSepolia', name: ETH_SEPOLIA_NETWORK_NAME },
+      [OP_SEPOLIA_CHAIN_ID]: { id: 'opSepolia', name: OP_SEPOLIA_NETWORK_NAME },
     };
     
     const handleAccountsChanged = (accounts: string[]) => {

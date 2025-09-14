@@ -3,7 +3,10 @@
 export const AMOY_CHAIN_ID = '0x13882'; // 80002 (Amoy Polygon Testnet)
 export const AMOY_NETWORK_NAME = 'Polygon Amoy (Testnet)';
 
-export const OP_SEPOLIA_CHAIN_ID = '0xaa37dc'; // 11155420 (OP Sepolia Testnet)
+export const ETH_SEPOLIA_CHAIN_ID = '0xaa36a7'; // 11155111 (Ethereum Sepolia Testnet)
+export const ETH_SEPOLIA_NETWORK_NAME = 'Ethereum Sepolia (Testnet)';
+
+export const OP_SEPOLIA_CHAIN_ID = '0xaa37dc'; // 11155420 (OP Sepolia Testnet)  
 export const OP_SEPOLIA_NETWORK_NAME = 'OP Sepolia (Testnet)';
 
 // Contract addresses by network
@@ -11,6 +14,10 @@ export const CONTRACT_ADDRESSES = {
   amoy: {
     REVIEW_PLATFORM: '0x3d27504B6B18Da549D6F18928c3fa8A35675aB8A',
     REWARD_TOKEN: '0x3d27504B6B18Da549D6F18928c3fa8A35675aB8A', // TRT token contract
+  },
+  ethSepolia: {
+    REVIEW_PLATFORM: '0x1665691897705F7bA63C62067F189993A1d44AD5', // ETH Sepolia TrustTrail contract  
+    REWARD_TOKEN: '0x1665691897705F7bA63C62067F189993A1d44AD5', // TRUST token contract
   },
   opSepolia: {
     REVIEW_PLATFORM: '0x1665691897705F7bA63C62067F189993A1d44AD5', // OP Sepolia TrustTrail contract

@@ -35,7 +35,7 @@ const StakingTab = ({ isWalletConnected, connectWallet }: StakingTabProps) => {
 
   // Function to refresh staked amounts
   const refreshStakedAmounts = React.useCallback(async () => {
-    if (!address || !isWalletConnected || (currentNetwork !== "amoy" && currentNetwork !== "opSepolia")) return;
+    if (!address || !isWalletConnected || !["amoy", "ethSepolia", "opSepolia"].includes(currentNetwork)) return;
     
     try {
       const trustStaked = await getStakedBalance(address);
@@ -58,7 +58,7 @@ const StakingTab = ({ isWalletConnected, connectWallet }: StakingTabProps) => {
 
   const stakingAPYs: Record<string, string> = { TRUST: "25%" };
 
-  const isValidNetwork = currentNetwork === "amoy" || currentNetwork === "opSepolia";
+  const isValidNetwork = ["amoy", "ethSepolia", "opSepolia"].includes(currentNetwork);
 
   return (
     <div>

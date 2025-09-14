@@ -38,7 +38,7 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
   const [stakedBalance, setStakedBalance] = useState("0");
   const [rewards, setRewards] = useState({ daily: "0", weekly: "0", monthly: "0" });
 
-  const isValidNetwork = currentNetwork === "amoy" || currentNetwork === "opSepolia";
+  const isValidNetwork = currentNetwork === "amoy" || currentNetwork === "ethSepolia" || currentNetwork === "opSepolia";
   const trtBalance = tokenBalances["TRT"] || "0";
   const calculatedAPY = calculateAPY();
 
