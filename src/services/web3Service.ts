@@ -201,11 +201,13 @@ export class Web3Service {
   }
 
   async submitReview(reviewData: any): Promise<string> {
-    console.log('🔥 =================== REVIEW SUBMISSION ATTEMPT ===================');
-    console.log('📊 Input data:', reviewData);
+    console.log('🔥 ===================== SMART CONTRACT SUBMISSION =====================');
+    console.log('📊 Input data received:', JSON.stringify(reviewData, null, 2));
+    console.log('🌐 Provider status:', !!this.provider);
+    console.log('✍️ Signer status:', !!this.signer);
     
     if (!this.provider || !this.signer) {
-      console.error('❌ No provider/signer');
+      console.error('❌ CRITICAL: No provider/signer available');
       throw new Error('Wallet not connected - call connect() first');
     }
 
@@ -220,20 +222,30 @@ export class Web3Service {
     return await this.retryWithFallback(async () => {
       try {
         // STEP 1: Basic connectivity check
-        console.log('🌐 STEP 1: Checking basic connectivity...');
+        console.log('🌐 =================== STEP 1: CONNECTIVITY CHECK ===================');
+        console.log('🌐 Checking network connection and basic connectivity...');
         const network = await this.provider.getNetwork();
-        console.log('🌐 Connected to network:', {
+        console.log('🌐 Network info retrieved:', {
           name: network.name,
           chainId: network.chainId.toString(),
+          chainIdHex: '0x' + network.chainId.toString(16),
           currentNetworkName: await this.getCurrentNetwork()
         });
         
+        const currentNetworkName = await this.getCurrentNetwork();
+        console.log('🌐 Current network name from service:', currentNetworkName);
+        
         // OP Sepolia specific network validation
-        if (await this.getCurrentNetwork() === 'opSepolia') {
-          console.log('🔴 OP SEPOLIA DETECTED - Using optimized transaction flow');
+        if (currentNetworkName === 'opSepolia') {
+          console.log('🔴 =================== OP SEPOLIA DETECTED ===================');
           console.log('🔴 Expected chain ID: 11155420 (0xaa37dc)');
-          console.log('🔴 Actual chain ID:', network.chainId.toString());
+          console.log('🔴 Actual chain ID decimal:', network.chainId.toString());
+          console.log('🔴 Actual chain ID hex: 0x' + network.chainId.toString(16));
+          console.log('🔴 Network validation: Using optimized OP Sepolia flow');
+          console.log('🔴 =========================================================');
         }
+        
+        console.log('✅ Network connectivity check passed');
         
         // STEP 2: Get signer info - avoid ENS issues on Amoy
         console.log('👤 STEP 2: Getting signer info...');

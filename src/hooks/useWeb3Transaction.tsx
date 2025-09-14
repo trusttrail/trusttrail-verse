@@ -68,27 +68,50 @@ export const useWeb3Transaction = () => {
       });
 
       // Force reconnection to ensure fresh web3 connection
-      console.log('🔄 Ensuring fresh web3 connection...');
+      console.log('🔄 =================== WEB3 CONNECTION PHASE ===================');
       try {
         // Request accounts to wake up MetaMask
+        console.log('📱 Requesting MetaMask accounts...');
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         console.log('📱 Available accounts:', accounts);
+        console.log('📱 Account count:', accounts?.length || 0);
         
         if (!accounts || accounts.length === 0) {
+          console.error('❌ No accounts available in MetaMask');
           throw new Error('No accounts available in MetaMask');
+        }
+
+        // Check current network
+        console.log('🌐 Checking current network...');
+        const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+        console.log('🌐 Current chain ID:', currentChainId);
+        console.log('🌐 Expected OP Sepolia chain ID: 0xaa37dc');
+        
+        if (currentChainId !== '0xaa37dc') {
+          console.warn('⚠️ WARNING: Not on OP Sepolia network!');
+          console.warn('⚠️ Current network:', currentChainId);
+          console.warn('⚠️ Expected network: 0xaa37dc (OP Sepolia)');
+        } else {
+          console.log('✅ Correct network detected: OP Sepolia');
         }
 
         // Connect web3Service with fresh connection
         console.log('🔗 Connecting web3Service...');
         const connectedAddress = await web3Service.connect();
         console.log('✅ Web3Service connected to:', connectedAddress);
+        console.log('✅ Connection verification passed');
 
       } catch (connectionError) {
-        console.error('❌ Web3 connection failed:', connectionError);
+        console.error('❌ ================ WEB3 CONNECTION FAILED ==================');
+        console.error('❌ Connection error type:', typeof connectionError);
+        console.error('❌ Connection error details:', connectionError);
+        console.error('❌ Connection error message:', connectionError.message);
+        console.error('❌ =========================================================');
         throw new Error(`Connection failed: ${connectionError.message}`);
       }
 
       // Prepare review data for blockchain
+      console.log('🔨 ================= PREPARING BLOCKCHAIN DATA ==================');
       const blockchainReviewData = {
         companyName: reviewData.companyName,
         category: reviewData.category,
@@ -99,14 +122,26 @@ export const useWeb3Transaction = () => {
         reviewer: walletAddress
       };
 
-      console.log('🔗 Final blockchain review data:', blockchainReviewData);
+      console.log('🔗 Final blockchain review data prepared:', JSON.stringify(blockchainReviewData, null, 2));
+      console.log('📋 Data validation:');
+      console.log('  - companyName:', blockchainReviewData.companyName);
+      console.log('  - category:', blockchainReviewData.category);
+      console.log('  - rating:', blockchainReviewData.rating);
+      console.log('  - reviewer address:', blockchainReviewData.reviewer);
 
       // Submit review to smart contract - THIS SHOULD TRIGGER METAMASK POPUP
-      console.log('🚀 Calling web3Service.submitReview() - MetaMask should popup now...');
-      console.log('📋 About to submit this data to blockchain:', blockchainReviewData);
+      console.log('🚀 ================= CALLING SMART CONTRACT ===================');
+      console.log('🚀 Calling web3Service.submitReview() - MetaMask popup should appear NOW');
+      console.log('📋 Submitting to blockchain with data:', blockchainReviewData);
+      
       const txHash = await web3Service.submitReview(blockchainReviewData);
       
+      console.log('✅ ================== TRANSACTION SUCCESSFUL ==================');
       console.log('✅ Transaction hash received:', txHash);
+      console.log('✅ Transaction hash type:', typeof txHash);
+      console.log('✅ Transaction hash length:', txHash?.length);
+      console.log('✅ ============================================================');
+      
       setLastTxHash(txHash);
       
       toast({
@@ -119,29 +154,39 @@ export const useWeb3Transaction = () => {
       return txHash;
       
     } catch (error: any) {
-      console.error('❌ Transaction failed with error:', error);
-      console.error('❌ Error details:', {
-        message: error.message,
-        code: error.code,
-        data: error.data,
-        stack: error.stack
-      });
+      console.error('❌ ================ TRANSACTION ERROR CAUGHT ==================');
+      console.error('❌ Error type:', typeof error);
+      console.error('❌ Error constructor:', error?.constructor?.name);
+      console.error('❌ Error message:', error?.message);
+      console.error('❌ Error code:', error?.code);
+      console.error('❌ Error data:', error?.data);
+      console.error('❌ Error reason:', error?.reason);
+      console.error('❌ Error receipt:', error?.receipt);
+      console.error('❌ Full error object:', error);
+      console.error('❌ Error stack trace:', error?.stack);
+      console.error('❌ ============================================================');
       
       let errorMessage = "Transaction failed. Please try again.";
       
       // Specific error handling
       if (error.message?.includes('rejected') || error.code === 4001) {
         errorMessage = "Transaction was cancelled in MetaMask.";
+        console.log('👤 User cancelled transaction in MetaMask');
       } else if (error.message?.includes('insufficient')) {
         errorMessage = "Insufficient gas balance. Get some from the faucet.";
+        console.log('⛽ Insufficient gas for transaction');
       } else if (error.message?.includes('Connection failed')) {
         errorMessage = error.message;
+        console.log('🔌 Connection issue detected');
       } else if (error.message?.includes('RPC Error') || error.message?.includes('Network connectivity issue')) {
         errorMessage = "RPC connection issues. Please refresh the page and try again.";
+        console.log('🌐 RPC/Network issue detected');
       } else if (error.message?.includes('network')) {
         errorMessage = "Network error. Please check your connection to supported testnet.";
+        console.log('🌐 Network error detected');
       } else {
         errorMessage = `Transaction error: ${error.message || 'Unknown error'}`;
+        console.log('❓ Unknown transaction error');
       }
       
       toast({

@@ -25,15 +25,19 @@ export const useFormSubmission = ({
   const handleSubmit = async (e: React.FormEvent, formData: ReviewFormData) => {
     e.preventDefault();
     
-    console.log('🚀 FORM SUBMISSION STARTED');
-    console.log('📋 Form data:', formData);
-    console.log('🔍 Validation checks:');
+    console.log('🚀 =================== FORM SUBMISSION STARTED ===================');
+    console.log('📋 Form data received:', JSON.stringify(formData, null, 2));
+    console.log('🔍 Environment validation checks:');
     console.log('  - isWalletConnected:', isWalletConnected);
     console.log('  - walletAddress:', walletAddress);
     console.log('  - gitcoinVerified:', gitcoinVerified);
+    console.log('  - window.ethereum exists:', !!window.ethereum);
+    console.log('  - MetaMask detected:', window.ethereum?.isMetaMask);
     
     if (!isWalletConnected || !walletAddress) {
-      console.error('❌ Wallet check failed');
+      console.error('❌ WALLET CONNECTION CHECK FAILED');
+      console.error('  - isWalletConnected:', isWalletConnected);
+      console.error('  - walletAddress:', walletAddress);
       toast({
         title: "Wallet Not Connected",
         description: "Please connect your wallet first.",
@@ -43,7 +47,8 @@ export const useFormSubmission = ({
     }
 
     if (!gitcoinVerified) {
-      console.error('❌ Gitcoin verification failed');
+      console.error('❌ GITCOIN VERIFICATION CHECK FAILED');
+      console.error('  - gitcoinVerified:', gitcoinVerified);
       toast({
         title: "Gitcoin Verification Required",
         description: "Please verify your Gitcoin passport before submitting a review.",
@@ -52,12 +57,12 @@ export const useFormSubmission = ({
       return;
     }
 
-    console.log('✅ All validation checks passed, proceeding with submission...');
+    console.log('✅ ALL VALIDATION CHECKS PASSED - PROCEEDING WITH SUBMISSION');
 
     setIsSubmitting(true);
 
     try {
-      console.log('🚀 Starting review submission: Blockchain FIRST, then AI screening...');
+      console.log('🚀 STARTING REVIEW SUBMISSION PROCESS - BLOCKCHAIN FIRST APPROACH');
       
       // STEP 1: Blockchain transaction FIRST (user signs with wallet)
       toast({
@@ -66,10 +71,18 @@ export const useFormSubmission = ({
         duration: 4000,
       });
       
-      console.log('🔗 Starting blockchain submission FIRST...');
+      console.log('🔗 CALLING submitReviewTransaction - THIS SHOULD TRIGGER METAMASK');
+      console.log('📊 Passing data to transaction:', {
+        formData: formData,
+        walletAddress: walletAddress
+      });
+      
       const txHash = await submitReviewTransaction(formData, walletAddress);
       
+      console.log('🔄 TRANSACTION RESULT RECEIVED:', txHash);
+      
       if (!txHash) {
+        console.error('❌ NO TRANSACTION HASH RETURNED - TRANSACTION FAILED');
         toast({
           title: "Transaction Failed",
           description: "Blockchain transaction was cancelled or failed. Please try again.",
@@ -77,6 +90,8 @@ export const useFormSubmission = ({
         });
         return;
       }
+      
+      console.log('✅ BLOCKCHAIN TRANSACTION SUCCESSFUL:', txHash);
       
       // STEP 2: Now do AI screening AFTER successful blockchain transaction
       toast({
@@ -125,13 +140,20 @@ export const useFormSubmission = ({
       resetForm();
       
     } catch (error) {
-      console.error('❌ Form submission error:', error);
+      console.error('❌ =================== FORM SUBMISSION ERROR ===================');
+      console.error('❌ Error type:', typeof error);
+      console.error('❌ Error details:', error);
+      console.error('❌ Error message:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      console.error('❌ ============================================================');
+      
       toast({
         title: "Submission Failed",
-        description: "An error occurred during submission. Please try again.",
+        description: error instanceof Error ? error.message : "An error occurred during submission. Please try again.",
         variant: "destructive",
       });
     } finally {
+      console.log('🔄 CLEANING UP - Setting isSubmitting to false');
       setIsSubmitting(false);
     }
   };
