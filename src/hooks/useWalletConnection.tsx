@@ -81,11 +81,11 @@ export const useWalletConnection = () => {
     return () => clearInterval(interval);
   }, [throttledConnectionCheck]);
 
-  const connectWallet = useCallback(async () => {
+  const connectWallet = useCallback(async (specificWallet?: any) => {
     if (isWalletConnecting) return { success: false, error: 'Already connecting' };
     
     try {
-      const address = await connectWalletCore();
+      const address = await connectWalletCore(specificWallet);
       
       if (address) {
         // Handle wallet authentication
@@ -95,7 +95,7 @@ export const useWalletConnection = () => {
           success: true,
           address,
           isNewUser: needsSignup,
-          message: "Successfully connected to MetaMask"
+          message: "Successfully connected wallet"
         };
       } else {
         return {

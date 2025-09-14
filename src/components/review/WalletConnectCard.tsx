@@ -7,9 +7,12 @@ import { useNavigate } from "react-router-dom";
 import { useWalletConnection } from '@/hooks/useWalletConnection';
 import { useAuth } from '@/hooks/useAuth';
 
+import MultiWalletSelector from './MultiWalletSelector';
+import { DetectedWallet } from '@/utils/walletProviders';
+
 interface WalletConnectCardProps {
   isMetaMaskAvailable: boolean;
-  connectWallet: () => void;
+  connectWallet: (wallet?: DetectedWallet) => void;
   connectWithWalletConnect: () => void;
   isWalletConnected: boolean;
   walletAddress: string;
@@ -25,6 +28,7 @@ const WalletConnectCard = ({
   const navigate = useNavigate();
   const { needsSignup, existingUser } = useWalletConnection();
   const { isAuthenticated, user } = useAuth();
+  const [showWalletSelector, setShowWalletSelector] = React.useState(false);
 
   const handleAuthRedirect = () => {
     console.log('Redirecting to auth page');
@@ -69,27 +73,30 @@ const WalletConnectCard = ({
               Connect your wallet first to continue. We'll automatically detect if you're a new or existing user.
             </p>
             <div className="space-y-2">
-              {isMetaMaskAvailable ? (
-                <Button onClick={connectWallet} className="w-full bg-gradient-to-r from-trustpurple-500 to-trustblue-500">
-                  <Wallet className="mr-2" size={18} />
-                  Connect MetaMask
-                </Button>
-              ) : (
-                <Button 
-                  onClick={() => window.open("https://metamask.io/download/", "_blank")}
-                  variant="outline"
-                  className="w-full"
-                >
-                  Install MetaMask
-                </Button>
-              )}
-              <Button onClick={connectWithWalletConnect} variant="outline" className="w-full">
+              <Button 
+                onClick={() => setShowWalletSelector(true)} 
+                className="w-full bg-gradient-to-r from-trustpurple-500 to-trustblue-500"
+              >
                 <Wallet className="mr-2" size={18} />
-                WalletConnect
+                Connect Wallet
               </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                Supports MetaMask, Rainbow, Trust Wallet, Coinbase Wallet, and more
+              </p>
             </div>
           </div>
         </CardContent>
+        
+        {/* Multi-Wallet Selector */}
+        <MultiWalletSelector
+          isOpen={showWalletSelector}
+          onClose={() => setShowWalletSelector(false)}
+          onWalletSelect={(wallet) => {
+            setShowWalletSelector(false);
+            connectWallet(wallet);
+          }}
+          isConnecting={false}
+        />
       </Card>
     );
   }
