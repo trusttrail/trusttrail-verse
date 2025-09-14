@@ -3,6 +3,7 @@ import { ReviewFormData } from '@/hooks/useReviewForm';
 import { supabase } from '@/integrations/supabase/client';
 import { sanitizeInput } from './inputSanitization';
 import { screenReviewWithAI } from './aiReviewScreening';
+import { getOrCreateWalletProfileSecurely } from './walletSecurity';
 
 export interface SubmissionResult {
   success: boolean;
@@ -18,40 +19,22 @@ export const submitReviewToDatabase = async (
   txHash?: string
 ): Promise<SubmissionResult> => {
   try {
-    // For wallet-connected users, create or get wallet profile
+    // For wallet-connected users, create or get wallet profile using secure method
     console.log('💾 Processing wallet-based review submission for:', walletAddress);
     
-    // First, ensure wallet profile exists
+    // Use secure wallet profile operations to prevent data exposure
     let walletProfileId: string;
     
-    // Check if wallet profile already exists
-    const { data: existingProfile } = await supabase
-      .from('wallet_profiles')
-      .select('id')
-      .eq('wallet_address', walletAddress.toLowerCase())
-      .maybeSingle();
-    
-    if (existingProfile) {
-      walletProfileId = existingProfile.id;
-      console.log('📁 Using existing wallet profile:', walletProfileId);
-    } else {
-      // Create new wallet profile
-      const { data: newProfile, error: profileError } = await supabase
-        .from('wallet_profiles')
-        .insert({ wallet_address: walletAddress.toLowerCase() })
-        .select('id')
-        .single();
-      
-      if (profileError) {
-        console.error('❌ Failed to create wallet profile:', profileError);
-        return {
-          success: false,
-          message: 'Failed to create wallet profile. Please try again.',
-        };
-      }
-      
-      walletProfileId = newProfile.id;
-      console.log('✅ Created new wallet profile:', walletProfileId);
+    try {
+      const walletProfile = await getOrCreateWalletProfileSecurely(walletAddress);
+      walletProfileId = walletProfile.id;
+      console.log('✅ Secured wallet profile ready:', walletProfileId);
+    } catch (error) {
+      console.error('❌ Failed to get/create wallet profile securely:', error);
+      return {
+        success: false,
+        message: 'Failed to process wallet profile. Please try again.',
+      };
     }
 
     console.log('💾 Submitting review to database with INSTANT AI screening:', {

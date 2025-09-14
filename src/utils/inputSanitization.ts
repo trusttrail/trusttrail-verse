@@ -3,6 +3,13 @@
 export { sanitizeInput, purify } from './sanitization/domSanitizer';
 export { sanitizeEmail } from './sanitization/emailSanitizer';
 export { sanitizeWalletAddress } from './sanitization/walletSanitizer';
+
+// Export secure wallet operations
+export { 
+  findWalletProfileByAddress, 
+  createWalletProfileSecurely, 
+  getOrCreateWalletProfileSecurely 
+} from './walletSecurity';
 export { validateFileType, validateFileSize } from './sanitization/fileSanitizer';
 export { 
   sanitizeNumericInput, 

@@ -167,6 +167,10 @@ export type Database = {
         Args: { check_user_id?: string }
         Returns: boolean
       }
+      prevent_wallet_enumeration: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       validate_wallet_query: {
         Args: Record<PropertyKey, never>
         Returns: boolean
