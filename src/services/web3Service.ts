@@ -224,8 +224,16 @@ export class Web3Service {
         const network = await this.provider.getNetwork();
         console.log('🌐 Connected to network:', {
           name: network.name,
-          chainId: network.chainId.toString()
+          chainId: network.chainId.toString(),
+          currentNetworkName: await this.getCurrentNetwork()
         });
+        
+        // OP Sepolia specific network validation
+        if (await this.getCurrentNetwork() === 'opSepolia') {
+          console.log('🔴 OP SEPOLIA DETECTED - Using optimized transaction flow');
+          console.log('🔴 Expected chain ID: 11155420 (0xaa37dc)');
+          console.log('🔴 Actual chain ID:', network.chainId.toString());
+        }
         
         // STEP 2: Get signer info - avoid ENS issues on Amoy
         console.log('👤 STEP 2: Getting signer info...');
@@ -286,19 +294,35 @@ export class Web3Service {
         let gasPrice: bigint;
         let gasLimit: bigint;
         
-        if (currentNetwork === 'ethSepolia' || currentNetwork === 'opSepolia') {
-          // OP Sepolia optimized settings - lower gas prices
+        if (currentNetwork === 'ethSepolia') {
+          // Ethereum Sepolia settings
           try {
             const feeData = await this.provider.getFeeData();
-            gasPrice = feeData.gasPrice ? (feeData.gasPrice * 120n) / 100n : ethers.parseUnits('0.1', 'gwei');
-            gasLimit = 300000n; // Optimized for OP Sepolia
+            gasPrice = feeData.gasPrice ? (feeData.gasPrice * 120n) / 100n : ethers.parseUnits('20', 'gwei');
+            gasLimit = 400000n;
+            console.log('⛽ Ethereum Sepolia gas settings:', {
+              gasPrice: ethers.formatUnits(gasPrice, 'gwei') + ' gwei',
+              gasLimit: gasLimit.toString()
+            });
+          } catch (gasError) {
+            gasPrice = ethers.parseUnits('20', 'gwei');
+            gasLimit = 400000n;
+            console.log('⛽ Ethereum Sepolia fallback gas settings');
+          }
+        } else if (currentNetwork === 'opSepolia') {
+          // OP Sepolia specific optimized settings
+          try {
+            const feeData = await this.provider.getFeeData();
+            // OP Sepolia typically has very low base fees, but we need sufficient priority fees
+            gasPrice = feeData.gasPrice ? (feeData.gasPrice * 150n) / 100n : ethers.parseUnits('0.001', 'gwei');
+            gasLimit = 500000n; // Higher gas limit for OP Sepolia due to L2 overhead
             console.log('⛽ OP Sepolia gas settings:', {
               gasPrice: ethers.formatUnits(gasPrice, 'gwei') + ' gwei',
               gasLimit: gasLimit.toString()
             });
           } catch (gasError) {
-            gasPrice = ethers.parseUnits('0.1', 'gwei');
-            gasLimit = 300000n;
+            gasPrice = ethers.parseUnits('0.001', 'gwei');
+            gasLimit = 500000n;
             console.log('⛽ OP Sepolia fallback gas settings');
           }
         } else {
@@ -322,16 +346,38 @@ export class Web3Service {
         console.log('🚀 STEP 6: CALLING CONTRACT METHOD - MetaMask should popup NOW...');
         console.log('🚀 ===============================================================');
         
+        // Network-specific transaction options
+        const txOptions: any = {
+          gasLimit: gasLimit,
+          gasPrice: gasPrice
+        };
+        
+        // For OP Sepolia, we might need to handle EIP-1559
+        if (currentNetwork === 'opSepolia') {
+          try {
+            const feeData = await this.provider.getFeeData();
+            if (feeData.maxFeePerGas && feeData.maxPriorityFeePerGas) {
+              // Use EIP-1559 for OP Sepolia if available
+              delete txOptions.gasPrice;
+              txOptions.maxFeePerGas = feeData.maxFeePerGas;
+              txOptions.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
+              console.log('⛽ Using EIP-1559 for OP Sepolia:', {
+                maxFeePerGas: ethers.formatUnits(feeData.maxFeePerGas, 'gwei') + ' gwei',
+                maxPriorityFeePerGas: ethers.formatUnits(feeData.maxPriorityFeePerGas, 'gwei') + ' gwei'
+              });
+            }
+          } catch (eip1559Error) {
+            console.log('⛽ EIP-1559 not available, using legacy gas pricing');
+          }
+        }
+        
         const tx = await contract.submitReview(
           reviewData.companyName,
           reviewData.category,
           ipfsHash,
           proofHash,
           reviewData.rating,
-          {
-            gasLimit: gasLimit,
-            gasPrice: gasPrice
-          }
+          txOptions
         );
         
         console.log('✅ ================= TRANSACTION SENT SUCCESSFULLY =================');
@@ -391,9 +437,13 @@ export class Web3Service {
         
         // Other specific errors
         if (error.message?.includes('insufficient funds')) {
-          throw new Error('Insufficient POL for gas fees');
+          throw new Error('Insufficient ETH for gas fees');
         } else if (error.message?.includes('gas')) {
           throw new Error('Gas limit too low or network congestion. Try again.');
+        } else if (error.message?.includes('nonce')) {
+          throw new Error('Transaction nonce error. Please reset MetaMask or try again.');
+        } else if (error.message?.includes('execution reverted')) {
+          throw new Error('Transaction reverted. Contract may not be deployed on this network.');
         } else {
           throw new Error(`Blockchain error: ${error.message || 'Unknown transaction failure'}`);
         }
@@ -563,12 +613,32 @@ export class Web3Service {
       
       // Get network-specific gas settings for minting
       const network = await this.getCurrentNetwork();
-      let gasLimit = ['ethSepolia', 'opSepolia'].includes(network) ? 200000n : 300000n;
+      let gasLimit: bigint;
+      let gasPrice: bigint | undefined;
       
-      // Attempt to mint tokens
-      const mintTx = await tokenContract.mint(recipientAddress, amount, {
-        gasLimit: gasLimit
-      });
+      if (network === 'opSepolia') {
+        gasLimit = 300000n; // Higher for OP Sepolia L2
+        try {
+          const feeData = await this.provider.getFeeData();
+          gasPrice = feeData.gasPrice ? (feeData.gasPrice * 150n) / 100n : ethers.parseUnits('0.001', 'gwei');
+        } catch {
+          gasPrice = ethers.parseUnits('0.001', 'gwei');
+        }
+      } else if (network === 'ethSepolia') {
+        gasLimit = 250000n;
+        gasPrice = undefined; // Let ethers handle it for ETH Sepolia
+      } else {
+        gasLimit = 300000n; // Amoy
+        gasPrice = undefined;
+      }
+      
+      // Attempt to mint tokens with network-specific gas settings
+      const mintOptions: any = { gasLimit };
+      if (gasPrice) {
+        mintOptions.gasPrice = gasPrice;
+      }
+      
+      const mintTx = await tokenContract.mint(recipientAddress, amount, mintOptions);
       
       console.log('🪙 Token mint transaction sent:', mintTx.hash);
       
