@@ -40,16 +40,17 @@ export const useWalletConnection = () => {
 
   const [lastConnectionCheck, setLastConnectionCheck] = useState<number>(0);
 
-  // Throttled connection check - only check every 2 seconds and skip if manual disconnect
+  // Throttled connection check - respects manual disconnection
   const throttledConnectionCheck = useCallback(async () => {
     const now = Date.now();
     if (now - lastConnectionCheck < 2000) {
       return; // Skip if checked within last 2 seconds
     }
     
-    // Skip automatic checks if user manually disconnected recently
-    const manualDisconnect = localStorage.getItem('wallet_disconnected');
+    // CRITICAL: Respect manual disconnect - never auto-reconnect after manual disconnect
+    const manualDisconnect = localStorage.getItem('manual_wallet_disconnect');
     if (manualDisconnect === 'true') {
+      console.log('🚫 Skipping auto-connection check - user manually disconnected');
       return;
     }
     
@@ -58,15 +59,15 @@ export const useWalletConnection = () => {
     try {
       const address = await checkIfWalletIsConnected();
       
-      if (address && address !== walletAddress) {
-        console.log('🔍 New wallet address detected:', address);
+      if (address && address !== walletAddress && !isWalletConnected) {
+        console.log('🔍 Auto-connecting to detected wallet:', address);
         setWalletAddress(address);
         setIsWalletConnected(true);
         
         // Handle wallet authentication
         await handleWalletConnection(address);
       } else if (!address && isWalletConnected) {
-        console.log('🔌 Automatic wallet disconnected detected');
+        console.log('🔌 Wallet disconnected from extension');
         setIsWalletConnected(false);
         setWalletAddress('');
         setNeedsSignup(false);
@@ -77,11 +78,17 @@ export const useWalletConnection = () => {
     }
   }, [checkIfWalletIsConnected, walletAddress, isWalletConnected, lastConnectionCheck, setWalletAddress, setIsWalletConnected, setNeedsSignup, setExistingUser, handleWalletConnection]);
 
-  // Check wallet connection on mount and periodically
+  // Check wallet connection on mount and periodically - but respect manual disconnection
   useEffect(() => {
-    throttledConnectionCheck();
+    // Only do initial connection check on page load if user hasn't manually disconnected
+    const manualDisconnect = localStorage.getItem('manual_wallet_disconnect');
+    if (manualDisconnect !== 'true') {
+      throttledConnectionCheck();
+    } else {
+      console.log('🚫 Skipping initial connection check - user previously disconnected manually');
+    }
     
-    // Check every 5 seconds instead of constantly
+    // Set up periodic checks (but they will be blocked if manually disconnected)
     const interval = setInterval(throttledConnectionCheck, 5000);
     
     return () => clearInterval(interval);
@@ -91,7 +98,9 @@ export const useWalletConnection = () => {
     if (isWalletConnecting) return { success: false, error: 'Already connecting' };
     
     try {
-      // Clear any manual disconnect flags when connecting
+      // Clear manual disconnect flags when user explicitly connects
+      console.log('🔗 User manually connecting wallet - clearing disconnect flags');
+      localStorage.removeItem('manual_wallet_disconnect');
       localStorage.removeItem('wallet_disconnected');
       
       const address = await connectWalletCore(specificWallet);

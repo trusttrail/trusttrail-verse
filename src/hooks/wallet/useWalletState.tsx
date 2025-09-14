@@ -38,27 +38,24 @@ export const useWalletState = () => {
   }, [isAuthenticated]);
 
   const disconnectWallet = () => {
-    console.log('🔌 Executing wallet disconnect...');
+    console.log('🔌 Executing manual wallet disconnect...');
     
     setIsWalletConnected(false);
     setWalletAddress("");
     setNeedsSignup(false);
     setExistingUser(false);
     
+    // Set a persistent flag to prevent auto-reconnection
+    localStorage.setItem('manual_wallet_disconnect', 'true');
     localStorage.setItem('wallet_disconnected', 'true');
     localStorage.removeItem('connected_wallet_address');
     
-    // Clear the manual disconnect flag after 5 seconds to resume automatic checks
-    setTimeout(() => {
-      localStorage.removeItem('wallet_disconnected');
-    }, 5000);
-    
     toast({
       title: "Wallet Disconnected",
-      description: "Your wallet has been disconnected successfully.",
+      description: "Your wallet has been disconnected. Click 'Connect Wallet' to reconnect.",
     });
     
-    console.log('✅ Wallet disconnect completed');
+    console.log('✅ Manual wallet disconnect completed - auto-reconnection disabled');
   };
 
   const handleNetworkChange = (network: string) => {
