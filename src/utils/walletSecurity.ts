@@ -50,23 +50,19 @@ export const findWalletProfileByAddress = async (
       throw new Error(`Failed to lookup wallet profile: ${error.message}`);
     }
 
-    // Convert the RPC result to our interface format
+    // Convert the RPC result to our interface format  
     if (data && data.length > 0) {
       const result = data[0];
-      // We need to get the full profile data using the profile_id
-      const { data: profileData, error: profileError } = await supabase
-        .from('wallet_profiles')
-        .select('id, wallet_address, created_at, updated_at')
-        .eq('id', result.profile_id)
-        .single();
-
-      if (profileError) {
-        console.error('❌ Error fetching wallet profile details:', profileError);
-        return null;
-      }
+      // The secure_wallet_lookup function already returns the data we need
+      const walletProfile: WalletProfile = {
+        id: result.profile_id,
+        wallet_address: result.wallet_addr,
+        created_at: new Date().toISOString(), // Use current timestamp as fallback
+        updated_at: new Date().toISOString()  // Use current timestamp as fallback
+      };
 
       console.log('✅ MAXIMUM SECURITY wallet lookup completed');
-      return profileData;
+      return walletProfile;
     }
 
     console.log('✅ MAXIMUM SECURITY wallet lookup completed - no match found');
@@ -103,19 +99,25 @@ export const createWalletProfileSecurely = async (
   console.log('🔒 Secure wallet profile creation for:', normalizedAddress);
 
   try {
-    const { data, error } = await supabase
-      .from('wallet_profiles')
-      .insert({ wallet_address: normalizedAddress })
-      .select('id, wallet_address, created_at, updated_at')
-      .single();
+    // Use secure edge function for wallet profile creation
+    const { data, error } = await supabase.functions.invoke('secure-wallet-ops', {
+      body: {
+        operation: 'create_wallet_profile',
+        walletAddress: normalizedAddress
+      }
+    });
 
     if (error) {
       console.error('❌ Error in secure wallet profile creation:', error);
       throw new Error(`Failed to create wallet profile: ${error.message}`);
     }
 
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to create wallet profile');
+    }
+
     console.log('✅ Secure wallet profile created');
-    return data;
+    return data.data;
   } catch (error) {
     console.error('❌ Exception in secure wallet profile creation:', error);
     throw error;
