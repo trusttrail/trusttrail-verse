@@ -270,26 +270,49 @@ export class Web3Service {
           proofHash: proofHash
         });
 
-        // STEP 5: Optimized gas settings for Amoy
-        console.log('⛽ STEP 5: Using optimized gas settings for Amoy...');
-        const gasLimit = 500000n; // Increased gas limit for contract with rewards
-        console.log('⛽ Gas limit set to:', gasLimit.toString());
+        // STEP 5: Network-specific gas configuration
+        console.log('⛽ STEP 5: Setting up gas configuration...');
+        const currentNetwork = await this.getCurrentNetwork();
+        console.log('🌐 Current network:', currentNetwork);
+        
+        let gasPrice: bigint;
+        let gasLimit: bigint;
+        
+        if (currentNetwork === 'opSepolia') {
+          // OP Sepolia optimized settings - lower gas prices
+          try {
+            const feeData = await this.provider.getFeeData();
+            gasPrice = feeData.gasPrice ? (feeData.gasPrice * 120n) / 100n : ethers.parseUnits('0.1', 'gwei');
+            gasLimit = 300000n; // Optimized for OP Sepolia
+            console.log('⛽ OP Sepolia gas settings:', {
+              gasPrice: ethers.formatUnits(gasPrice, 'gwei') + ' gwei',
+              gasLimit: gasLimit.toString()
+            });
+          } catch (gasError) {
+            gasPrice = ethers.parseUnits('0.1', 'gwei');
+            gasLimit = 300000n;
+            console.log('⛽ OP Sepolia fallback gas settings');
+          }
+        } else {
+          // Amoy settings (existing)
+          try {
+            const feeData = await this.provider.getFeeData();
+            gasPrice = feeData.gasPrice ? (feeData.gasPrice * 150n) / 100n : ethers.parseUnits('50', 'gwei');
+            gasLimit = 500000n; // Higher for Amoy
+            console.log('⛽ Amoy gas settings:', {
+              gasPrice: ethers.formatUnits(gasPrice, 'gwei') + ' gwei',
+              gasLimit: gasLimit.toString()
+            });
+          } catch (gasError) {
+            gasPrice = ethers.parseUnits('50', 'gwei');
+            gasLimit = 500000n;
+            console.log('⛽ Amoy fallback gas settings');
+          }
+        }
 
         // STEP 6: Call contract method - this will trigger MetaMask
         console.log('🚀 STEP 6: CALLING CONTRACT METHOD - MetaMask should popup NOW...');
         console.log('🚀 ===============================================================');
-        
-        // Get current gas price from network and add buffer for faster confirmation
-        let gasPrice: bigint;
-        try {
-          const feeData = await this.provider.getFeeData();
-          gasPrice = feeData.gasPrice ? (feeData.gasPrice * 150n) / 100n : ethers.parseUnits('50', 'gwei');
-          console.log('⛽ Using network gas price with 50% buffer:', ethers.formatUnits(gasPrice, 'gwei'), 'gwei');
-        } catch (gasError) {
-          // Fallback to higher fixed price for faster confirmation
-          gasPrice = ethers.parseUnits('50', 'gwei'); // Increased from 30 to 50 gwei
-          console.log('⛽ Using fallback gas price:', ethers.formatUnits(gasPrice, 'gwei'), 'gwei');
-        }
         
         const tx = await contract.submitReview(
           reviewData.companyName,
@@ -335,6 +358,11 @@ export class Web3Service {
         if (receipt.status === 1) {
           console.log('🎉 SUCCESS! Review submitted to blockchain!');
           console.log('🔗 View on explorer:', await this.getExplorerUrl(tx.hash));
+          
+          // STEP 8: Mint reward tokens for successful review submission
+          console.log('🪙 STEP 8: Minting reward tokens...');
+          await this.mintRewardTokens(signerAddress, ethers.parseUnits('10', 18)); // 10 tokens per review
+          
           return tx.hash;
         } else {
           throw new Error('Transaction failed with status 0');
@@ -439,32 +467,52 @@ export class Web3Service {
     if (!this.provider) throw new Error('Wallet not connected');
     
     try {
-      // Use the same calculation as dashboard: query Supabase for approved reviews
-      // This ensures exact consistency between dashboard and staking sections
-      const { supabase } = await import('@/integrations/supabase/client');
+      console.log('🪙 Getting real token balance from contract for:', address);
       
-      const { data: reviews, error } = await supabase
-        .from('reviews')
-        .select('*')
-        .ilike('wallet_address', address)
-        .eq('status', 'approved'); // Only count approved reviews
+      const contractAddresses = await this.getContractAddresses();
+      const tokenContract = new ethers.Contract(
+        contractAddresses.rewardToken, 
+        this.ERC20_ABI, 
+        this.provider
+      );
       
-      if (error) {
-        console.error('❌ Error fetching approved reviews:', error);
-        return '0';
-      }
+      // Get actual balance from contract
+      const balance = await tokenContract.balanceOf(address);
+      const decimals = await tokenContract.decimals();
+      const realBalance = ethers.formatUnits(balance, decimals);
       
-      const approvedReviewCount = reviews?.length || 0;
-      const trtBalance = approvedReviewCount * 10; // 10 TRT per approved review
-      
-      console.log(`📊 User has ${approvedReviewCount} approved reviews in database`);
-      console.log(`🪙 TRT Balance: ${trtBalance} TRT (${approvedReviewCount} approved reviews × 10 TRT)`);
-      
-      return trtBalance.toString();
+      console.log('🪙 Real contract balance:', realBalance);
+      return realBalance;
       
     } catch (error) {
-      console.error('Failed to get TRT balance from database:', error);
-      return '0';
+      console.error('❌ Failed to get real token balance from contract:', error);
+      console.log('🔄 Falling back to database calculation...');
+      
+      // Fallback: Use database calculation if contract call fails
+      try {
+        const { supabase } = await import('@/integrations/supabase/client');
+        
+        const { data: reviews, error } = await supabase
+          .from('reviews')
+          .select('*')
+          .ilike('wallet_address', address)
+          .eq('status', 'approved');
+        
+        if (error) {
+          console.error('❌ Error fetching approved reviews:', error);
+          return '0';
+        }
+        
+        const approvedReviewCount = reviews?.length || 0;
+        const fallbackBalance = approvedReviewCount * 10; // 10 tokens per approved review
+        
+        console.log(`📊 Fallback: ${approvedReviewCount} approved reviews = ${fallbackBalance} tokens`);
+        return fallbackBalance.toString();
+        
+      } catch (dbError) {
+        console.error('❌ Database fallback also failed:', dbError);
+        return '0';
+      }
     }
   }
 
@@ -472,15 +520,73 @@ export class Web3Service {
     // Mock exchange rates for demo - in production, this would call a DEX API
     const rates: Record<string, Record<string, number>> = {
       POL: { ETH: 0.0015, BTC: 0.000025, USDT: 0.85, USDC: 0.85, TRT: 1200 },
-      ETH: { POL: 650, BTC: 0.065, USDT: 2500, USDC: 2500, TRT: 1800000 },
+      ETH: { POL: 650, BTC: 0.065, USDT: 2500, USDC: 2500, TRUST: 1800000 },
       BTC: { POL: 40000, ETH: 15.4, USDT: 95000, USDC: 95000, TRT: 28000000 },
       USDT: { POL: 1.18, ETH: 0.0004, BTC: 0.00001, USDC: 1.0, TRT: 1400 },
       USDC: { POL: 1.18, ETH: 0.0004, BTC: 0.00001, USDT: 1.0, TRT: 1400 },
-      TRT: { POL: 0.00083, ETH: 0.00000056, BTC: 0.000000036, USDT: 0.00071, USDC: 0.00071 }
+      TRT: { POL: 0.00083, ETH: 0.00000056, BTC: 0.000000036, USDT: 0.00071, USDC: 0.00071 },
+      TRUST: { ETH: 0.00000056, BTC: 0.000000036, USDT: 0.00071, USDC: 0.00071 }
     };
 
     const rate = rates[fromToken]?.[toToken] || 1;
     return (parseFloat(amount) * rate).toFixed(6);
+  }
+
+  async mintRewardTokens(recipientAddress: string, amount: bigint): Promise<string | null> {
+    if (!this.provider || !this.signer) {
+      throw new Error('Wallet not connected');
+    }
+
+    try {
+      console.log('🪙 Starting token minting process...');
+      const contractAddresses = await this.getContractAddresses();
+      
+      // Import the RewardToken ABI
+      const { RewardTokenABI } = await import('@/contracts/abis/RewardToken');
+      
+      // Create token contract instance
+      const tokenContract = new ethers.Contract(
+        contractAddresses.rewardToken,
+        RewardTokenABI,
+        this.signer
+      );
+
+      console.log('🪙 Minting', ethers.formatUnits(amount, 18), 'tokens to:', recipientAddress);
+      
+      // Get network-specific gas settings for minting
+      const network = await this.getCurrentNetwork();
+      let gasLimit = network === 'opSepolia' ? 200000n : 300000n;
+      
+      // Attempt to mint tokens
+      const mintTx = await tokenContract.mint(recipientAddress, amount, {
+        gasLimit: gasLimit
+      });
+      
+      console.log('🪙 Token mint transaction sent:', mintTx.hash);
+      
+      // Wait for confirmation
+      const mintReceipt = await mintTx.wait(1);
+      
+      if (mintReceipt.status === 1) {
+        console.log('🎉 Tokens minted successfully!');
+        return mintTx.hash;
+      } else {
+        console.error('❌ Token minting failed');
+        return null;
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Token minting error:', error);
+      
+      // If minting fails, continue with review submission
+      // Don't fail the entire process due to token minting issues
+      if (error.message?.includes('not a minter') || error.message?.includes('Ownable')) {
+        console.warn('⚠️ Contract not configured for token minting - review still successful');
+      } else {
+        console.error('❌ Unexpected minting error:', error.message);
+      }
+      return null;
+    }
   }
 }
 

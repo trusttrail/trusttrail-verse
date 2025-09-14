@@ -3,7 +3,7 @@
 export const AMOY_CHAIN_ID = '0x13882'; // 80002 (Amoy Polygon Testnet)
 export const AMOY_NETWORK_NAME = 'Polygon Amoy (Testnet)';
 
-export const OP_SEPOLIA_CHAIN_ID = '0xaa36a7'; // 11155420 (OP Sepolia Testnet)
+export const OP_SEPOLIA_CHAIN_ID = '0xaa37dc'; // 11155420 (OP Sepolia Testnet)
 export const OP_SEPOLIA_NETWORK_NAME = 'OP Sepolia (Testnet)';
 
 // Contract addresses by network
