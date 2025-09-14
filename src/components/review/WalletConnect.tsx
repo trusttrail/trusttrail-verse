@@ -52,8 +52,15 @@ const WalletConnect = ({
   };
   
   const handleDisconnect = () => {
-    onDisconnect();
+    console.log('🔌 Manual wallet disconnect triggered');
+    
+    // First close the popover to prevent any event bubbling issues
     setIsOpen(false);
+    
+    // Add a small delay to ensure popover state is updated
+    setTimeout(() => {
+      onDisconnect();
+    }, 100);
   };
 
   const handleConnectClick = () => {

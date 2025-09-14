@@ -40,11 +40,17 @@ export const useWalletConnection = () => {
 
   const [lastConnectionCheck, setLastConnectionCheck] = useState<number>(0);
 
-  // Throttled connection check - only check every 2 seconds
+  // Throttled connection check - only check every 2 seconds and skip if manual disconnect
   const throttledConnectionCheck = useCallback(async () => {
     const now = Date.now();
     if (now - lastConnectionCheck < 2000) {
       return; // Skip if checked within last 2 seconds
+    }
+    
+    // Skip automatic checks if user manually disconnected recently
+    const manualDisconnect = localStorage.getItem('wallet_disconnected');
+    if (manualDisconnect === 'true') {
+      return;
     }
     
     setLastConnectionCheck(now);
@@ -60,7 +66,7 @@ export const useWalletConnection = () => {
         // Handle wallet authentication
         await handleWalletConnection(address);
       } else if (!address && isWalletConnected) {
-        console.log('🔌 Wallet disconnected');
+        console.log('🔌 Automatic wallet disconnected detected');
         setIsWalletConnected(false);
         setWalletAddress('');
         setNeedsSignup(false);
@@ -85,6 +91,9 @@ export const useWalletConnection = () => {
     if (isWalletConnecting) return { success: false, error: 'Already connecting' };
     
     try {
+      // Clear any manual disconnect flags when connecting
+      localStorage.removeItem('wallet_disconnected');
+      
       const address = await connectWalletCore(specificWallet);
       
       if (address) {
