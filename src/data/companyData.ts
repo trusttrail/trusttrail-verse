@@ -24,7 +24,7 @@ export const sampleCompanies = [
   {
     id: 1,
     name: 'Uniswap',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/7083.png',
+    logo: 'https://assets.coingecko.com/coins/images/12504/standard/uniswap-uni.png',
     rating: 4.8,
     reviewCount: 1247,
     category: 'dex',
@@ -34,7 +34,7 @@ export const sampleCompanies = [
   {
     id: 2,
     name: 'SushiSwap',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/6758.png',
+    logo: 'https://assets.coingecko.com/coins/images/12271/standard/512x512_Logo_no_chop.png',
     rating: 4.2,
     reviewCount: 534,
     category: 'dex',
@@ -44,7 +44,7 @@ export const sampleCompanies = [
   {
     id: 3,
     name: 'PancakeSwap',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/7186.png',
+    logo: 'https://assets.coingecko.com/coins/images/12632/standard/pancakeswap-cake-logo_%281%29.png',
     rating: 4.3,
     reviewCount: 892,
     category: 'dex',
@@ -56,7 +56,7 @@ export const sampleCompanies = [
   {
     id: 4,
     name: 'Binance',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png',
+    logo: 'https://assets.coingecko.com/coins/images/825/standard/bnb-icon2_2x.png',
     rating: 4.5,
     reviewCount: 3421,
     category: 'cex',
@@ -66,7 +66,7 @@ export const sampleCompanies = [
   {
     id: 5,
     name: 'Coinbase',
-    logo: 'https://s2.coinmarketcap.com/static/img/exchanges/64x64/89.png',
+    logo: 'https://assets.coingecko.com/coins/images/9956/standard/Badge_Coinbase.png',
     rating: 4.1,
     reviewCount: 2156,
     category: 'cex',
@@ -78,7 +78,7 @@ export const sampleCompanies = [
   {
     id: 6,
     name: 'Aave',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/7278.png',
+    logo: 'https://assets.coingecko.com/coins/images/12645/standard/AAVE.png',
     rating: 4.6,
     reviewCount: 892,
     category: 'defi-lending',
@@ -88,7 +88,7 @@ export const sampleCompanies = [
   {
     id: 7,
     name: 'Compound',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/5692.png',
+    logo: 'https://assets.coingecko.com/coins/images/10775/standard/COMP.png',
     rating: 4.4,
     reviewCount: 675,
     category: 'defi-lending',
@@ -98,7 +98,7 @@ export const sampleCompanies = [
   {
     id: 8,
     name: 'MakerDAO',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1518.png',
+    logo: 'https://assets.coingecko.com/coins/images/1364/standard/Mark_Maker.png',
     rating: 4.7,
     reviewCount: 789,
     category: 'defi-lending',
@@ -110,7 +110,7 @@ export const sampleCompanies = [
   {
     id: 9,
     name: 'Ethereum',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png',
+    logo: 'https://assets.coingecko.com/coins/images/279/standard/ethereum.png',
     rating: 4.9,
     reviewCount: 5234,
     category: 'layer-1',
@@ -120,7 +120,7 @@ export const sampleCompanies = [
   {
     id: 10,
     name: 'Solana',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png',
+    logo: 'https://assets.coingecko.com/coins/images/4128/standard/solana.png',
     rating: 4.6,
     reviewCount: 2341,
     category: 'layer-1',
@@ -130,7 +130,7 @@ export const sampleCompanies = [
   {
     id: 11,
     name: 'Cardano',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/2010.png',
+    logo: 'https://assets.coingecko.com/coins/images/975/standard/cardano.png',
     rating: 4.3,
     reviewCount: 1876,
     category: 'layer-1',
@@ -142,7 +142,7 @@ export const sampleCompanies = [
   {
     id: 12,
     name: 'Polygon',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3890.png',
+    logo: 'https://assets.coingecko.com/coins/images/4713/standard/matic-token-icon.png',
     rating: 4.6,
     reviewCount: 1123,
     category: 'layer-2',
@@ -152,11 +152,21 @@ export const sampleCompanies = [
   {
     id: 13,
     name: 'Arbitrum',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/11841.png',
+    logo: 'https://assets.coingecko.com/coins/images/16547/standard/photo_2023-03-29_21.47.00.jpeg',
     rating: 4.5,
     reviewCount: 892,
     category: 'layer-2',
     description: 'Optimistic rollup scaling solution for Ethereum',
+    hasPendingReviews: false,
+  },
+  {
+    id: 31,
+    name: 'Optimism',
+    logo: 'https://assets.coingecko.com/coins/images/25244/standard/Optimism.png',
+    rating: 4.7,
+    reviewCount: 1456,
+    category: 'layer-2',
+    description: 'Optimistic Ethereum L2 blockchain',
     hasPendingReviews: false,
   },
   
@@ -164,7 +174,7 @@ export const sampleCompanies = [
   {
     id: 14,
     name: 'OpenSea',
-    logo: 'https://storage.googleapis.com/opensea-static/Logomark/Logomark-Blue.png',
+    logo: 'https://assets.coingecko.com/coins/images/24841/standard/YlGyLwG.png',
     rating: 4.2,
     reviewCount: 3456,
     category: 'nft-marketplace',
@@ -174,7 +184,7 @@ export const sampleCompanies = [
   {
     id: 15,
     name: 'Magic Eden',
-    logo: 'https://pbs.twimg.com/profile_images/1618229467932237824/Noc7MqQ6_400x400.jpg',
+    logo: 'https://assets.coingecko.com/coins/images/27804/standard/magiceden-logo.png',
     rating: 4.4,
     reviewCount: 1234,
     category: 'nft-marketplace',
@@ -186,7 +196,7 @@ export const sampleCompanies = [
   {
     id: 16,
     name: 'ApeCoin',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/18876.png',
+    logo: 'https://assets.coingecko.com/coins/images/24383/standard/apecoin.jpg',
     rating: 4.6,
     reviewCount: 567,
     category: 'dao',
@@ -196,7 +206,7 @@ export const sampleCompanies = [
   {
     id: 17,
     name: 'Curve DAO Token',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/6538.png',
+    logo: 'https://assets.coingecko.com/coins/images/12124/standard/Curve.png',
     rating: 4.5,
     reviewCount: 423,
     category: 'dao',
@@ -208,7 +218,7 @@ export const sampleCompanies = [
   {
     id: 18,
     name: 'Dogecoin',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/74.png',
+    logo: 'https://assets.coingecko.com/coins/images/5/standard/dogecoin.png',
     rating: 4.1,
     reviewCount: 2345,
     category: 'memes',
@@ -218,11 +228,21 @@ export const sampleCompanies = [
   {
     id: 19,
     name: 'Shiba Inu',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/5994.png',
+    logo: 'https://assets.coingecko.com/coins/images/11939/standard/shiba.png',
     rating: 3.9,
     reviewCount: 1876,
     category: 'memes',
     description: 'Ethereum-based meme token with DeFi ecosystem',
+    hasPendingReviews: false,
+  },
+  {
+    id: 32,
+    name: 'Pepe',
+    logo: 'https://assets.coingecko.com/coins/images/29850/standard/pepe-token.jpeg',
+    rating: 4.0,
+    reviewCount: 1567,
+    category: 'memes',
+    description: 'Popular meme token on Ethereum',
     hasPendingReviews: false,
   },
   
@@ -230,7 +250,7 @@ export const sampleCompanies = [
   {
     id: 20,
     name: 'The Graph',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/6719.png',
+    logo: 'https://assets.coingecko.com/coins/images/13397/standard/Graph_Token.png',
     rating: 4.4,
     reviewCount: 687,
     category: 'ai-analytics',
@@ -240,7 +260,7 @@ export const sampleCompanies = [
   {
     id: 21,
     name: 'Chainlink',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1975.png',
+    logo: 'https://assets.coingecko.com/coins/images/877/standard/chainlink-new-logo.png',
     rating: 4.9,
     reviewCount: 1567,
     category: 'oracle-network',
@@ -252,7 +272,7 @@ export const sampleCompanies = [
   {
     id: 22,
     name: 'RealT',
-    logo: '/placeholder.svg',
+    logo: 'https://assets.coingecko.com/coins/images/11201/standard/RealT_Logo_Clean.png',
     rating: 4.3,
     reviewCount: 234,
     category: 'real-world-assets',
@@ -262,7 +282,7 @@ export const sampleCompanies = [
   {
     id: 23,
     name: 'Centrifuge',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/6748.png',
+    logo: 'https://assets.coingecko.com/coins/images/17106/standard/CENTRIFUGE.png',
     rating: 4.2,
     reviewCount: 156,
     category: 'real-world-assets',
@@ -274,7 +294,7 @@ export const sampleCompanies = [
   {
     id: 24,
     name: 'Axie Infinity',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/6783.png',
+    logo: 'https://assets.coingecko.com/coins/images/13029/standard/axie_infinity_logo.png',
     rating: 4.0,
     reviewCount: 1234,
     category: 'gaming',
@@ -284,7 +304,7 @@ export const sampleCompanies = [
   {
     id: 25,
     name: 'The Sandbox',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/6210.png',
+    logo: 'https://assets.coingecko.com/coins/images/12129/standard/sandbox_logo.jpg',
     rating: 4.1,
     reviewCount: 892,
     category: 'gaming',
@@ -292,11 +312,11 @@ export const sampleCompanies = [
     hasPendingReviews: false,
   },
   
-  // Newer/Unlisted Projects
+  // DeFi Tools & Newer Projects
   {
     id: 26,
     name: 'Pump.fun',
-    logo: '/placeholder.svg',
+    logo: 'https://assets.coingecko.com/coins/images/67164/standard/pump.jpg',
     rating: 4.2,
     reviewCount: 234,
     category: 'defi-tools',
@@ -306,7 +326,7 @@ export const sampleCompanies = [
   {
     id: 27,
     name: 'Abstract',
-    logo: '/placeholder.svg',
+    logo: 'https://assets.coingecko.com/coins/images/68507/standard/linea-logo.jpeg',
     rating: 4.0,
     reviewCount: 156,
     category: 'layer-2',
@@ -316,7 +336,7 @@ export const sampleCompanies = [
   {
     id: 28,
     name: 'Dreamstarter.xyz',
-    logo: '/placeholder.svg',
+    logo: 'https://assets.coingecko.com/coins/images/12632/standard/pancakeswap-cake-logo_%281%29.png',
     rating: 3.8,
     reviewCount: 89,
     category: 'launchpad',
@@ -328,7 +348,7 @@ export const sampleCompanies = [
   {
     id: 29,
     name: 'Avalanche',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/5805.png',
+    logo: 'https://assets.coingecko.com/coins/images/12559/standard/Avalanche_Circle_RedWhite_Trans.png',
     rating: 4.5,
     reviewCount: 1456,
     category: 'layer-1',
@@ -338,13 +358,45 @@ export const sampleCompanies = [
   {
     id: 30,
     name: 'Polkadot',
-    logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/6636.png',
+    logo: 'https://assets.coingecko.com/coins/images/12171/standard/polkadot.png',
     rating: 4.4,
     reviewCount: 1234,
     category: 'layer-1',
     description: 'Multi-chain blockchain platform enabling interoperability',
     hasPendingReviews: false,
-  }
+  },
+  
+  // Additional Major Cryptocurrencies
+  {
+    id: 33,
+    name: 'Bitcoin',
+    logo: 'https://assets.coingecko.com/coins/images/1/standard/bitcoin.png',
+    rating: 4.9,
+    reviewCount: 8976,
+    category: 'layer-1',
+    description: 'The original cryptocurrency and digital store of value',
+    hasPendingReviews: false,
+  },
+  {
+    id: 34,
+    name: 'Ripple',
+    logo: 'https://assets.coingecko.com/coins/images/44/standard/xrp-symbol-white-128.png',
+    rating: 4.2,
+    reviewCount: 3456,
+    category: 'layer-1',
+    description: 'Digital payment protocol for fast cross-border transactions',
+    hasPendingReviews: false,
+  },
+  {
+    id: 35,
+    name: 'Litecoin',
+    logo: 'https://assets.coingecko.com/coins/images/2/standard/litecoin.png',
+    rating: 4.3,
+    reviewCount: 2134,
+    category: 'layer-1',
+    description: 'Peer-to-peer cryptocurrency based on Bitcoin',
+    hasPendingReviews: false,
+  },
 ];
 
 export const sampleCategories = [
