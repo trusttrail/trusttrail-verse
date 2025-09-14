@@ -75,14 +75,14 @@ export const useReviewForm = () => {
 
   const handleCompanySearch = (value: string) => {
     if (!value.trim()) {
-      setFilteredCompanies(mockCompanies.slice(0, 50));
+      setFilteredCompanies(mockCompanies); // Show all companies instead of limiting to 50
       return;
     }
 
     const filtered = mockCompanies.filter(company =>
       company.name.toLowerCase().includes(value.toLowerCase()) ||
       company.category.toLowerCase().includes(value.toLowerCase())
-    ).slice(0, 100);
+    ); // Remove slice limit to show all matching companies
     
     setFilteredCompanies(filtered);
   };

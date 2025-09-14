@@ -109,7 +109,7 @@ const CompanySelector = ({
       {showDropdown && (
         <div 
           ref={dropdownRef}
-          className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-lg z-[90] max-h-60 overflow-y-auto"
+          className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg z-[100] max-h-80 overflow-y-auto"
         >
           {filteredCompanies.length > 0 ? (
             <div className="py-1">
@@ -117,14 +117,14 @@ const CompanySelector = ({
                 <div
                   key={company.id}
                   onClick={() => handleCompanyClick(company)}
-                  className="px-3 py-2 cursor-pointer hover:bg-accent border-b border-border last:border-b-0 text-popover-foreground"
+                  className="px-3 py-3 cursor-pointer hover:bg-accent/80 border-b border-border/50 last:border-b-0 text-foreground transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     {company.logo && (
                       <img 
                         src={company.logo} 
                         alt={`${company.name} logo`}
-                        className="w-8 h-8 rounded-full object-contain"
+                        className="w-8 h-8 rounded-full object-contain bg-background/50 p-1"
                         onError={(e) => {
                           e.currentTarget.src = `https://via.placeholder.com/32x32/7c3aed/ffffff?text=${company.name.charAt(0)}`;
                         }}
@@ -132,20 +132,20 @@ const CompanySelector = ({
                     )}
                     <div className="flex flex-col">
                       <span className="font-medium text-sm">{company.name}</span>
-                      <span className="text-xs text-muted-foreground">{company.category}</span>
+                      <span className="text-xs text-muted-foreground capitalize">{company.category.replace('-', ' ')}</span>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : companyName.length > 0 ? (
-            <div className="px-3 py-4 text-center text-sm text-muted-foreground">
+            <div className="px-3 py-4 text-center text-sm text-muted-foreground bg-background">
               <p>No matching companies found.</p>
               <p className="text-xs mt-1">You can still use "{companyName}" for your review.</p>
             </div>
           ) : (
-            <div className="px-3 py-4 text-center text-sm text-muted-foreground">
-              Start typing to search companies...
+            <div className="px-3 py-4 text-center text-sm text-muted-foreground bg-background">
+              Start typing to search from {filteredCompanies.length}+ companies...
             </div>
           )}
         </div>
