@@ -53,6 +53,11 @@ const EnhancedAnalyticsDashboard = () => {
 
   // AI-driven insights generation
   const generateInsights = () => {
+    // Return empty array if data is still loading or undefined
+    if (!overview || !categoryData || loading) {
+      return [];
+    }
+
     const insights = [];
     
     if (overview.totalReviews === 0) {
@@ -82,7 +87,7 @@ const EnhancedAnalyticsDashboard = () => {
     }
 
     // Category insights
-    if (categoryData.length > 0) {
+    if (categoryData && categoryData.length > 0) {
       const topCategory = categoryData[0];
       const categoryPercentage = Math.round((topCategory.reviewCount / overview.totalReviews) * 100);
       
@@ -104,7 +109,7 @@ const EnhancedAnalyticsDashboard = () => {
     }];
   };
 
-  const aiInsights = generateInsights();
+  const aiInsights = loading || !overview || !categoryData ? [] : generateInsights();
 
   // Enhanced chart configs
   const trendChartConfig = {
@@ -113,7 +118,7 @@ const EnhancedAnalyticsDashboard = () => {
     cumulative: { label: "Total Reviews", color: "#22c55e" },
   };
 
-  const pieChartConfig = categoryData.reduce((config, item) => {
+  const pieChartConfig = (categoryData || []).reduce((config, item) => {
     const categoryName = String(item.category || '');
     config[item.category] = {
       label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
@@ -161,7 +166,7 @@ const EnhancedAnalyticsDashboard = () => {
   };
 
   const CategoryTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
+    if (active && payload && payload.length && overview) {
       const data = payload[0];
       const percentage = Math.round((data.value / overview.totalReviews) * 100);
       return (
