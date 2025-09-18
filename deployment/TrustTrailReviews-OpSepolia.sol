@@ -112,7 +112,7 @@ contract TrustTrailReviews is ERC20, ERC20Burnable, AccessControl, ReentrancyGua
     
     // =================== CONSTRUCTOR ===================
     
-    constructor() ERC20("TrustTrail Token", "TRST") {
+    constructor() ERC20("TrustTrail Token", "TRST") Ownable(msg.sender) {
         _mint(msg.sender, INITIAL_SUPPLY);
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(ADMIN_ROLE, msg.sender);
