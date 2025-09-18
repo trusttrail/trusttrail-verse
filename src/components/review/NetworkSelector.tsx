@@ -65,18 +65,10 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
         const networkId = supportedNetworks[chainId];
         if (networkId) {
           setActualNetwork(networkId);
-          const networkName = networks.find(n => n.id === networkId)?.name || networkId;
-          toast({
-            title: "Network Changed",
-            description: `Connected to ${networkName}`,
-          });
+          // Don't show toast here - it's handled by useWalletNetwork hook
         } else {
           setActualNetwork("wrong");
-          toast({
-            title: "Wrong Network", 
-            description: "Please switch to a supported testnet (Polygon Amoy, Ethereum Sepolia, or OP Sepolia)",
-            variant: "destructive",
-          });
+          // Don't show toast here - it's handled by useWalletNetwork hook
         }
       };
       
@@ -130,6 +122,7 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
           method: 'wallet_switchEthereumChain',
           params: [{ chainId: config.chainId }],
         });
+        // Success toast will be shown by chainChanged event handler
       } catch (switchError: any) {
         if (switchError.code === 4902) {
           try {

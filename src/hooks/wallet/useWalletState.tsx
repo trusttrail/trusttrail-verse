@@ -68,11 +68,7 @@ export const useWalletState = () => {
       return;
     }
     setCurrentNetwork(network);
-    const networkName = network === "amoy" ? "Polygon Amoy" : "OP Sepolia";
-    toast({
-      title: "Network Changed",
-      description: `Switched to ${networkName} testnet.`,
-    });
+    // Don't show toast here - actual network changes are handled by wallet events
   };
 
   return {
