@@ -483,6 +483,14 @@ export class Web3Service {
           receipt: error.receipt
         });
         
+        // Log the original error details before transformation
+        console.error('🔍 DETAILED ERROR ANALYSIS:');
+        console.error('🔍 Original error message:', error.message);
+        console.error('🔍 Error includes "gas":', error.message?.includes('gas'));
+        console.error('🔍 Error includes "insufficient funds":', error.message?.includes('insufficient funds'));
+        console.error('🔍 Error includes "nonce":', error.message?.includes('nonce'));
+        console.error('🔍 Error includes "execution reverted":', error.message?.includes('execution reverted'));
+        
         // Re-throw user rejections immediately
         if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
           throw new Error('You cancelled the transaction in MetaMask');
@@ -497,7 +505,7 @@ export class Web3Service {
         if (error.message?.includes('insufficient funds')) {
           throw new Error('Insufficient ETH for gas fees');
         } else if (error.message?.includes('gas')) {
-          throw new Error('Gas limit too low or network congestion. Try again.');
+          throw new Error(`ORIGINAL GAS ERROR: ${error.message}`);
         } else if (error.message?.includes('nonce')) {
           throw new Error('Transaction nonce error. Please reset MetaMask or try again.');
         } else if (error.message?.includes('execution reverted')) {
