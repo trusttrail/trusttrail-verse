@@ -7,10 +7,9 @@ interface AnalyticsOverview {
   totalReviews: number;
   avgRating: number;
   totalCompanies: number;
-  uniqueSignups: number;
-  activeWallets: number;
-  totalStaked: number;
-  feesGenerated: number;
+  uniqueReviewers: number;
+  dailyAverage: number;
+  reviewsThisMonth: number;
 }
 
 interface CategoryData {
@@ -21,10 +20,9 @@ interface CategoryData {
 }
 
 interface NetworkData {
-  network: string;
-  reviewCount: number;
-  avgRating: number;
-  color: string;
+  date: string;
+  reviews: number;
+  rating: number;
 }
 
 interface CompanyData {
@@ -38,10 +36,9 @@ export const useAnalyticsData = () => {
     totalReviews: 0,
     avgRating: 0,
     totalCompanies: 0,
-    uniqueSignups: 0,
-    activeWallets: 0,
-    totalStaked: 0,
-    feesGenerated: 0
+    uniqueReviewers: 0,
+    dailyAverage: 0,
+    reviewsThisMonth: 0
   });
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
   const [networkData, setNetworkData] = useState<NetworkData[]>([]);
@@ -62,37 +59,45 @@ export const useAnalyticsData = () => {
       // Fetch reviews data
       const { data: overviewData, error: overviewError } = await supabase
         .from('reviews')
-        .select('id, rating, company_name, category, user_id')
+        .select('id, rating, company_name, category, user_id, created_at')
         .eq('status', 'approved');
 
       if (overviewError) throw overviewError;
 
-      // Fetch user signups data
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('id, created_at');
+      // Fetch daily trends data  
+      const { data: dailyTrends, error: dailyError } = await supabase
+        .from('reviews')
+        .select('created_at, rating')
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false })
+        .limit(100);
 
-      if (userError) throw userError;
-
-      // Mock data for business metrics (replace with actual queries when tables exist)
-      const mockActiveWallets = 1250;
-      const mockStaked = 125000;
-      const mockFees = 2500;
+      if (dailyError) throw dailyError;
 
       if (overviewData && overviewData.length > 0) {
         const totalReviews = overviewData.length;
         const avgRating = overviewData.reduce((sum, review) => sum + review.rating, 0) / totalReviews;
         const uniqueCompanies = new Set(overviewData.map(r => r.company_name)).size;
-        const uniqueSignups = userData?.length || 0;
+        const uniqueReviewers = new Set(overviewData.filter(r => r.user_id).map(r => r.user_id)).size;
+        
+        // Calculate reviews this month
+        const now = new Date();
+        const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const reviewsThisMonth = overviewData.filter(r => new Date(r.created_at) >= thisMonth).length;
+        
+        // Calculate daily average over last 30 days
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const recentReviews = overviewData.filter(r => new Date(r.created_at) >= thirtyDaysAgo);
+        const dailyAverage = recentReviews.length / 30;
 
         setOverview({
           totalReviews,
           avgRating: Number(avgRating.toFixed(1)),
           totalCompanies: uniqueCompanies,
-          uniqueSignups,
-          activeWallets: mockActiveWallets,
-          totalStaked: mockStaked,
-          feesGenerated: mockFees
+          uniqueReviewers,
+          dailyAverage: Number(dailyAverage.toFixed(1)),
+          reviewsThisMonth
         });
 
         // Process category data with proper display names
@@ -119,13 +124,28 @@ export const useAnalyticsData = () => {
 
         setCategoryData(categories.sort((a, b) => b.reviewCount - a.reviewCount));
 
-        // Process network data (using mock data for now)
-        const networkMockData = [
-          { network: 'Optimism', reviewCount: Math.floor(totalReviews * 0.6), avgRating: avgRating + 0.1, color: colorPalette[0] },
-          { network: 'Polygon', reviewCount: Math.floor(totalReviews * 0.4), avgRating: avgRating - 0.1, color: colorPalette[1] }
-        ];
+        // Process daily trends data
+        if (dailyTrends && dailyTrends.length > 0) {
+          const dailyMap = new Map<string, { count: number; totalRating: number }>();
+          dailyTrends.forEach(review => {
+            const date = new Date(review.created_at).toISOString().split('T')[0];
+            const current = dailyMap.get(date) || { count: 0, totalRating: 0 };
+            dailyMap.set(date, {
+              count: current.count + 1,
+              totalRating: current.totalRating + review.rating
+            });
+          });
 
-        setNetworkData(networkMockData);
+          const trends: NetworkData[] = Array.from(dailyMap.entries()).map(([date, data]) => ({
+            date,
+            reviews: data.count,
+            rating: Number((data.totalRating / data.count).toFixed(1))
+          }));
+
+          setNetworkData(trends.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+        } else {
+          setNetworkData([]);
+        }
 
         // Process company data
         const companyMap = new Map<string, { count: number; totalRating: number }>();
@@ -150,10 +170,9 @@ export const useAnalyticsData = () => {
           totalReviews: 0,
           avgRating: 0,
           totalCompanies: 0,
-          uniqueSignups: userData?.length || 0,
-          activeWallets: mockActiveWallets,
-          totalStaked: mockStaked,
-          feesGenerated: mockFees
+          uniqueReviewers: 0,
+          dailyAverage: 0,
+          reviewsThisMonth: 0
         });
         setCategoryData([]);
         setNetworkData([]);

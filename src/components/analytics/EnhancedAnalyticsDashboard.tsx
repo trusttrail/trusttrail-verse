@@ -393,124 +393,74 @@ const EnhancedAnalyticsDashboard = () => {
           </TabsList>
 
           <TabsContent value="trends" className="space-y-6">
-            {/* Network Analysis Section */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card className="col-span-full">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5" />
-                    Business Growth Metrics
-                  </CardTitle>
-                  <CardDescription>
-                    Key performance indicators for platform growth and user engagement
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <div className="p-4 rounded-lg bg-muted/50">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Users className="h-4 w-4 text-blue-500" />
-                        <span className="text-sm font-medium">Unique Signups</span>
-                      </div>
-                      <div className="text-2xl font-bold">{overview?.uniqueSignups || 0}</div>
-                      <p className="text-xs text-muted-foreground">Platform users</p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-muted/50">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Wallet className="h-4 w-4 text-green-500" />
-                        <span className="text-sm font-medium">Active Wallets</span>
-                      </div>
-                      <div className="text-2xl font-bold">{overview?.activeWallets || 0}</div>
-                      <p className="text-xs text-muted-foreground">Connected & verified</p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-muted/50">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Coins className="h-4 w-4 text-purple-500" />
-                        <span className="text-sm font-medium">TRST Staked</span>
-                      </div>
-                      <div className="text-2xl font-bold">{overview?.totalStaked?.toLocaleString() || 0}</div>
-                      <p className="text-xs text-muted-foreground">Total Value Locked</p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-muted/50">
-                      <div className="flex items-center gap-2 mb-2">
-                        <DollarSign className="h-4 w-4 text-yellow-500" />
-                        <span className="text-sm font-medium">Fees Generated</span>
-                      </div>
-                      <div className="text-2xl font-bold">${overview?.feesGenerated?.toLocaleString() || 0}</div>
-                      <p className="text-xs text-muted-foreground">Platform revenue</p>
+            {/* Daily Trends Analysis */}
+            <Card className="col-span-full">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Review Activity Over Time
+                </CardTitle>
+                <CardDescription>
+                  Daily review submissions and rating trends based on actual submitted reviews
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {networkData && networkData.length > 0 ? (
+                  <div className="h-[400px]">
+                    <ChartContainer config={trendChartConfig}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart data={networkData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                          <XAxis 
+                            dataKey="date" 
+                            className="text-xs fill-muted-foreground"
+                            tick={{ fontSize: 12 }}
+                            angle={-45}
+                            textAnchor="end"
+                            height={60}
+                            tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          />
+                          <YAxis 
+                            yAxisId="left" 
+                            className="text-xs fill-muted-foreground"
+                            tick={{ fontSize: 12 }}
+                            label={{ value: 'Review Count', angle: -90, position: 'insideLeft' }}
+                          />
+                          <YAxis 
+                            yAxisId="right" 
+                            orientation="right" 
+                            className="text-xs fill-muted-foreground"
+                            tick={{ fontSize: 12 }}
+                            domain={[0, 5]}
+                            label={{ value: 'Average Rating', angle: 90, position: 'insideRight' }}
+                          />
+                          <Tooltip content={<EnhancedTooltip />} />
+                          <Legend />
+                          <Bar yAxisId="left" dataKey="reviews" fill="var(--color-reviews)" name="Daily Reviews" radius={[4, 4, 0, 0]} />
+                          <Line 
+                            yAxisId="right" 
+                            type="monotone" 
+                            dataKey="rating" 
+                            stroke="var(--color-rating)" 
+                            strokeWidth={3}
+                            dot={{ fill: "var(--color-rating)", r: 4 }}
+                            name="Avg Rating"
+                          />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  </div>
+                ) : (
+                  <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                    <div className="text-center">
+                      <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No trend data available yet</p>
+                      <p className="text-sm">More reviews needed to show daily trends</p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-              
-              {/* Network Distribution */}
-              <Card className="col-span-full">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5" />
-                    Review Distribution by Network
-                  </CardTitle>
-                  <CardDescription>
-                    Reviews submitted across Optimism and Polygon networks
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {networkData && networkData.length > 0 ? (
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="h-[300px]">
-                        <ChartContainer config={pieChartConfig}>
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie
-                                data={networkData}
-                                cx="50%"
-                                cy="50%"
-                                outerRadius={80}
-                                fill="#8884d8"
-                                dataKey="reviewCount"
-                                nameKey="network"
-                              >
-                                {networkData.map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
-                              </Pie>
-                              <ChartTooltip 
-                                content={<ChartTooltipContent />}
-                              />
-                              <ChartLegend 
-                                content={<ChartLegendContent />}
-                              />
-                            </PieChart>
-                          </ResponsiveContainer>
-                        </ChartContainer>
-                      </div>
-                      <div className="space-y-4">
-                        <h4 className="text-sm font-medium">Network Performance</h4>
-                        {networkData.map((network, index) => (
-                          <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                            <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: network.color }} />
-                              <span className="font-medium">{network.network}</span>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-semibold">{network.reviewCount}</div>
-                              <div className="text-xs text-muted-foreground">⭐ {network.avgRating}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                      <div className="text-center">
-                        <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>Loading network data...</p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="categories" className="space-y-6">
