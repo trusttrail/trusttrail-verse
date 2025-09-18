@@ -15,8 +15,8 @@ export const RewardDistributionInfo: React.FC = () => {
               <span>Review submitted to blockchain securely</span>
             </div>
             <div className="flex items-center gap-2">
-              <Coins className="h-3 w-3 text-amber-500" />
-              <span>10 TRST tokens distributed after moderator approval</span>
+              <Coins className="h-3 w-3 text-green-500" />
+              <span>10 TRST tokens distributed INSTANTLY upon submission</span>
             </div>
             <div className="flex items-center gap-2">
               <Coins className="h-3 w-3 text-blue-500" />

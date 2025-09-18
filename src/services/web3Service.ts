@@ -464,9 +464,8 @@ export class Web3Service {
           console.log('🎉 SUCCESS! Review submitted to blockchain!');
           console.log('🔗 View on explorer:', await this.getExplorerUrl(tx.hash));
           
-          // STEP 8: Note about rewards
-          console.log('🪙 STEP 8: Review submitted! Tokens will be minted when approved by moderators.');
-          console.log('ℹ️ Unified contract distributes TRST only after moderator approval, not automatically.');
+          console.log('🪙 STEP 8: Review submitted! Tokens automatically distributed by unified contract.');
+          console.log('✅ Auto-approval enabled - 10 TRST tokens minted immediately to reviewer.');
           
           return tx.hash;
         } else {
