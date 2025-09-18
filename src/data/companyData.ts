@@ -399,6 +399,51 @@ export const sampleCompanies = [
   },
 ];
 
+// Network-specific crypto projects
+const opSepoliaProjects: Company[] = [
+  // Major OP ecosystem projects
+  { id: 1001, name: "Velodrome", logo: "https://assets.coingecko.com/coins/images/25783/standard/velo.png", rating: 4.2, reviewCount: 89, category: "dex", description: "Leading DEX on Optimism" },
+  { id: 1002, name: "Synthetix", logo: "https://assets.coingecko.com/coins/images/3406/standard/SNX.png", rating: 4.0, reviewCount: 156, category: "derivatives", description: "Synthetic assets protocol" },
+  { id: 1003, name: "Lyra", logo: "https://assets.coingecko.com/coins/images/15284/standard/lyra_logo.png", rating: 4.1, reviewCount: 67, category: "derivatives", description: "Options trading protocol" },
+  { id: 1004, name: "Beethoven X", logo: "https://assets.coingecko.com/coins/images/19158/standard/beets-icon-large.png", rating: 4.3, reviewCount: 45, category: "dex", description: "Balancer-based DEX" },
+  { id: 1005, name: "Stargate Finance", logo: "https://assets.coingecko.com/coins/images/18834/standard/sgLogo.png", rating: 4.0, reviewCount: 134, category: "defi-tools", description: "Cross-chain bridge protocol" },
+  { id: 1006, name: "Hop Protocol", logo: "https://assets.coingecko.com/coins/images/25445/standard/hop.png", rating: 3.9, reviewCount: 78, category: "defi-tools", description: "Layer 2 bridge" },
+  { id: 1007, name: "Rubicon", logo: "https://assets.coingecko.com/coins/images/17045/standard/rubicon.png", rating: 4.2, reviewCount: 34, category: "dex", description: "Order book DEX" },
+  { id: 1008, name: "Kwenta", logo: "https://assets.coingecko.com/coins/images/17241/standard/kwenta.png", rating: 4.1, reviewCount: 56, category: "derivatives", description: "Perpetual futures trading" },
+  { id: 1009, name: "Thales", logo: "https://assets.coingecko.com/coins/images/18388/standard/thales_logo.jpg", rating: 3.8, reviewCount: 42, category: "derivatives", description: "Binary options market" },
+  { id: 1010, name: "Perpetual Protocol", logo: "https://assets.coingecko.com/coins/images/12381/standard/60d18e06844a844ad75901a9_mark_only_03.png", rating: 4.0, reviewCount: 98, category: "derivatives", description: "Decentralized perpetual contracts" },
+];
+
+const polygonAmoyProjects: Company[] = [
+  // Major Polygon ecosystem projects  
+  { id: 2001, name: "QuickSwap", logo: "https://assets.coingecko.com/coins/images/13970/standard/1_pOU6pBMEmiL-ZJVb0CYRjQ.png", rating: 4.3, reviewCount: 245, category: "dex", description: "Leading Polygon DEX" },
+  { id: 2002, name: "Aave (Polygon)", logo: "https://assets.coingecko.com/coins/images/12645/standard/AAVE.png", rating: 4.5, reviewCount: 567, category: "defi-lending", description: "Leading lending protocol on Polygon" },
+  { id: 2003, name: "Polymarket", logo: "https://assets.coingecko.com/coins/images/31949/standard/polymarket.png", rating: 4.1, reviewCount: 189, category: "derivatives", description: "Prediction markets" },
+  { id: 2004, name: "Balancer (Polygon)", logo: "https://assets.coingecko.com/coins/images/11683/standard/Balancer.png", rating: 4.2, reviewCount: 234, category: "dex", description: "Automated portfolio manager" },
+  { id: 2005, name: "Gains Network", logo: "https://assets.coingecko.com/coins/images/13703/standard/gns_logo.jpg", rating: 4.0, reviewCount: 145, category: "derivatives", description: "Decentralized leverage trading" },
+  { id: 2006, name: "Mai Finance", logo: "https://assets.coingecko.com/coins/images/15264/standard/mimatic-red.png", rating: 3.9, reviewCount: 67, category: "defi-lending", description: "Over-collateralized stablecoin" },
+  { id: 2007, name: "DodoEx", logo: "https://assets.coingecko.com/coins/images/12651/standard/dodo_logo.png", rating: 3.8, reviewCount: 89, category: "dex", description: "Proactive market maker" },
+  { id: 2008, name: "Dfyn Network", logo: "https://assets.coingecko.com/coins/images/14758/standard/dfyn.png", rating: 3.7, reviewCount: 56, category: "dex", description: "Multi-chain DEX" },
+  { id: 2009, name: "Klima DAO", logo: "https://assets.coingecko.com/coins/images/17741/standard/klima.png", rating: 3.6, reviewCount: 78, category: "dao", description: "Carbon-backed currency" },
+  { id: 2010, name: "PolyBridge", logo: "https://assets.coingecko.com/coins/images/4713/standard/matic-token-icon.png", rating: 4.0, reviewCount: 123, category: "defi-tools", description: "Cross-chain bridge" },
+];
+
+// Get companies filtered by network for better UX
+export const getCompaniesForNetwork = (network: string) => {
+  const baseCompanies = sampleCompanies.filter(c => !c.id.toString().startsWith('1') && !c.id.toString().startsWith('2'));
+  
+  switch (network) {
+    case 'opSepolia':
+      return [...baseCompanies, ...opSepoliaProjects];
+    case 'amoy':
+      return [...baseCompanies, ...polygonAmoyProjects];
+    default:
+      return [...baseCompanies, ...opSepoliaProjects, ...polygonAmoyProjects];
+  }
+};
+
+export const getAllCompanies = () => [...sampleCompanies, ...opSepoliaProjects, ...polygonAmoyProjects];
+
 export const sampleCategories = [
   {
     id: 'dex',

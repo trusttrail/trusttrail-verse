@@ -1,6 +1,7 @@
-
-import { useState } from 'react';
-import { sampleCompanies, sampleCategories } from '@/data/companyData';
+import { useState, useEffect } from 'react';
+import { getCompaniesForNetwork, getAllCompanies, sampleCategories } from '@/data/companyData';
+import { web3Categories } from '@/data/web3Categories';
+import { useWalletConnection } from '@/hooks/useWalletConnection';
 
 export interface ReviewFormData {
   companyName: string;
@@ -13,6 +14,8 @@ export interface ReviewFormData {
 }
 
 export const useReviewForm = () => {
+  const { currentNetwork } = useWalletConnection(); // Get current network
+  
   const [formData, setFormData] = useState<ReviewFormData>({
     companyName: '',
     category: '',
@@ -28,20 +31,32 @@ export const useReviewForm = () => {
   const [openCompanySelect, setOpenCompanySelect] = useState(false);
   const [gitcoinVerified, setGitcoinVerified] = useState(false);
 
-  // Use the comprehensive company list from our database
-  const mockCompanies = sampleCompanies.map(company => ({
-    id: company.id,
-    name: company.name,
-    category: company.category,
-    logo: company.logo
-  }));
+  // Get network-specific companies
+  const getNetworkCompanies = () => {
+    const companies = currentNetwork ? getCompaniesForNetwork(currentNetwork) : getAllCompanies();
+    return companies.map(company => ({
+      id: company.id,
+      name: company.name,
+      category: company.category,
+      logo: company.logo
+    }));
+  };
 
-  const mockCategories = sampleCategories.map(cat => ({
+  const [mockCompanies, setMockCompanies] = useState(getNetworkCompanies());
+  const [filteredCompanies, setFilteredCompanies] = useState(mockCompanies);
+
+  // Update companies when network changes
+  useEffect(() => {
+    const networkCompanies = getNetworkCompanies();
+    setMockCompanies(networkCompanies);
+    setFilteredCompanies(networkCompanies);
+  }, [currentNetwork]);
+
+  // Use comprehensive categories from web3Categories
+  const mockCategories = web3Categories.map(cat => ({
     id: cat.id,
     name: cat.name
   }));
-
-  const [filteredCompanies, setFilteredCompanies] = useState(mockCompanies);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -75,14 +90,14 @@ export const useReviewForm = () => {
 
   const handleCompanySearch = (value: string) => {
     if (!value.trim()) {
-      setFilteredCompanies(mockCompanies); // Show all companies instead of limiting to 50
+      setFilteredCompanies(mockCompanies);
       return;
     }
 
     const filtered = mockCompanies.filter(company =>
       company.name.toLowerCase().includes(value.toLowerCase()) ||
       company.category.toLowerCase().includes(value.toLowerCase())
-    ); // Remove slice limit to show all matching companies
+    );
     
     setFilteredCompanies(filtered);
   };

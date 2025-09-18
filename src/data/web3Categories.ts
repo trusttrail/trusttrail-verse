@@ -147,5 +147,40 @@ export const web3Categories: Web3Category[] = [
     icon: "👥",
     count: 45,
     description: "Decentralized social networks and platforms"
+  },
+  {
+    id: "metaverse",
+    name: "Metaverse",
+    icon: "🌐",
+    count: 67,
+    description: "Virtual worlds and metaverse platforms"
+  },
+  {
+    id: "cross-chain",
+    name: "Cross-Chain",
+    icon: "🌉",
+    count: 34,
+    description: "Interoperability and bridge protocols"
+  },
+  {
+    id: "insurance",
+    name: "Insurance",
+    icon: "🛡️",
+    count: 23,
+    description: "Decentralized insurance protocols"
+  },
+  {
+    id: "payments",
+    name: "Payments",
+    icon: "💳",
+    count: 56,
+    description: "Crypto payment solutions and processors"
+  },
+  {
+    id: "analytics",
+    name: "Analytics",
+    icon: "📊",
+    count: 29,
+    description: "Blockchain analytics and data platforms"
   }
 ];
