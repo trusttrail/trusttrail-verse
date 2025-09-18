@@ -59,7 +59,7 @@ export const useStakingTransaction = () => {
       // ✅ REAL STAKING using proper contract functions
       const amountInWei = ethers.parseEther(amount);
       
-      console.log(`📝 ${action === 'stake' ? 'Staking' : 'Unstaking'} ${amount} TRT (${amountInWei.toString()} wei)`);
+      console.log(`📝 ${action === 'stake' ? 'Staking' : 'Unstaking'} ${amount} TRST (${amountInWei.toString()} wei)`);
 
       let tx;
       
@@ -125,7 +125,7 @@ export const useStakingTransaction = () => {
 
       toast({
         title: "Transaction Submitted",
-        description: `${action === 'stake' ? 'Staking' : 'Unstaking'} ${amount} TRT tokens...`,
+        description: `${action === 'stake' ? 'Staking' : 'Unstaking'} ${amount} TRST tokens...`,
       });
 
       // Wait for transaction confirmation
@@ -205,7 +205,7 @@ export const useStakingTransaction = () => {
       const stakedBalanceWei = await contract.getStakedBalance(address);
       const stakedBalance = ethers.formatEther(stakedBalanceWei);
       
-      console.log(`📊 Real staked balance: ${stakedBalance} TRT`);
+      console.log(`📊 Real staked balance: ${stakedBalance} TRST`);
       
       return parseFloat(stakedBalance).toFixed(0);
     } catch (error) {
@@ -291,7 +291,7 @@ export const useStakingTransaction = () => {
 
       toast({
         title: "Claiming Rewards...",
-        description: `Claiming ${rewardAmount.toFixed(4)} TRT tokens as daily rewards.`,
+        description: `Claiming ${rewardAmount.toFixed(4)} TRST tokens as daily rewards.`,
       });
 
       // Use the real contract claimRewards function

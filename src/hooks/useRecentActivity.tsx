@@ -86,7 +86,7 @@ export const RecentActivityProvider = ({ children }: { children: ReactNode }) =>
         return {
           id,
           type,
-          message: `You earned ${amount} $TRT tokens 💰`,
+          message: `You earned ${amount} $TRST tokens 💰`,
           wallet,
         };
       }

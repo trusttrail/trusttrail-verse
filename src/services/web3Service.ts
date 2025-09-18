@@ -32,8 +32,8 @@ export class Web3Service {
           decimals: 18,
           icon: '🔷'
         },
-        TRT: {
-          symbol: 'TRT',
+        TRST: {
+          symbol: 'TRST',
           name: 'TRUSTTRAIL',
           address: CONTRACT_ADDRESSES.amoy.REWARD_TOKEN,
           decimals: 18,
@@ -520,9 +520,9 @@ export class Web3Service {
         console.warn('⚠️ Low POL balance detected. User may need to get POL from faucet.');
       }
       
-      // Get TRT token balance
-      const trtBalance = await this.getTrustTokenBalance(address);
-      balances['TRT'] = trtBalance;
+      // Get TRST token balance
+      const trstBalance = await this.getTrustTokenBalance(address);
+      balances['TRST'] = trstBalance;
     } else if (network === 'ethSepolia' || network === 'opSepolia') {
       // Get ETH balance for gas fees
       const ethBalance = await this.getTokenBalance(address, 'ETH');
@@ -597,12 +597,12 @@ export class Web3Service {
   async estimateSwap(fromToken: string, toToken: string, amount: string): Promise<string> {
     // Mock exchange rates for demo - in production, this would call a DEX API
     const rates: Record<string, Record<string, number>> = {
-      POL: { ETH: 0.0015, BTC: 0.000025, USDT: 0.85, USDC: 0.85, TRT: 1200 },
+      POL: { ETH: 0.0015, BTC: 0.000025, USDT: 0.85, USDC: 0.85, TRST: 1200 },
       ETH: { POL: 650, BTC: 0.065, USDT: 2500, USDC: 2500, TRUST: 1800000 },
-      BTC: { POL: 40000, ETH: 15.4, USDT: 95000, USDC: 95000, TRT: 28000000 },
-      USDT: { POL: 1.18, ETH: 0.0004, BTC: 0.00001, USDC: 1.0, TRT: 1400 },
-      USDC: { POL: 1.18, ETH: 0.0004, BTC: 0.00001, USDT: 1.0, TRT: 1400 },
-      TRT: { POL: 0.00083, ETH: 0.00000056, BTC: 0.000000036, USDT: 0.00071, USDC: 0.00071 },
+      BTC: { POL: 40000, ETH: 15.4, USDT: 95000, USDC: 95000, TRST: 28000000 },
+      USDT: { POL: 1.18, ETH: 0.0004, BTC: 0.00001, USDC: 1.0, TRST: 1400 },
+      USDC: { POL: 1.18, ETH: 0.0004, BTC: 0.00001, USDT: 1.0, TRST: 1400 },
+      TRST: { POL: 0.00083, ETH: 0.00000056, BTC: 0.000000036, USDT: 0.00071, USDC: 0.00071 },
       TRUST: { ETH: 0.00000056, BTC: 0.000000036, USDT: 0.00071, USDC: 0.00071 }
     };
 

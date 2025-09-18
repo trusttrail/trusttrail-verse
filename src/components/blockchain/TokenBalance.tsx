@@ -13,7 +13,7 @@ export const TokenBalance: React.FC = () => {
   }
 
   // Get the correct token symbol for each network
-  const tokenSymbol = currentNetwork === "amoy" ? "TRT" : "TRUST";
+  const tokenSymbol = currentNetwork === "amoy" ? "TRST" : "TRUST";
   const tokenBalance = tokenBalances[tokenSymbol] || "0";
   const networkName = currentNetwork === "amoy" ? "Polygon Amoy" : "OP Sepolia";
 

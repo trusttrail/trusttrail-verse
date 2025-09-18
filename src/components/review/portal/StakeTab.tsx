@@ -39,13 +39,13 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
   const [rewards, setRewards] = useState({ daily: "0", weekly: "0", monthly: "0" });
 
   const isValidNetwork = currentNetwork === "amoy" || currentNetwork === "ethSepolia" || currentNetwork === "opSepolia";
-  const trtBalance = tokenBalances["TRT"] || "0";
+  const trstBalance = tokenBalances["TRST"] || "0";
   const calculatedAPY = calculateAPY();
 
   // Enhanced debug logging
-  console.log('🔍 StakeTab Debug - TRT Balance:', {
+  console.log('🔍 StakeTab Debug - TRST Balance:', {
     tokenBalances,
-    trtBalance,
+    trstBalance,
     address,
     isWalletConnected,
     isValidNetwork,
@@ -55,8 +55,8 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
 
   // Force re-render when balance data changes
   useEffect(() => {
-    console.log('🔄 StakeTab data changed:', { trtBalance, stakedBalance, rewards });
-  }, [trtBalance, stakedBalance, rewards]);
+    console.log('🔄 StakeTab data changed:', { trstBalance, stakedBalance, rewards });
+  }, [trstBalance, stakedBalance, rewards]);
 
   // Load staked balance and rewards when wallet is connected
   useEffect(() => {
@@ -128,7 +128,7 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
     if (result.success) {
       toast({
         title: "Staking Successful! 🎉",
-        description: `Staked ${stakeAmount} TRT successfully. Transaction: ${result.txHash?.substring(0, 10)}...`,
+        description: `Staked ${stakeAmount} TRST successfully. Transaction: ${result.txHash?.substring(0, 10)}...`,
       });
       setStakeAmount("");
       await refreshStakingData();
@@ -176,7 +176,7 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
     if (result.success) {
       toast({
         title: "Unstaking Successful! 🎉",
-        description: `Unstaked ${unstakeAmount} TRT successfully. Transaction: ${result.txHash?.substring(0, 10)}...`,
+        description: `Unstaked ${unstakeAmount} TRST successfully. Transaction: ${result.txHash?.substring(0, 10)}...`,
       });
       setUnstakeAmount("");
       await refreshStakingData();
@@ -209,7 +209,7 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
 
   return (
     <div>
-      <h2 className="text-2xl md:text-3xl font-bold mb-2">TRT Token Staking</h2>
+      <h2 className="text-2xl md:text-3xl font-bold mb-2">TRST Token Staking</h2>
       <p className="text-muted-foreground mb-8">Stake your tokens to earn {calculatedAPY} APY on supported networks</p>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -218,8 +218,8 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
           {/* Current Balances */}
           <Card>
             <CardHeader>
-              <CardTitle>TRT Token Information</CardTitle>
-              <CardDescription>Your current TRT token balances</CardDescription>
+              <CardTitle>TRST Token Information</CardTitle>
+              <CardDescription>Your current TRST token balances</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -228,16 +228,16 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
                   <p className="font-medium text-lg">
                     {/* Debug: Explicit logging here */}
                     {(() => {
-                      console.log('🎯 UI RENDER - trtBalance value:', trtBalance, typeof trtBalance);
+                      console.log('🎯 UI RENDER - trstBalance value:', trstBalance, typeof trstBalance);
                       console.log('🎯 UI RENDER - tokenBalances:', tokenBalances);
-                      console.log('🎯 UI RENDER - tokenBalances["TRT"]:', tokenBalances["TRT"]);
-                      return trtBalance;
-                    })()} TRT
+                      console.log('🎯 UI RENDER - tokenBalances["TRST"]:', tokenBalances["TRST"]);
+                      return trstBalance;
+                    })()} TRST
                   </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Staked Balance</p>
-                  <p className="font-medium text-lg">{stakedBalance} TRT</p>
+                  <p className="font-medium text-lg">{stakedBalance} TRST</p>
                 </div>
               </div>
               <div className="mt-4 p-3 bg-muted/40 rounded-lg">
@@ -258,8 +258,8 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
           {/* Stake Form */}
           <Card>
             <CardHeader>
-              <CardTitle>Stake TRT Tokens</CardTitle>
-              <CardDescription>Stake your TRT tokens to start earning rewards</CardDescription>
+              <CardTitle>Stake TRST Tokens</CardTitle>
+              <CardDescription>Stake your TRST tokens to start earning rewards</CardDescription>
             </CardHeader>
             <CardContent>
               {!isWalletConnected ? (
@@ -292,14 +292,14 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
                         className="pr-16"
                         step="1"
                         min="1"
-                        max={trtBalance}
+                        max={trstBalance}
                       />
                       <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <span className="text-sm text-muted-foreground">TRT</span>
+                        <span className="text-sm text-muted-foreground">TRST</span>
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Available: {trtBalance} TRT
+                      Available: {trstBalance} TRST
                     </p>
                   </div>
                   
@@ -311,7 +311,7 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
                       </div>
                       <div className="flex justify-between">
                         <span>Est. Daily Rewards:</span>
-                        <span>{(parseFloat(stakeAmount) * 0.30 / 365).toFixed(4)} TRT</span>
+                        <span>{(parseFloat(stakeAmount) * 0.30 / 365).toFixed(4)} TRST</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Network Fee:</span>
@@ -333,7 +333,7 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
                     ) : (
                       <>
                         <Coins className="mr-2" size={18} />
-                        Stake TRT
+                        Stake TRST
                       </>
                     )}
                   </Button>
@@ -345,8 +345,8 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
           {/* Unstake Form */}
           <Card>
             <CardHeader>
-              <CardTitle>Unstake TRT Tokens</CardTitle>
-              <CardDescription>Withdraw your staked TRT tokens</CardDescription>
+              <CardTitle>Unstake TRST Tokens</CardTitle>
+              <CardDescription>Withdraw your staked TRST tokens</CardDescription>
             </CardHeader>
             <CardContent>
               {!isWalletConnected ? (
@@ -359,7 +359,7 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
                 </div>
               ) : parseFloat(stakedBalance) <= 0 ? (
                 <div className="text-center py-4">
-                  <p className="text-muted-foreground">No TRT tokens staked</p>
+                  <p className="text-muted-foreground">No TRST tokens staked</p>
                 </div>
               ) : (
                 <form onSubmit={handleUnstake} className="space-y-4">
@@ -380,11 +380,11 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
                         max={stakedBalance}
                       />
                       <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <span className="text-sm text-muted-foreground">TRT</span>
+                        <span className="text-sm text-muted-foreground">TRST</span>
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Staked: {stakedBalance} TRT
+                      Staked: {stakedBalance} TRST
                     </p>
                   </div>
                   
@@ -400,7 +400,7 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
                         Unstaking...
                       </>
                     ) : (
-                      "Unstake TRT"
+                      "Unstake TRST"
                     )}
                   </Button>
                 </form>
@@ -414,19 +414,19 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
           <Card>
             <CardHeader>
               <CardTitle>Staking Overview</CardTitle>
-              <CardDescription>Your current TRT staking position</CardDescription>
+              <CardDescription>Your current TRST staking position</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between p-3 bg-muted/40 rounded-lg">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">🔷</span>
                   <div>
-                    <p className="font-medium">TRT</p>
+                    <p className="font-medium">TRST</p>
                     <p className="text-sm text-muted-foreground">{calculatedAPY} APY</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium">{stakedBalance} TRT</p>
+                  <p className="font-medium">{stakedBalance} TRST</p>
                   <p className="text-sm text-muted-foreground">Staked</p>
                 </div>
               </div>
@@ -442,18 +442,18 @@ const StakeTab = ({ isWalletConnected, connectWallet }: StakeTabProps) => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Daily Rewards:</span>
-                  <span className="text-green-500">{rewards.daily} TRT</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Weekly Rewards:</span>
-                  <span className="text-green-500">{rewards.weekly} TRT</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Monthly Rewards:</span>
-                  <span className="text-green-500">{rewards.monthly} TRT</span>
-                </div>
+                 <div className="flex justify-between">
+                   <span>Daily Rewards:</span>
+                   <span className="text-green-500">{rewards.daily} TRST</span>
+                 </div>
+                 <div className="flex justify-between">
+                   <span>Weekly Rewards:</span>
+                   <span className="text-green-500">{rewards.weekly} TRST</span>
+                 </div>
+                 <div className="flex justify-between">
+                   <span>Monthly Rewards:</span>
+                   <span className="text-green-500">{rewards.monthly} TRST</span>
+                 </div>
               </div>
               
               <Button 
