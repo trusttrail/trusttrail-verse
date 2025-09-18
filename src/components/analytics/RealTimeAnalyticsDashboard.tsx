@@ -37,7 +37,7 @@ import {
 import { useAnalyticsData } from "@/hooks/useAnalyticsData";
 
 const RealTimeAnalyticsDashboard = () => {
-  const { overview, categoryData, dailyData, companyData, loading, refreshData } = useAnalyticsData();
+  const { overview, categoryData, networkData, companyData, loading, refreshData } = useAnalyticsData();
 
   // Chart configs for different chart types
   const lineChartConfig = {
@@ -193,7 +193,7 @@ const RealTimeAnalyticsDashboard = () => {
             <Users className="h-5 w-5 text-green-500" />
           </CardHeader>
           <CardContent className="pb-4">
-            <div className="text-3xl font-bold text-foreground">{overview.totalCategories}</div>
+            <div className="text-3xl font-bold text-foreground">{categoryData.length}</div>
             <p className="text-xs text-muted-foreground mt-2">
               🎯 Different Web3 sectors covered
             </p>
@@ -228,75 +228,13 @@ const RealTimeAnalyticsDashboard = () => {
           </TabsList>
 
           <TabsContent value="trends" className="space-y-6">
-            {dailyData.length > 0 ? (
-              <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-xl flex items-center gap-2">
-                    📈 Review Activity Over Time
-                  </CardTitle>
-                  <CardDescription className="space-y-1">
-                    <p>Daily review submissions and average ratings from blockchain transactions</p>
-                    <div className="flex items-center gap-4 text-sm mt-2">
-                      <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 rounded bg-[#7b58f6]"></div>
-                        <span>Purple bars = Review Count (left axis)</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 rounded bg-[#2c9fff]"></div>
-                        <span>Blue line = Average Rating (right axis)</span>
-                      </div>
-                    </div>
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer config={lineChartConfig} className="h-[400px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <ComposedChart data={dailyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
-                        <XAxis 
-                          dataKey="date" 
-                          className="text-xs fill-muted-foreground"
-                          tick={{ fontSize: 12 }}
-                          tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        />
-                        <YAxis 
-                          yAxisId="left" 
-                          className="text-xs fill-muted-foreground"
-                          tick={{ fontSize: 12 }}
-                          label={{ value: 'Review Count', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' } }}
-                        />
-                        <YAxis 
-                          yAxisId="right" 
-                          orientation="right" 
-                          className="text-xs fill-muted-foreground"
-                          tick={{ fontSize: 12 }}
-                          domain={[0, 5]}
-                          label={{ value: 'Average Rating (0-5)', angle: 90, position: 'insideRight', style: { textAnchor: 'middle' } }}
-                        />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Legend />
-                        <Bar yAxisId="left" dataKey="reviews" fill="var(--color-reviews)" name="Reviews" radius={[4, 4, 0, 0]} />
-                        <Line 
-                          yAxisId="right" 
-                          type="monotone" 
-                          dataKey="rating" 
-                          stroke="var(--color-rating)" 
-                          strokeWidth={3}
-                          dot={{ fill: "var(--color-rating)", r: 4 }}
-                          name="Avg Rating"
-                        />
-                      </ComposedChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-                <CardContent className="text-center py-8">
-                  <p className="text-muted-foreground">More reviews needed to show trend data</p>
-                </CardContent>
-              </Card>
-            )}
+            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+              <CardContent className="text-center py-8">
+                <TrendingUp className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">Network Performance Tracking</h3>
+                <p className="text-muted-foreground">Monitoring review submissions across Optimism and Polygon networks</p>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="categories" className="space-y-6">

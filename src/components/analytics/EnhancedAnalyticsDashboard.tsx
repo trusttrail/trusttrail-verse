@@ -48,7 +48,7 @@ import {
 import { useAnalyticsData } from "@/hooks/useAnalyticsData";
 
 const EnhancedAnalyticsDashboard = () => {
-  const { overview, categoryData, dailyData, companyData, loading, refreshData } = useAnalyticsData();
+  const { overview, categoryData, networkData, companyData, loading, refreshData } = useAnalyticsData();
   const [activeInsight, setActiveInsight] = useState<string>("overview");
 
   // AI-driven insights generation
@@ -96,26 +96,9 @@ const EnhancedAnalyticsDashboard = () => {
       }
     }
 
-    // Growth insights
-    if (dailyData.length >= 7) {
-      const recent = dailyData.slice(-3);
-      const earlier = dailyData.slice(-7, -3);
-      const recentAvg = recent.reduce((sum, day) => sum + day.reviews, 0) / recent.length;
-      const earlierAvg = earlier.reduce((sum, day) => sum + day.reviews, 0) / earlier.length;
-      
-      if (recentAvg > earlierAvg * 1.2) {
-        insights.push({
-          type: "growth",
-          title: "🚀 Accelerating Growth",
-          message: `Review submission rate increased ${Math.round(((recentAvg - earlierAvg) / earlierAvg) * 100)}% in recent days.`,
-          action: "capitalize_growth"
-        });
-      }
-    }
-
     return insights.length > 0 ? insights : [{
       type: "neutral",
-      title: "📊 Steady Progress",
+      title: "📊 Steady Progress", 
       message: "Your platform is building momentum with consistent review submissions and user engagement.",
       action: "maintain_momentum"
     }];
@@ -370,7 +353,7 @@ const EnhancedAnalyticsDashboard = () => {
             </div>
           </CardHeader>
           <CardContent className="pb-4">
-            <div className="text-3xl font-bold text-foreground mb-2">{overview.totalCategories}</div>
+            <div className="text-3xl font-bold text-foreground mb-2">{categoryData.length}</div>
             <div className="flex items-center gap-2 text-xs">
               <Badge variant="secondary">Web3 Sectors</Badge>
             </div>
@@ -400,85 +383,13 @@ const EnhancedAnalyticsDashboard = () => {
           </TabsList>
 
           <TabsContent value="trends" className="space-y-6">
-            {dailyData.length > 0 ? (
-              <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-                <CardHeader className="pb-6">
-                  <CardTitle className="text-2xl flex items-center gap-3">
-                    📈 Review Activity Timeline
-                  </CardTitle>
-                  <CardDescription className="space-y-2">
-                    <p className="text-base">Track daily review submissions and quality trends over time</p>
-                    <div className="flex flex-wrap items-center gap-6 text-sm mt-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-[#7b58f6] rounded"></div>
-                        <span>Daily Reviews (bars)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-[#2c9fff] rounded"></div>
-                        <span>Average Rating (line)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-[#22c55e] rounded"></div>
-                        <span>Cumulative Total (area)</span>
-                      </div>
-                    </div>
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer config={trendChartConfig} className="h-[500px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <ComposedChart data={dailyData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
-                        <XAxis 
-                          dataKey="date" 
-                          className="text-xs fill-muted-foreground"
-                          tick={{ fontSize: 12 }}
-                          angle={-45}
-                          textAnchor="end"
-                          height={60}
-                          tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        />
-                        <YAxis 
-                          yAxisId="left" 
-                          className="text-xs fill-muted-foreground"
-                          tick={{ fontSize: 12 }}
-                          label={{ value: 'Reviews Count', angle: -90, position: 'insideLeft' }}
-                        />
-                        <YAxis 
-                          yAxisId="right" 
-                          orientation="right" 
-                          className="text-xs fill-muted-foreground"
-                          tick={{ fontSize: 12 }}
-                          domain={[0, 5]}
-                          label={{ value: 'Rating (0-5 ⭐)', angle: 90, position: 'insideRight' }}
-                        />
-                        <Tooltip content={<EnhancedTooltip />} />
-                        <Legend />
-                        <Area yAxisId="left" dataKey="reviews" fill="var(--color-cumulative)" fillOpacity={0.1} stroke="none" stackId="1" />
-                        <Bar yAxisId="left" dataKey="reviews" fill="var(--color-reviews)" name="Daily Reviews" radius={[4, 4, 0, 0]} />
-                        <Line 
-                          yAxisId="right" 
-                          type="monotone" 
-                          dataKey="rating" 
-                          stroke="var(--color-rating)" 
-                          strokeWidth={4}
-                          dot={{ fill: "var(--color-rating)", r: 6, strokeWidth: 2, stroke: "#fff" }}
-                          name="Avg Rating"
-                        />
-                      </ComposedChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-                <CardContent className="text-center py-12">
-                  <TrendingUp className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">Building Trend Data</h3>
-                  <p className="text-muted-foreground">More reviews needed to show meaningful trends over time</p>
-                </CardContent>
-              </Card>
-            )}
+            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+              <CardContent className="text-center py-12">
+                <TrendingUp className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">Network Performance Analytics</h3>
+                <p className="text-muted-foreground">Tracking review submissions across Optimism and Polygon networks</p>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="categories" className="space-y-6">
