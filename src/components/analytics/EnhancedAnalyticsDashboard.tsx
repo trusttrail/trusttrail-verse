@@ -131,8 +131,9 @@ const EnhancedAnalyticsDashboard = () => {
   };
 
   const pieChartConfig = categoryData.reduce((config, item) => {
+    const categoryName = String(item.category || '');
     config[item.category] = {
-      label: item.category.charAt(0).toUpperCase() + item.category.slice(1),
+      label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
       color: item.color,
     };
     return config;
@@ -526,9 +527,10 @@ const EnhancedAnalyticsDashboard = () => {
                             formatter={(value, entry) => {
                               const categoryItem = categoryData.find(c => c.category === value);
                               const percentage = categoryItem ? Math.round((categoryItem.reviewCount / overview.totalReviews) * 100) : 0;
+                              const displayValue = String(value || '');
                               return (
                                 <span style={{ color: entry.color || '#666', fontWeight: '600', fontSize: '14px' }}>
-                                  {value.charAt(0).toUpperCase() + value.slice(1)} ({percentage}%)
+                                  {displayValue.charAt(0).toUpperCase() + displayValue.slice(1)} ({percentage}%)
                                 </span>
                               );
                             }}
