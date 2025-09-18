@@ -73,6 +73,9 @@ contract TrustTrailReviews is ERC20, ERC20Burnable, AccessControl, ReentrancyGua
     uint256 public reviewRewardAmount = 10 * 10**18; // 10 TRST per review
     uint256 public upvoteRewardAmount = 1 * 10**18;  // 1 TRST per upvote received
     
+    // Auto-approval settings
+    bool public autoApproveReviews = true; // Enable automatic approval and reward distribution
+    
     // =================== EVENTS ===================
     
     // Token events
@@ -88,6 +91,7 @@ contract TrustTrailReviews is ERC20, ERC20Burnable, AccessControl, ReentrancyGua
     event ReviewDownvoted(uint256 indexed reviewId, address indexed voter);
     event CommentAdded(uint256 indexed commentId, uint256 indexed reviewId, address indexed commenter);
     event RewardDistributed(address indexed recipient, uint256 amount, string reason);
+    event AutoApprovalToggled(bool enabled, address indexed admin);
     
     // Staking events
     event TokensStaked(address indexed staker, uint256 amount);
@@ -186,10 +190,25 @@ contract TrustTrailReviews is ERC20, ERC20Burnable, AccessControl, ReentrancyGua
         userReviews[msg.sender].push(reviewId);
         companyReviews[_companyName].push(reviewId);
         
+        // Auto-approval and instant reward distribution
+        if (autoApproveReviews) {
+            review.status = ReviewStatus.Approved;
+            
+            // Distribute reward immediately
+            _mint(msg.sender, reviewRewardAmount);
+            userReputations[msg.sender] += 10;
+            
+            emit ReviewApproved(reviewId, address(this)); // Contract as approver
+            emit RewardDistributed(msg.sender, reviewRewardAmount, "Auto-approved review submission");
+        } else {
+            review.status = ReviewStatus.Pending;
+        }
+        
         emit ReviewSubmitted(reviewId, msg.sender, _companyName);
         return reviewId;
     }
     
+    // Manual approval function (for when auto-approval is disabled)
     function approveReview(uint256 _reviewId) external onlyModerator {
         require(_reviewId < nextReviewId, "Review does not exist");
         Review storage review = reviews[_reviewId];
@@ -197,12 +216,18 @@ contract TrustTrailReviews is ERC20, ERC20Burnable, AccessControl, ReentrancyGua
         
         review.status = ReviewStatus.Approved;
         
-        // Distribute reward to reviewer
+        // Distribute reward to reviewer (only if not already rewarded)
         _mint(review.reviewer, reviewRewardAmount);
         userReputations[review.reviewer] += 10;
         
         emit ReviewApproved(_reviewId, msg.sender);
-        emit RewardDistributed(review.reviewer, reviewRewardAmount, "Review approval");
+        emit RewardDistributed(review.reviewer, reviewRewardAmount, "Manual review approval");
+    }
+    
+    // Toggle auto-approval feature
+    function setAutoApproval(bool _enabled) external onlyAdmin {
+        autoApproveReviews = _enabled;
+        emit AutoApprovalToggled(_enabled, msg.sender);
     }
     
     function rejectReview(uint256 _reviewId) external onlyModerator {
