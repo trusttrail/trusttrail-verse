@@ -19,16 +19,16 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
   const { toast } = useToast();
   const [actualNetwork, setActualNetwork] = useState<string>("amoy");
 
-  // Network options for display with proper chain symbols
+  // Network options for display with proper project symbols
   const networks = [
-    { id: "ethereum", name: "Ethereum Mainnet", icon: "Ξ", symbol: "ETH", supported: false },
-    { id: "polygon", name: "Polygon Mainnet", icon: "⬟", symbol: "MATIC", supported: false },
-    { id: "amoy", name: "Polygon Amoy (Testnet)", icon: "⬟", symbol: "MATIC", supported: true },
-    { id: "ethSepolia", name: "Ethereum Sepolia (Testnet)", icon: "Ξ", symbol: "ETH", supported: true },
-    { id: "opSepolia", name: "OP Sepolia (Testnet)", icon: "🔴", symbol: "ETH", supported: true },
-    { id: "arbitrum", name: "Arbitrum One", icon: "◆", symbol: "ETH", supported: false },
-    { id: "optimism", name: "Optimism", icon: "🔴", symbol: "ETH", supported: false },
-    { id: "base", name: "Base", icon: "🔵", symbol: "ETH", supported: false },
+    { id: "ethereum", name: "Ethereum Mainnet", icon: "Ξ", supported: false },
+    { id: "polygon", name: "Polygon Mainnet", icon: "⬟", supported: false },
+    { id: "amoy", name: "Polygon Amoy (Testnet)", icon: "⬟", supported: true },
+    { id: "ethSepolia", name: "Ethereum Sepolia (Testnet)", icon: "Ξ", supported: true },
+    { id: "opSepolia", name: "OP Sepolia (Testnet)", icon: "⭕", supported: true },
+    { id: "arbitrum", name: "Arbitrum One", icon: "Ⓐ", supported: false },
+    { id: "optimism", name: "Optimism", icon: "⭕", supported: false },
+    { id: "base", name: "Base", icon: "Ⓑ", supported: false },
   ];
 
   // Listen for supported testnets
@@ -187,7 +187,6 @@ const NetworkSelector = ({ currentNetwork, onChange }: NetworkSelectorProps) => 
             <span className="text-lg">{network.icon}</span>
             <div className="flex flex-col">
               <span className="text-sm font-medium">{network.name}</span>
-              <span className="text-xs text-muted-foreground">Native: {network.symbol}</span>
               {!network.supported && (
                 <span className="text-xs text-amber-600">Coming Soon</span>
               )}
