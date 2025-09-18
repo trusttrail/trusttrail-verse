@@ -344,7 +344,26 @@ export class Web3Service {
             const feeData = await this.provider.getFeeData();
             // Use similar gas pricing to Amoy but adjusted for OP Sepolia
             gasPrice = feeData.gasPrice ? (feeData.gasPrice * 200n) / 100n : ethers.parseUnits('2', 'gwei');
-            gasLimit = 800000n; // Higher gas limit for OP Sepolia L2 operations
+            
+            // Try to estimate gas for OP Sepolia too
+            try {
+              const estimatedGas = await contract.submitReview.estimateGas(
+                reviewData.companyName,
+                reviewData.category,
+                ipfsHash,
+                proofHash,
+                reviewData.rating
+              );
+              gasLimit = (estimatedGas * 150n) / 100n; // Add 50% buffer
+              console.log('⛽ OP Sepolia gas estimation successful:', {
+                estimated: estimatedGas.toString(),
+                withBuffer: gasLimit.toString()
+              });
+            } catch (estimateError) {
+              console.log('⛽ OP Sepolia gas estimation failed, using default:', estimateError);
+              gasLimit = 1000000n; // Increased from 800000 to 1000000 for OP Sepolia
+            }
+            
             console.log('⛽ OP Sepolia gas settings:', {
               gasPrice: ethers.formatUnits(gasPrice, 'gwei') + ' gwei',
               gasLimit: gasLimit.toString()
@@ -352,22 +371,41 @@ export class Web3Service {
           } catch (gasError) {
             console.log('⛽ OP Sepolia gas error, using fallback:', gasError);
             gasPrice = ethers.parseUnits('2', 'gwei');
-            gasLimit = 800000n;
+            gasLimit = 1000000n; // Increased fallback limit
             console.log('⛽ OP Sepolia fallback gas settings');
           }
         } else {
-          // Amoy settings (existing)
+          // Amoy settings (existing) - Increased gas limits for better reliability
           try {
             const feeData = await this.provider.getFeeData();
             gasPrice = feeData.gasPrice ? (feeData.gasPrice * 150n) / 100n : ethers.parseUnits('50', 'gwei');
-            gasLimit = 500000n; // Higher for Amoy
+            
+            // Try to estimate gas first, then add buffer
+            try {
+              const estimatedGas = await contract.submitReview.estimateGas(
+                reviewData.companyName,
+                reviewData.category,
+                ipfsHash,
+                proofHash,
+                reviewData.rating
+              );
+              gasLimit = (estimatedGas * 150n) / 100n; // Add 50% buffer
+              console.log('⛽ Gas estimation successful:', {
+                estimated: estimatedGas.toString(),
+                withBuffer: gasLimit.toString()
+              });
+            } catch (estimateError) {
+              console.log('⛽ Gas estimation failed, using higher default:', estimateError);
+              gasLimit = 800000n; // Increased from 500000 to 800000
+            }
+            
             console.log('⛽ Amoy gas settings:', {
               gasPrice: ethers.formatUnits(gasPrice, 'gwei') + ' gwei',
               gasLimit: gasLimit.toString()
             });
           } catch (gasError) {
             gasPrice = ethers.parseUnits('50', 'gwei');
-            gasLimit = 500000n;
+            gasLimit = 800000n; // Increased fallback limit
             console.log('⛽ Amoy fallback gas settings');
           }
         }
