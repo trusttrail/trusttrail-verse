@@ -12,8 +12,8 @@ export const OP_SEPOLIA_NETWORK_NAME = 'OP Sepolia (Testnet)';
 // Contract addresses by network
 export const CONTRACT_ADDRESSES = {
   amoy: {
-    REVIEW_PLATFORM: '0x3d27504B6B18Da549D6F18928c3fa8A35675aB8A', // Keep original for reviews
-    REWARD_TOKEN: '0x9BBebEc28e788C64e07D229D345bb006BA432dab', // New TRST token contract
+    REVIEW_PLATFORM: '0x7F2cB4F56CC15C6a9c92d16D62870b042DF50854', // Unified TrustTrailReviews contract
+    REWARD_TOKEN: '0x7F2cB4F56CC15C6a9c92d16D62870b042DF50854', // Same unified contract for TRST tokens
   },
   ethSepolia: {
     REVIEW_PLATFORM: '0x1665691897705F7bA63C62067F189993A1d44AD5', // ETH Sepolia TrustTrail contract  
