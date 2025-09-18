@@ -124,14 +124,14 @@ export const useFormSubmission = ({
       // Show final results based on AI decision
       if (dbResult.aiScreeningResult?.approved) {
         toast({
-          title: "🎉 Review LIVE!",
-          description: `✅ Blockchain secured + AI approved in ${Math.round(aiProcessingTime/1000)}s! You've earned 10 $TRUST tokens. Review is now live!`,
+          title: "🎉 Review Submitted!",
+          description: `✅ Blockchain secured + AI approved in ${Math.round(aiProcessingTime/1000)}s! TRST tokens will be distributed after moderator approval.`,
           duration: 6000,
         });
       } else {
         toast({
           title: "⚠️ Review Under Review",
-          description: `Blockchain transaction successful but AI flagged for manual review. You still earned tokens! Tx: ${txHash.substring(0, 10)}...`,
+          description: `Blockchain secured but needs manual review. TRST tokens distributed after approval. Tx: ${txHash.substring(0, 10)}...`,
           duration: 8000,
         });
       }

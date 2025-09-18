@@ -1,6 +1,7 @@
 
 import React from 'react';
 import ReviewFormContainer from './form/ReviewFormContainer';
+import { RewardDistributionInfo } from './RewardDistributionInfo';
 
 interface WriteReviewFormProps {
   isWalletConnected: boolean;
@@ -10,9 +11,12 @@ interface WriteReviewFormProps {
 
 const WriteReviewForm = ({ isWalletConnected, connectWallet, categories }: WriteReviewFormProps) => {
   return (
-    <ReviewFormContainer 
-      categories={categories}
-    />
+    <div className="space-y-4">
+      <RewardDistributionInfo />
+      <ReviewFormContainer 
+        categories={categories}
+      />
+    </div>
   );
 };
 

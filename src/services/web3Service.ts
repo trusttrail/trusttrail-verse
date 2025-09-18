@@ -464,9 +464,9 @@ export class Web3Service {
           console.log('🎉 SUCCESS! Review submitted to blockchain!');
           console.log('🔗 View on explorer:', await this.getExplorerUrl(tx.hash));
           
-          // STEP 8: Mint reward tokens for successful review submission
-          console.log('🪙 STEP 8: Minting reward tokens...');
-          await this.mintRewardTokens(signerAddress, ethers.parseUnits('10', 18)); // 10 tokens per review
+          // STEP 8: Note about rewards
+          console.log('🪙 STEP 8: Review submitted! Tokens will be minted when approved by moderators.');
+          console.log('ℹ️ Unified contract distributes TRST only after moderator approval, not automatically.');
           
           return tx.hash;
         } else {
@@ -610,33 +610,11 @@ export class Web3Service {
       
     } catch (error) {
       console.error('❌ Failed to get real token balance from contract:', error);
-      console.log('🔄 Falling back to database calculation...');
+      console.log('⚠️ Contract call failed - returning 0 as unified contract only distributes tokens after approval');
       
-      // Fallback: Use database calculation if contract call fails
-      try {
-        const { supabase } = await import('@/integrations/supabase/client');
-        
-        const { data: reviews, error } = await supabase
-          .from('reviews')
-          .select('*')
-          .ilike('wallet_address', address)
-          .eq('status', 'approved');
-        
-        if (error) {
-          console.error('❌ Error fetching approved reviews:', error);
-          return '0';
-        }
-        
-        const approvedReviewCount = reviews?.length || 0;
-        const fallbackBalance = approvedReviewCount * 10; // 10 tokens per approved review
-        
-        console.log(`📊 Fallback: ${approvedReviewCount} approved reviews = ${fallbackBalance} tokens`);
-        return fallbackBalance.toString();
-        
-      } catch (dbError) {
-        console.error('❌ Database fallback also failed:', dbError);
-        return '0';
-      }
+      // For unified contract, tokens are only distributed after moderator approval
+      // Don't show misleading database calculations
+      return '0';
     }
   }
 
