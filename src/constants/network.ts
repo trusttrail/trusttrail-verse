@@ -20,8 +20,8 @@ export const CONTRACT_ADDRESSES = {
     REWARD_TOKEN: '0x1665691897705F7bA63C62067F189993A1d44AD5', // TRUST token contract
   },
   opSepolia: {
-    REVIEW_PLATFORM: '0x1665691897705F7bA63C62067F189993A1d44AD5', // OP Sepolia unified TrustTrail contract  
-    REWARD_TOKEN: '0x1665691897705F7bA63C62067F189993A1d44AD5', // Same unified contract for TRST tokens
+    REVIEW_PLATFORM: '0xF16107CD183467C17E8fF4b6c8266fcbC66D9178', // OP Sepolia unified TrustTrail contract  
+    REWARD_TOKEN: '0xF16107CD183467C17E8fF4b6c8266fcbC66D9178', // Same unified contract for TRST tokens
   }
 };
 
