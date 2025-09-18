@@ -1,7 +1,7 @@
 
 import React from "react";
-import RealTimeAnalyticsDashboard from "@/components/analytics/RealTimeAnalyticsDashboard";
+import EnhancedAnalyticsDashboard from "@/components/analytics/EnhancedAnalyticsDashboard";
 
-const AnalyticsTab = () => <RealTimeAnalyticsDashboard />;
+const AnalyticsTab = () => <EnhancedAnalyticsDashboard />;
 
 export default AnalyticsTab;
